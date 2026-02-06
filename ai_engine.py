@@ -1,0 +1,230 @@
+import os
+import json
+from openai import OpenAI
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
+
+AI_INTEGRATIONS_OPENAI_API_KEY = os.environ.get("AI_INTEGRATIONS_OPENAI_API_KEY")
+AI_INTEGRATIONS_OPENAI_BASE_URL = os.environ.get("AI_INTEGRATIONS_OPENAI_BASE_URL")
+
+client = OpenAI(
+    api_key=AI_INTEGRATIONS_OPENAI_API_KEY,
+    base_url=AI_INTEGRATIONS_OPENAI_BASE_URL
+)
+
+
+def is_rate_limit_error(exception: BaseException) -> bool:
+    error_msg = str(exception)
+    return (
+        "429" in error_msg
+        or "RATELIMIT_EXCEEDED" in error_msg
+        or "quota" in error_msg.lower()
+        or "rate limit" in error_msg.lower()
+        or (hasattr(exception, "status_code") and exception.status_code == 429)
+    )
+
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=2, max=60),
+    retry=retry_if_exception(is_rate_limit_error),
+    reraise=True
+)
+def call_ai(system_prompt: str, user_prompt: str) -> str:
+    # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
+    # do not change this unless explicitly requested by the user
+    response = client.chat.completions.create(
+        model="gpt-5",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        max_completion_tokens=8192
+    )
+    return response.choices[0].message.content or ""
+
+
+def analyze_cv(cv_text: str) -> dict:
+    system_prompt = """אתה מומחה בכתיבת קורות חיים מקצועיים. 
+תפקידך לנתח קורות חיים ולהציע שיפורים מפורטים.
+עליך להחזיר תשובה בפורמט JSON בלבד (ללא markdown, ללא ```).
+
+המבנה הנדרש:
+{
+    "sections": [
+        {
+            "title": "שם הסעיף",
+            "original": "הטקסט המקורי",
+            "improved": "הטקסט המשופר",
+            "explanation": "הסבר קצר על השיפור"
+        }
+    ],
+    "general_tips": ["טיפ כללי 1", "טיפ כללי 2"],
+    "keywords_to_add": ["מילת מפתח 1", "מילת מפתח 2"],
+    "score": 72
+}
+
+כללים:
+- השתמש בעברית בלבד
+- הצע שיפורים קונקרטיים, לא כלליים
+- נסח הישגים במקום מטלות (למשל: "הגדלתי מכירות ב-30%" במקום "אחראי על מכירות")
+- הוסף מילות מפתח רלוונטיות לתחום
+- ציון (score) בין 0-100 המשקף את איכות קורות החיים המקוריים
+- חלק לסעיפים לוגיים: פרטים אישיים, תקציר מקצועי, ניסיון תעסוקתי, השכלה, מיומנויות, וכו'"""
+
+    user_prompt = f"""נתח את קורות החיים הבאים והצע שיפורים:
+
+{cv_text}"""
+
+    result = call_ai(system_prompt, user_prompt)
+
+    result = result.strip()
+    if result.startswith("```json"):
+        result = result[7:]
+    if result.startswith("```"):
+        result = result[3:]
+    if result.endswith("```"):
+        result = result[:-3]
+    result = result.strip()
+
+    try:
+        return json.loads(result)
+    except json.JSONDecodeError:
+        return {
+            "sections": [{
+                "title": "ניתוח כללי",
+                "original": cv_text[:500],
+                "improved": result[:500],
+                "explanation": "הבינה המלאכותית ניתחה את קורות החיים שלך"
+            }],
+            "general_tips": ["נסה להעלות קובץ עם מבנה ברור יותר"],
+            "keywords_to_add": [],
+            "score": 50
+        }
+
+
+def get_interview_question(conversation_history: list, step: int) -> str:
+    system_prompt = """אתה מומחה בכתיבת קורות חיים. אתה מנהל ראיון עם המשתמש כדי לאסוף מידע ליצירת קורות חיים מקצועיים.
+
+שלבי הראיון:
+1. פרטים אישיים (שם, טלפון, אימייל, עיר מגורים)
+2. תקציר מקצועי / מטרת קריירה
+3. ניסיון תעסוקתי (תפקידים, חברות, תקופות, הישגים)
+4. השכלה (תארים, מוסדות, שנים)
+5. מיומנויות (טכניות ורכות)
+6. שפות
+7. מידע נוסף (התנדבות, קורסים, הסמכות)
+
+כללים:
+- שאל שאלה אחת בכל פעם
+- היה ידידותי ומעודד
+- אם המשתמש נתן תשובה קצרה, בקש פרטים נוספים
+- שאל בעברית בלבד
+- אל תציג את מספר השלב"""
+
+    messages = [{"role": "system", "content": system_prompt}]
+
+    if not conversation_history:
+        messages.append({
+            "role": "user",
+            "content": "שלום, אני רוצה ליצור קורות חיים חדשים. בוא נתחיל."
+        })
+    else:
+        for msg in conversation_history:
+            messages.append(msg)
+
+    # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
+    # do not change this unless explicitly requested by the user
+    response = client.chat.completions.create(
+        model="gpt-5",
+        messages=messages,
+        max_completion_tokens=1024
+    )
+    return response.choices[0].message.content or ""
+
+
+def generate_cv_from_interview(conversation_history: list) -> dict:
+    system_prompt = """אתה מומחה בכתיבת קורות חיים מקצועיים.
+על סמך השיחה עם המשתמש, צור קורות חיים מלאים ומקצועיים.
+
+החזר את התוצאה בפורמט JSON בלבד (ללא markdown, ללא ```):
+{
+    "full_name": "שם מלא",
+    "contact": {
+        "phone": "טלפון",
+        "email": "אימייל",
+        "city": "עיר"
+    },
+    "professional_summary": "תקציר מקצועי של 2-3 משפטים",
+    "experience": [
+        {
+            "title": "תפקיד",
+            "company": "חברה",
+            "period": "תקופה",
+            "achievements": ["הישג 1", "הישג 2"]
+        }
+    ],
+    "education": [
+        {
+            "degree": "תואר",
+            "institution": "מוסד",
+            "year": "שנה"
+        }
+    ],
+    "skills": {
+        "technical": ["מיומנות 1"],
+        "soft": ["מיומנות 1"]
+    },
+    "languages": [{"language": "שפה", "level": "רמה"}],
+    "additional": ["פריט נוסף"]
+}
+
+כללים:
+- נסח הישגים באופן מקצועי ומדיד
+- השתמש בפעלים חזקים
+- הוסף מילות מפתח רלוונטיות
+- אם חסר מידע, השאר את השדה ריק"""
+
+    conv_text = "\n".join([
+        f"{'משתמש' if m['role'] == 'user' else 'מערכת'}: {m['content']}"
+        for m in conversation_history
+    ])
+
+    user_prompt = f"""על סמך השיחה הבאה, צור קורות חיים מקצועיים:
+
+{conv_text}"""
+
+    result = call_ai(system_prompt, user_prompt)
+
+    result = result.strip()
+    if result.startswith("```json"):
+        result = result[7:]
+    if result.startswith("```"):
+        result = result[3:]
+    if result.endswith("```"):
+        result = result[:-3]
+    result = result.strip()
+
+    try:
+        return json.loads(result)
+    except json.JSONDecodeError:
+        return {
+            "full_name": "",
+            "contact": {"phone": "", "email": "", "city": ""},
+            "professional_summary": result[:300],
+            "experience": [],
+            "education": [],
+            "skills": {"technical": [], "soft": []},
+            "languages": [],
+            "additional": []
+        }
+
+
+def improve_section_text(original: str, context: str = "") -> str:
+    system_prompt = """אתה מומחה בכתיבת קורות חיים. שפר את הטקסט הבא כך שיהיה מקצועי יותר.
+החזר רק את הטקסט המשופר, ללא הסברים נוספים.
+- נסח הישגים במקום מטלות
+- השתמש בפעלים חזקים
+- הוסף מדדים כמותיים אם אפשר
+- כתוב בעברית"""
+
+    return call_ai(system_prompt, f"טקסט לשיפור:\n{original}\n\nהקשר:\n{context}")
