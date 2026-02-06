@@ -36,6 +36,8 @@ def reset_improve():
     st.session_state.cv_text = ""
     st.session_state.analysis_result = None
     st.session_state.section_decisions = {}
+    if "improve_final_sections" in st.session_state:
+        del st.session_state.improve_final_sections
 
 
 def reset_build():
@@ -257,36 +259,68 @@ def render_improve_export():
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">📄 קורות החיים המשופרים שלך</div>', unsafe_allow_html=True)
+    st.markdown("ניתן לערוך, לשנות או למחוק כל סעיף לפני ההורדה")
 
     result = st.session_state.analysis_result
     sections = result.get("sections", [])
 
-    final_sections = []
-    for i, section in enumerate(sections):
-        title = section.get("title", f"סעיף {i+1}")
-        final_text = st.session_state.section_decisions.get(f"text_{i}", section.get("improved", ""))
-        final_sections.append({
-            "title": title,
-            "final_text": final_text,
-            "improved": section.get("improved", ""),
-            "original": section.get("original", "")
-        })
+    if "improve_final_sections" not in st.session_state:
+        final_sections = []
+        for i, section in enumerate(sections):
+            title = section.get("title", f"סעיף {i+1}")
+            final_text = st.session_state.section_decisions.get(f"text_{i}", section.get("improved", ""))
+            final_sections.append({"title": title, "final_text": final_text})
+        st.session_state.improve_final_sections = final_sections
 
-    st.markdown('<div class="cv-preview">', unsafe_allow_html=True)
-    for sec in final_sections:
-        st.markdown(f"### {sec['title']}")
-        st.markdown(sec['final_text'])
-    st.markdown('</div>', unsafe_allow_html=True)
+    sections_to_delete = []
+
+    for i, sec in enumerate(st.session_state.improve_final_sections):
+        with st.container():
+            col_title, col_delete = st.columns([5, 1])
+            with col_title:
+                new_title = st.text_input(
+                    "כותרת סעיף",
+                    value=sec["title"],
+                    key=f"imp_title_{i}",
+                    label_visibility="collapsed",
+                    placeholder="כותרת סעיף"
+                )
+                st.session_state.improve_final_sections[i]["title"] = new_title
+            with col_delete:
+                if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף"):
+                    sections_to_delete.append(i)
+
+            new_text = st.text_area(
+                "תוכן",
+                value=sec["final_text"],
+                key=f"imp_text_{i}",
+                height=120,
+                label_visibility="collapsed",
+                placeholder="תוכן הסעיף"
+            )
+            st.session_state.improve_final_sections[i]["final_text"] = new_text
+            st.markdown("---")
+
+    if sections_to_delete:
+        for idx in sorted(sections_to_delete, reverse=True):
+            st.session_state.improve_final_sections.pop(idx)
+        st.rerun()
+
+    if st.button("➕ הוסף סעיף חדש", key="imp_add_section"):
+        st.session_state.improve_final_sections.append({"title": "סעיף חדש", "final_text": ""})
+        st.rerun()
 
     st.markdown("---")
     st.markdown('<div class="section-header">⬇️ הורדת קורות החיים</div>', unsafe_allow_html=True)
+
+    export_sections = [s for s in st.session_state.improve_final_sections if s["final_text"].strip()]
 
     col1, col2 = st.columns(2)
 
     with col2:
         try:
             from export_utils import export_improved_cv_to_pdf
-            pdf_bytes = export_improved_cv_to_pdf(final_sections)
+            pdf_bytes = export_improved_cv_to_pdf(export_sections)
             st.download_button(
                 label="📥 הורד כ-PDF",
                 data=pdf_bytes,
@@ -300,7 +334,7 @@ def render_improve_export():
     with col1:
         try:
             from export_utils import export_improved_cv_to_docx
-            docx_bytes = export_improved_cv_to_docx(final_sections)
+            docx_bytes = export_improved_cv_to_docx(export_sections)
             st.download_button(
                 label="📥 הורד כ-DOCX",
                 data=docx_bytes,
@@ -410,89 +444,163 @@ def render_build_preview():
         return
 
     st.markdown('<div class="section-header">✨ קורות החיים שלך מוכנים!</div>', unsafe_allow_html=True)
+    st.markdown("ניתן לערוך, לשנות או למחוק כל שדה לפני ההורדה")
 
-    st.markdown('<div class="cv-preview">', unsafe_allow_html=True)
+    need_rerun = False
 
-    name = cv_data.get("full_name", "")
-    if name:
-        st.markdown(f"## {name}")
+    st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
+    cv_data["full_name"] = st.text_input("שם מלא", value=cv_data.get("full_name", ""), key="build_name")
 
     contact = cv_data.get("contact", {})
-    contact_parts = []
-    if contact.get("phone"):
-        contact_parts.append(f"📱 {contact['phone']}")
-    if contact.get("email"):
-        contact_parts.append(f"📧 {contact['email']}")
-    if contact.get("city"):
-        contact_parts.append(f"📍 {contact['city']}")
-    if contact_parts:
-        st.markdown(" | ".join(contact_parts))
+    c1, c2, c3 = st.columns(3)
+    with c3:
+        contact["phone"] = st.text_input("טלפון", value=contact.get("phone", ""), key="build_phone")
+    with c2:
+        contact["email"] = st.text_input("אימייל", value=contact.get("email", ""), key="build_email")
+    with c1:
+        contact["city"] = st.text_input("עיר", value=contact.get("city", ""), key="build_city")
+    cv_data["contact"] = contact
 
-    st.markdown("---")
+    st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
+    cv_data["professional_summary"] = st.text_area(
+        "תקציר מקצועי",
+        value=cv_data.get("professional_summary", ""),
+        key="build_summary",
+        height=100,
+        label_visibility="collapsed"
+    )
 
-    summary = cv_data.get("professional_summary", "")
-    if summary:
-        st.markdown("### תקציר מקצועי")
-        st.markdown(summary)
-
+    st.markdown('<div class="section-header">💼 ניסיון תעסוקתי</div>', unsafe_allow_html=True)
     experience = cv_data.get("experience", [])
-    if experience:
-        st.markdown("### ניסיון תעסוקתי")
-        for exp in experience:
-            title = exp.get("title", "")
-            company = exp.get("company", "")
-            period = exp.get("period", "")
-            header = f"**{title}**"
-            if company:
-                header += f" | {company}"
-            if period:
-                header += f" | {period}"
-            st.markdown(header)
-            for ach in exp.get("achievements", []):
-                st.markdown(f"• {ach}")
+    exp_to_delete = []
+    for i, exp in enumerate(experience):
+        with st.container():
+            col_header, col_del = st.columns([5, 1])
+            with col_del:
+                if st.button("🗑️", key=f"del_exp_{i}", help="מחק ניסיון"):
+                    exp_to_delete.append(i)
 
+            ec1, ec2, ec3 = st.columns(3)
+            with ec3:
+                exp["title"] = st.text_input("תפקיד", value=exp.get("title", ""), key=f"exp_title_{i}")
+            with ec2:
+                exp["company"] = st.text_input("חברה", value=exp.get("company", ""), key=f"exp_company_{i}")
+            with ec1:
+                exp["period"] = st.text_input("תקופה", value=exp.get("period", ""), key=f"exp_period_{i}")
+
+            achievements = exp.get("achievements", [])
+            ach_text = "\n".join(achievements)
+            new_ach = st.text_area(
+                "הישגים (שורה לכל הישג)",
+                value=ach_text,
+                key=f"exp_ach_{i}",
+                height=80
+            )
+            exp["achievements"] = [a.strip() for a in new_ach.split("\n") if a.strip()]
+            st.markdown("---")
+
+    if exp_to_delete:
+        for idx in sorted(exp_to_delete, reverse=True):
+            experience.pop(idx)
+        cv_data["experience"] = experience
+        need_rerun = True
+
+    if st.button("➕ הוסף ניסיון תעסוקתי", key="add_exp"):
+        experience.append({"title": "", "company": "", "period": "", "achievements": []})
+        cv_data["experience"] = experience
+        need_rerun = True
+
+    st.markdown('<div class="section-header">🎓 השכלה</div>', unsafe_allow_html=True)
     education = cv_data.get("education", [])
-    if education:
-        st.markdown("### השכלה")
-        for edu in education:
-            parts = []
-            if edu.get("degree"):
-                parts.append(edu["degree"])
-            if edu.get("institution"):
-                parts.append(edu["institution"])
-            if edu.get("year"):
-                parts.append(edu["year"])
-            st.markdown(" | ".join(parts))
+    edu_to_delete = []
+    for i, edu in enumerate(education):
+        with st.container():
+            col_header, col_del = st.columns([5, 1])
+            with col_del:
+                if st.button("🗑️", key=f"del_edu_{i}", help="מחק השכלה"):
+                    edu_to_delete.append(i)
 
+            ec1, ec2, ec3 = st.columns(3)
+            with ec3:
+                edu["degree"] = st.text_input("תואר", value=edu.get("degree", ""), key=f"edu_degree_{i}")
+            with ec2:
+                edu["institution"] = st.text_input("מוסד", value=edu.get("institution", ""), key=f"edu_inst_{i}")
+            with ec1:
+                edu["year"] = st.text_input("שנה", value=edu.get("year", ""), key=f"edu_year_{i}")
+            st.markdown("---")
+
+    if edu_to_delete:
+        for idx in sorted(edu_to_delete, reverse=True):
+            education.pop(idx)
+        cv_data["education"] = education
+        need_rerun = True
+
+    if st.button("➕ הוסף השכלה", key="add_edu"):
+        education.append({"degree": "", "institution": "", "year": ""})
+        cv_data["education"] = education
+        need_rerun = True
+
+    st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
     skills = cv_data.get("skills", {})
     technical = skills.get("technical", [])
     soft = skills.get("soft", [])
-    if technical or soft:
-        st.markdown("### מיומנויות")
-        if technical:
-            st.markdown(f"**טכניות:** {', '.join(technical)}")
-        if soft:
-            st.markdown(f"**רכות:** {', '.join(soft)}")
 
+    tech_text = st.text_input(
+        "מיומנויות טכניות (מופרדות בפסיקים)",
+        value=", ".join(technical),
+        key="build_tech_skills"
+    )
+    skills["technical"] = [s.strip() for s in tech_text.split(",") if s.strip()]
+
+    soft_text = st.text_input(
+        "מיומנויות רכות (מופרדות בפסיקים)",
+        value=", ".join(soft),
+        key="build_soft_skills"
+    )
+    skills["soft"] = [s.strip() for s in soft_text.split(",") if s.strip()]
+    cv_data["skills"] = skills
+
+    st.markdown('<div class="section-header">🌍 שפות</div>', unsafe_allow_html=True)
     languages = cv_data.get("languages", [])
-    if languages:
-        st.markdown("### שפות")
-        lang_parts = []
-        for lang in languages:
-            part = lang.get("language", "")
-            if lang.get("level"):
-                part += f" - {lang['level']}"
-            lang_parts.append(part)
-        st.markdown(" | ".join(lang_parts))
+    lang_to_delete = []
+    for i, lang in enumerate(languages):
+        lc1, lc2, lc_del = st.columns([3, 3, 1])
+        with lc1:
+            lang["language"] = st.text_input("שפה", value=lang.get("language", ""), key=f"lang_name_{i}")
+        with lc2:
+            lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"lang_level_{i}")
+        with lc_del:
+            if st.button("🗑️", key=f"del_lang_{i}", help="מחק שפה"):
+                lang_to_delete.append(i)
 
+    if lang_to_delete:
+        for idx in sorted(lang_to_delete, reverse=True):
+            languages.pop(idx)
+        cv_data["languages"] = languages
+        need_rerun = True
+
+    if st.button("➕ הוסף שפה", key="add_lang"):
+        languages.append({"language": "", "level": ""})
+        cv_data["languages"] = languages
+        need_rerun = True
+
+    st.markdown('<div class="section-header">📌 מידע נוסף</div>', unsafe_allow_html=True)
     additional = cv_data.get("additional", [])
-    if additional:
-        st.markdown("### מידע נוסף")
-        for item in additional:
-            if item:
-                st.markdown(f"• {item}")
+    add_text = "\n".join(additional)
+    new_add = st.text_area(
+        "מידע נוסף (שורה לכל פריט)",
+        value=add_text,
+        key="build_additional",
+        height=80,
+        label_visibility="collapsed",
+        placeholder="התנדבות, קורסים, הסמכות..."
+    )
+    cv_data["additional"] = [a.strip() for a in new_add.split("\n") if a.strip()]
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.session_state.generated_cv = cv_data
+
+    if need_rerun:
+        st.rerun()
 
     st.markdown("---")
     st.markdown('<div class="section-header">⬇️ הורדת קורות החיים</div>', unsafe_allow_html=True)
