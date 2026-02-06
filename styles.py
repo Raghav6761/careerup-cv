@@ -5,10 +5,21 @@ def inject_custom_css():
     st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
         *, html, body, [class*="st-"] {
             font-family: 'Assistant', sans-serif !important;
             direction: rtl !important;
+        }
+
+        [data-testid="stIconMaterial"],
+        [data-testid="stExpanderToggleIcon"],
+        [data-testid="stExpanderToggleIcon"] span,
+        [data-testid="stIconMaterial"] span,
+        .material-symbols-rounded {
+            font-family: 'Material Symbols Rounded' !important;
+            direction: ltr !important;
+            unicode-bidi: bidi-override !important;
         }
 
         .stApp {
