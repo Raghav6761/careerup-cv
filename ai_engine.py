@@ -16,13 +16,14 @@ client = OpenAI(
 )
 
 
-def is_rate_limit_error(exception: BaseException) -> bool:
+def should_retry(exception: BaseException) -> bool:
     error_msg = str(exception)
     return (
         "429" in error_msg
         or "RATELIMIT_EXCEEDED" in error_msg
         or "quota" in error_msg.lower()
         or "rate limit" in error_msg.lower()
+        or "empty_response" in error_msg
         or (hasattr(exception, "status_code") and exception.status_code == 429)
     )
 
@@ -30,21 +31,32 @@ def is_rate_limit_error(exception: BaseException) -> bool:
 @retry(
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=2, max=60),
-    retry=retry_if_exception(is_rate_limit_error),
+    retry=retry_if_exception(should_retry),
     reraise=True
 )
 def call_ai(system_prompt: str, user_prompt: str) -> str:
-    # the newest OpenAI model is "gpt-5" which was released August 7, 2025.
-    # do not change this unless explicitly requested by the user
     response = client.chat.completions.create(
         model="gpt-5",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
-        max_completion_tokens=8192
+        max_completion_tokens=16384
     )
-    return response.choices[0].message.content or ""
+    choice = response.choices[0]
+    content = choice.message.content or ""
+    finish_reason = choice.finish_reason
+
+    logger.info(f"AI response: {len(content)} chars, finish_reason={finish_reason}")
+
+    if not content.strip():
+        logger.warning(f"Empty AI response (finish_reason={finish_reason}), retrying...")
+        raise Exception("empty_response: AI returned empty content")
+
+    if finish_reason == "length":
+        logger.warning("Response was truncated due to max_completion_tokens")
+
+    return content
 
 
 def analyze_cv(cv_text: str) -> dict:
