@@ -95,12 +95,12 @@ def _get_pdf_styles(font_name, bold_font):
         "job_title": ParagraphStyle(
             "JobTitle",
             fontName=bold_font,
-            fontSize=10,
+            fontSize=9,
             leading=13,
             alignment=TA_RIGHT,
-            textColor=HexColor("#2c3e50"),
+            textColor=HexColor("#333333"),
             spaceAfter=1,
-            spaceBefore=2
+            spaceBefore=4
         ),
         "job_period": ParagraphStyle(
             "JobPeriod",
@@ -380,7 +380,7 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
                 run = p.add_run(" – ".join(header_parts))
                 run.font.bold = True
                 run.font.size = Pt(10)
-                run.font.color.rgb = RGBColor(44, 62, 80)
+                run.font.color.rgb = RGBColor(51, 51, 51)
                 p.paragraph_format.space_after = Pt(1)
                 p.paragraph_format.space_before = Pt(4)
 
@@ -545,16 +545,15 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
                     run = p.add_run(stripped)
                     run.font.bold = True
                     run.font.size = Pt(10)
-                    run.font.color.rgb = RGBColor(44, 62, 80)
+                    run.font.color.rgb = RGBColor(51, 51, 51)
                     p.paragraph_format.space_after = Pt(1)
                     p.paragraph_format.space_before = Pt(4)
                 elif stripped.startswith("-") or stripped.startswith("•"):
                     p = doc.add_paragraph()
                     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                     run = p.add_run(stripped)
-                    run.font.size = Pt(9)
+                    run.font.size = Pt(10)
                     p.paragraph_format.space_after = Pt(1)
-                    p.paragraph_format.left_indent = Pt(8)
                 else:
                     p = doc.add_paragraph(stripped)
                     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
