@@ -8,7 +8,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER
 from bidi.algorithm import get_display
-import arabic_reshaper
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -38,8 +37,7 @@ def register_hebrew_font():
 def reshape_hebrew(text: str) -> str:
     if not text:
         return ""
-    reshaped = arabic_reshaper.reshape(text)
-    return str(get_display(reshaped))
+    return str(get_display(text, base_dir='R'))
 
 
 def _make_section_separator(width_mm=170):
