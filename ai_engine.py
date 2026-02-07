@@ -404,6 +404,69 @@ def generate_cv_from_form(form_data: dict) -> dict:
         }
 
 
+def translate_cv_to_english(cv_text: str) -> str:
+    system_prompt = """You are a professional CV/resume translator specializing in Hebrew to English translation.
+Translate the following CV content from Hebrew to English professionally.
+
+Rules:
+- Maintain the exact same structure and formatting (sections, bullet points, separators)
+- IMPORTANT: Keep section markers like === Section Name === exactly as they appear, but translate the section name inside them to English
+- Translate job titles, skills, and descriptions professionally
+- Keep proper nouns (company names, institution names) in their original form or use their known English names
+- Keep email addresses, phone numbers, and URLs unchanged
+- Translate degree names to their standard English equivalents (e.g., תואר ראשון = B.A./B.Sc.)
+- Use professional CV language and action verbs
+- Keep dates and numbers as-is
+- Preserve line breaks and bullet points (• or -)
+- Do NOT add any explanations, just return the translated text"""
+
+    return call_ai(system_prompt, f"Translate this CV to English:\n\n{cv_text}")
+
+
+def translate_cv_data_to_english(cv_data: dict) -> dict:
+    system_prompt = """You are a professional CV/resume translator specializing in Hebrew to English translation.
+Translate the CV data from Hebrew to English professionally.
+
+Return the result in JSON format only (no markdown, no ```):
+{
+    "full_name": "Full Name",
+    "contact": {"phone": "phone", "email": "email", "city": "City"},
+    "professional_summary": "Professional summary in 2-3 sentences",
+    "experience": [
+        {"title": "Job Title", "company": "Company", "period": "Period", "achievements": ["Achievement 1"]}
+    ],
+    "education": [{"degree": "Degree", "institution": "Institution", "year": "Year"}],
+    "skills": {"technical": ["Skill"], "soft": ["Skill"]},
+    "languages": [{"language": "Language", "level": "Level"}],
+    "additional": ["Additional item"]
+}
+
+Rules:
+- Translate all Hebrew text to professional English
+- Keep proper nouns, emails, phone numbers unchanged
+- Translate degree names to standard English equivalents
+- Use professional CV language and action verbs
+- Keep dates and numbers as-is
+- Do NOT add explanations, only return valid JSON"""
+
+    user_prompt = f"Translate this CV data to English:\n\n{json.dumps(cv_data, ensure_ascii=False)}"
+    result = call_ai(system_prompt, user_prompt)
+
+    result = result.strip()
+    if result.startswith("```json"):
+        result = result[7:]
+    if result.startswith("```"):
+        result = result[3:]
+    if result.endswith("```"):
+        result = result[:-3]
+    result = result.strip()
+
+    try:
+        return json.loads(result)
+    except json.JSONDecodeError:
+        return cv_data
+
+
 def improve_section_text(original: str, context: str = "") -> str:
     system_prompt = """אתה מומחה בכתיבת קורות חיים. שפר את הטקסט הבא כך שיהיה מקצועי יותר.
 החזר רק את הטקסט המשופר, ללא הסברים נוספים.

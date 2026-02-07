@@ -345,6 +345,60 @@ def render_improve_export():
         except Exception as e:
             st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
+    st.markdown('<div class="section-header">🌐 הורדה באנגלית (תרגום)</div>', unsafe_allow_html=True)
+
+    if "improve_en_translated" not in st.session_state:
+        st.session_state.improve_en_translated = None
+    if "improve_en_translating" not in st.session_state:
+        st.session_state.improve_en_translating = False
+
+    if st.session_state.improve_en_translated is None:
+        if st.button("🔄 תרגם לאנגלית", use_container_width=True, key="translate_improve_btn"):
+            st.session_state.improve_en_translating = True
+            st.rerun()
+
+        if st.session_state.improve_en_translating:
+            with st.spinner("מתרגם לאנגלית..."):
+                try:
+                    from ai_engine import translate_cv_to_english
+                    full_text = "\n\n".join([
+                        f"=== {s['title']} ===\n{s['final_text']}" for s in export_sections
+                    ])
+                    st.session_state.improve_en_translated = translate_cv_to_english(full_text)
+                    st.session_state.improve_en_translating = False
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"שגיאה בתרגום: {str(e)}")
+                    st.session_state.improve_en_translating = False
+    else:
+        col3, col4 = st.columns(2)
+        with col4:
+            try:
+                from export_utils import export_improved_cv_to_pdf_en
+                pdf_en = export_improved_cv_to_pdf_en(st.session_state.improve_en_translated)
+                st.download_button(
+                    label="📥 Download PDF (English)",
+                    data=pdf_en,
+                    file_name="cv_english.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"שגיאה ביצירת PDF: {str(e)}")
+        with col3:
+            try:
+                from export_utils import export_improved_cv_to_docx_en
+                docx_en = export_improved_cv_to_docx_en(st.session_state.improve_en_translated)
+                st.download_button(
+                    label="📥 Download DOCX (English)",
+                    data=docx_en,
+                    file_name="cv_english.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"שגיאה ביצירת DOCX: {str(e)}")
+
     st.markdown("---")
     if st.button("🏠 חזרה לדף הבית", use_container_width=True):
         go_to("home")
@@ -750,6 +804,57 @@ def render_build_preview():
             )
         except Exception as e:
             st.error(f"שגיאה ביצירת DOCX: {str(e)}")
+
+    st.markdown('<div class="section-header">🌐 הורדה באנגלית (תרגום)</div>', unsafe_allow_html=True)
+
+    if "build_en_translated" not in st.session_state:
+        st.session_state.build_en_translated = None
+    if "build_en_translating" not in st.session_state:
+        st.session_state.build_en_translating = False
+
+    if st.session_state.build_en_translated is None:
+        if st.button("🔄 תרגם לאנגלית", use_container_width=True, key="translate_build_btn"):
+            st.session_state.build_en_translating = True
+            st.rerun()
+
+        if st.session_state.build_en_translating:
+            with st.spinner("מתרגם לאנגלית..."):
+                try:
+                    from ai_engine import translate_cv_data_to_english
+                    st.session_state.build_en_translated = translate_cv_data_to_english(cv_data)
+                    st.session_state.build_en_translating = False
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"שגיאה בתרגום: {str(e)}")
+                    st.session_state.build_en_translating = False
+    else:
+        col3, col4 = st.columns(2)
+        with col4:
+            try:
+                from export_utils import export_cv_to_pdf_en
+                pdf_en = export_cv_to_pdf_en(st.session_state.build_en_translated)
+                st.download_button(
+                    label="📥 Download PDF (English)",
+                    data=pdf_en,
+                    file_name="cv_english.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"שגיאה ביצירת PDF: {str(e)}")
+        with col3:
+            try:
+                from export_utils import export_cv_to_docx_en
+                docx_en = export_cv_to_docx_en(st.session_state.build_en_translated)
+                st.download_button(
+                    label="📥 Download DOCX (English)",
+                    data=docx_en,
+                    file_name="cv_english.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
     st.markdown("---")
     if st.button("🏠 חזרה לדף הבית", use_container_width=True):
