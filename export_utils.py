@@ -480,11 +480,20 @@ def _is_job_header_line(line: str) -> bool:
     line = line.strip()
     if line.startswith("-") or line.startswith("•") or line.startswith("–"):
         return False
-    military_keywords = ['שירות מלא', 'שירות סדיר', 'חיל ', 'צה"ל', 'צבא', 'שירות לאומי', 'שירות צבאי']
-    for keyword in military_keywords:
+    military_keywords_he = ['שירות מלא', 'שירות סדיר', 'חיל ', 'צה"ל', 'צבא', 'שירות לאומי', 'שירות צבאי']
+    for keyword in military_keywords_he:
         if keyword in line:
             return False
-    if re.search(r'\d{4}', line) and ('–' in line or '-' in line or '|' in line or 'הווה' in line or 'נוכחי' in line or 'היום' in line):
+    lower = line.lower()
+    military_keywords_en = [
+        'military service', 'army', 'air force', 'navy', 'idf',
+        'israeli defense', 'israeli air force', 'israeli navy',
+        'national service', 'full service', 'combat', 'compulsory service'
+    ]
+    for keyword in military_keywords_en:
+        if keyword in lower:
+            return False
+    if re.search(r'\d{4}', line) and ('–' in line or '-' in line or '|' in line or 'הווה' in line or 'נוכחי' in line or 'היום' in line or 'present' in lower):
         return True
     return False
 

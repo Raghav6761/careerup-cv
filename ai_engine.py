@@ -437,12 +437,13 @@ Rules:
 - Maintain the exact same structure and formatting (sections, bullet points, separators)
 - IMPORTANT: Keep section markers like === Section Name === exactly as they appear, but translate the section name inside them to English
 - Translate job titles, skills, and descriptions professionally
-- Keep proper nouns (company names, institution names) in their original form or use their known English names
+- CRITICAL: For Hebrew company/organization names that appear in quotes (e.g., "אנוש כח אדם", "המרכז בריאותי לכף רגל"), either transliterate them to English (e.g., "Enosh Koach Adam") or translate their meaning (e.g., "Human Resources Inc."). NEVER output reversed Hebrew characters. The output must be fully readable in English left-to-right.
 - Keep email addresses, phone numbers, and URLs unchanged
 - Translate degree names to their standard English equivalents (e.g., תואר ראשון = B.A./B.Sc.)
 - Use professional CV language and action verbs
 - Keep dates and numbers as-is
 - Preserve line breaks and bullet points (• or -)
+- For military service lines, translate them as regular text (not as job positions). Mark them clearly, e.g., "Military Service: Israeli Air Force, Intelligence – Clerk (full service)"
 - Do NOT add any explanations, just return the translated text"""
 
     return call_ai(system_prompt, f"Translate this CV to English:\n\n{cv_text}")
@@ -468,7 +469,8 @@ Return the result in JSON format only (no markdown, no ```):
 
 Rules:
 - Translate all Hebrew text to professional English
-- Keep proper nouns, emails, phone numbers unchanged
+- CRITICAL: For Hebrew company/organization names, either transliterate them to English or translate their meaning. NEVER output reversed Hebrew characters. The output must be fully readable in English left-to-right.
+- Keep emails, phone numbers unchanged
 - Translate degree names to standard English equivalents
 - Use professional CV language and action verbs
 - Keep dates and numbers as-is
