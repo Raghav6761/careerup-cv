@@ -298,6 +298,112 @@ def generate_cv_from_interview(conversation_history: list) -> dict:
         }
 
 
+def generate_cv_from_form(form_data: dict) -> dict:
+    system_prompt = """אתה מומחה בכתיבת קורות חיים מקצועיים.
+קיבלת נתוני טופס מהמשתמש. תפקידך:
+1. לשפר ולנסח מחדש את התוכן בצורה מקצועית
+2. לכתוב תקציר מקצועי אם המשתמש לא כתב אחד
+3. לנסח הישגים באופן מדיד ומקצועי
+4. להוסיף מילות מפתח רלוונטיות
+
+החזר את התוצאה בפורמט JSON בלבד (ללא markdown, ללא ```):
+{
+    "full_name": "שם מלא",
+    "contact": {"phone": "טלפון", "email": "אימייל", "city": "עיר"},
+    "professional_summary": "תקציר מקצועי של 2-3 משפטים",
+    "experience": [
+        {"title": "תפקיד", "company": "חברה", "period": "תקופה", "achievements": ["הישג 1", "הישג 2"]}
+    ],
+    "education": [{"degree": "תואר", "institution": "מוסד", "year": "שנה"}],
+    "skills": {"technical": ["מיומנות"], "soft": ["מיומנות"]},
+    "languages": [{"language": "שפה", "level": "רמה"}],
+    "additional": ["פריט נוסף"]
+}
+
+כללים:
+- שמור על הנתונים המקוריים (שם, טלפון, אימייל, תקופות, מוסדות)
+- שפר רק את הניסוח של הישגים, תקציר, ומיומנויות
+- השתמש בפעלים חזקים ומדדים כמותיים
+- תקציר מקצועי: 2-3 משפטים קצרים בלבד
+- הישגים: עד 2-3 נקודות לכל תפקיד, כל נקודה משפט אחד קצר
+- אל תמציא מידע שלא קיים בטופס
+- כתוב בעברית בלבד"""
+
+    form_text = f"""שם: {form_data.get('full_name', '')}
+טלפון: {form_data.get('phone', '')}
+אימייל: {form_data.get('email', '')}
+עיר: {form_data.get('city', '')}
+
+תקציר מקצועי: {form_data.get('professional_summary', '')}
+
+ניסיון תעסוקתי:
+"""
+    for exp in form_data.get("experience", []):
+        title = exp.get("title", "")
+        company = exp.get("company", "")
+        period = exp.get("period", "")
+        achievements = exp.get("achievements", "")
+        if title or company:
+            form_text += f"- תפקיד: {title}, חברה: {company}, תקופה: {period}\n"
+            if achievements:
+                form_text += f"  הישגים: {achievements}\n"
+
+    form_text += "\nהשכלה:\n"
+    for edu in form_data.get("education", []):
+        degree = edu.get("degree", "")
+        institution = edu.get("institution", "")
+        year = edu.get("year", "")
+        if degree or institution:
+            form_text += f"- {degree}, {institution}, {year}\n"
+
+    form_text += f"\nמיומנויות טכניות: {form_data.get('technical_skills', '')}\n"
+    form_text += f"מיומנויות רכות: {form_data.get('soft_skills', '')}\n"
+
+    form_text += "\nשפות:\n"
+    for lang in form_data.get("languages", []):
+        lang_name = lang.get("language", "")
+        level = lang.get("level", "")
+        if lang_name:
+            form_text += f"- {lang_name}: {level}\n"
+
+    additional = form_data.get("additional", "")
+    if additional:
+        form_text += f"\nמידע נוסף: {additional}\n"
+
+    user_prompt = f"""צור קורות חיים מקצועיים על סמך נתוני הטופס הבאים:
+
+{form_text}"""
+
+    result = call_ai(system_prompt, user_prompt)
+
+    result = result.strip()
+    if result.startswith("```json"):
+        result = result[7:]
+    if result.startswith("```"):
+        result = result[3:]
+    if result.endswith("```"):
+        result = result[:-3]
+    result = result.strip()
+
+    try:
+        return json.loads(result)
+    except json.JSONDecodeError:
+        return {
+            "full_name": form_data.get("full_name", ""),
+            "contact": {
+                "phone": form_data.get("phone", ""),
+                "email": form_data.get("email", ""),
+                "city": form_data.get("city", "")
+            },
+            "professional_summary": form_data.get("professional_summary", ""),
+            "experience": [],
+            "education": [],
+            "skills": {"technical": [], "soft": []},
+            "languages": [],
+            "additional": []
+        }
+
+
 def improve_section_text(original: str, context: str = "") -> str:
     system_prompt = """אתה מומחה בכתיבת קורות חיים. שפר את הטקסט הבא כך שיהיה מקצועי יותר.
 החזר רק את הטקסט המשופר, ללא הסברים נוספים.

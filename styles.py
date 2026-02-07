@@ -28,7 +28,7 @@ def inject_custom_css():
 
         .main .block-container {
             max-width: 900px;
-            padding: 1rem 1rem 3rem 1rem;
+            padding: 0.5rem 1rem 2rem 1rem;
         }
 
         h1, h2, h3, h4, h5, h6 {
@@ -89,11 +89,11 @@ def inject_custom_css():
             background: #f8fafc;
             border: 2px solid #e2e8f0;
             border-radius: 16px;
-            padding: 32px 24px;
+            padding: 20px 20px;
             text-align: center !important;
             transition: all 0.3s ease;
             cursor: pointer;
-            min-height: 220px;
+            min-height: 160px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -106,15 +106,15 @@ def inject_custom_css():
         }
 
         .path-card-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
+            font-size: 36px;
+            margin-bottom: 8px;
         }
 
         .path-card-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: #2c3e50;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .path-card-desc {
@@ -126,10 +126,10 @@ def inject_custom_css():
         .section-header {
             background: #f0f6fb;
             border-right: 4px solid #7fb3d8;
-            padding: 12px 20px;
+            padding: 8px 16px;
             border-radius: 0 10px 10px 0;
-            margin: 16px 0 12px 0;
-            font-size: 18px;
+            margin: 8px 0 8px 0;
+            font-size: 17px;
             font-weight: 700;
             color: #2c3e50;
         }
@@ -199,21 +199,22 @@ def inject_custom_css():
 
         .app-header {
             text-align: center !important;
-            padding: 20px 0 10px 0;
+            padding: 8px 0 4px 0;
         }
 
         .app-header h1 {
             text-align: center !important;
-            font-size: 36px !important;
+            font-size: 32px !important;
             font-weight: 800 !important;
             color: #2c3e50 !important;
-            margin-bottom: 4px !important;
+            margin-bottom: 0px !important;
         }
 
         .app-header p {
             text-align: center !important;
-            font-size: 17px;
+            font-size: 15px;
             color: #6b7c93;
+            margin-bottom: 0px !important;
         }
 
         .logo-text {
@@ -224,7 +225,7 @@ def inject_custom_css():
             display: flex;
             justify-content: center;
             gap: 8px;
-            margin: 20px 0;
+            margin: 8px 0;
             direction: ltr !important;
         }
 
@@ -301,24 +302,24 @@ def inject_custom_css():
 
         @media (max-width: 768px) {
             .main .block-container {
-                padding: 0.5rem 0.5rem 2rem 0.5rem;
+                padding: 0.25rem 0.5rem 2rem 0.5rem;
             }
 
             .path-card {
-                padding: 24px 16px;
-                min-height: 180px;
+                padding: 16px 12px;
+                min-height: 140px;
             }
 
             .path-card-icon {
-                font-size: 36px;
+                font-size: 28px;
             }
 
             .path-card-title {
-                font-size: 18px;
+                font-size: 17px;
             }
 
             .app-header h1 {
-                font-size: 28px !important;
+                font-size: 26px !important;
             }
 
             .stButton > button {

@@ -24,14 +24,14 @@ fonts/              - Assistant font files for PDF export
 
 ## Key Features
 1. **Improve Existing CV**: Upload PDF/DOCX/TXT → AI analysis → side-by-side comparison → approve/edit per section → export
-2. **Build from Scratch**: Interactive chat interview → AI generates structured CV → preview → export
+2. **Build from Scratch**: Smart form with structured fields → AI polishes content → preview/edit → export
 
 ## User Flow Pages
 - `home` - Two path selection cards
 - `improve_upload` - File upload page
 - `improve_review` - Side-by-side comparison with approve/edit
 - `improve_export` - Final preview and download
-- `build_chat` - Interactive interview chat
+- `build_form` - Smart form for filling CV fields (personal details, experience, education, skills, languages)
 - `build_preview` - Generated CV preview and download
 
 ## Running

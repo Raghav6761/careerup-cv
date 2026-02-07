@@ -18,14 +18,8 @@ if "analysis_result" not in st.session_state:
     st.session_state.analysis_result = None
 if "section_decisions" not in st.session_state:
     st.session_state.section_decisions = {}
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "interview_step" not in st.session_state:
-    st.session_state.interview_step = 0
 if "generated_cv" not in st.session_state:
     st.session_state.generated_cv = None
-if "interview_complete" not in st.session_state:
-    st.session_state.interview_complete = False
 
 
 def go_to(page):
@@ -41,10 +35,9 @@ def reset_improve():
 
 
 def reset_build():
-    st.session_state.chat_history = []
-    st.session_state.interview_step = 0
     st.session_state.generated_cv = None
-    st.session_state.interview_complete = False
+    if "build_form_data" in st.session_state:
+        del st.session_state.build_form_data
 
 
 def render_header():
@@ -59,8 +52,6 @@ def render_header():
 def render_home():
     render_header()
 
-    st.markdown("---")
-
     col1, col2 = st.columns(2)
 
     with col2:
@@ -69,7 +60,7 @@ def render_home():
             <div class="path-card-icon">📤</div>
             <div class="path-card-title">שיפור קורות חיים קיימים</div>
             <div class="path-card-desc">
-                העלה קובץ קורות חיים קיים וקבל הצעות שיפור מבוססות בינה מלאכותית
+                העלה קובץ קיים וקבל הצעות שיפור מבינה מלאכותית
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -84,13 +75,13 @@ def render_home():
             <div class="path-card-icon">✨</div>
             <div class="path-card-title">בנייה מאפס</div>
             <div class="path-card-desc">
-                צ'אט אינטראקטיבי שילווה אותך בבניית קורות חיים מקצועיים מהתחלה
+                מלא טופס חכם והבינה המלאכותית תבנה קורות חיים מקצועיים
             </div>
         </div>
         """, unsafe_allow_html=True)
         if st.button("התחל בנייה  ←", key="btn_build", use_container_width=True):
             reset_build()
-            go_to("build_chat")
+            go_to("build_form")
             st.rerun()
 
 
@@ -360,80 +351,197 @@ def render_improve_export():
         st.rerun()
 
 
-def render_build_chat():
+def _init_build_form_data():
+    if "build_form_data" not in st.session_state:
+        st.session_state.build_form_data = {
+            "full_name": "",
+            "phone": "",
+            "email": "",
+            "city": "",
+            "professional_summary": "",
+            "experience": [{"title": "", "company": "", "period": "", "achievements": ""}],
+            "education": [{"degree": "", "institution": "", "year": ""}],
+            "technical_skills": "",
+            "soft_skills": "",
+            "languages": [{"language": "עברית", "level": "שפת אם"}, {"language": "אנגלית", "level": ""}],
+            "additional": "",
+        }
+
+
+def render_build_form():
     render_header()
 
     if st.button("→ חזרה לדף הבית", key="back_home_build"):
         go_to("home")
         st.rerun()
 
-    total_steps = 7
-    progress = min(st.session_state.interview_step / total_steps, 1.0)
-    st.progress(progress)
-    st.markdown(f"""
-    <div style="text-align: center; font-size: 14px; color: #6b7c93; margin-bottom: 16px;">
-        שלב {min(st.session_state.interview_step + 1, total_steps)} מתוך {total_steps}
-    </div>
-    """, unsafe_allow_html=True)
+    _init_build_form_data()
+    fd = st.session_state.build_form_data
 
-    if not st.session_state.chat_history:
-        with st.spinner("מכין את הראיון..."):
-            from ai_engine import get_interview_question
-            first_q = get_interview_question([], 0)
-            st.session_state.chat_history.append({
-                "role": "assistant",
-                "content": first_q
-            })
-            st.rerun()
+    st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
+    fd["full_name"] = st.text_input("שם מלא", value=fd["full_name"], key="bf_name", placeholder="ישראל ישראלי")
+    c1, c2, c3 = st.columns(3)
+    with c3:
+        fd["phone"] = st.text_input("טלפון", value=fd["phone"], key="bf_phone", placeholder="050-1234567")
+    with c2:
+        fd["email"] = st.text_input("אימייל", value=fd["email"], key="bf_email", placeholder="email@example.com")
+    with c1:
+        fd["city"] = st.text_input("עיר", value=fd["city"], key="bf_city", placeholder="תל אביב")
 
-    for msg in st.session_state.chat_history:
-        if msg["role"] == "assistant":
-            st.markdown(f'<div class="chat-message-ai">{msg["content"]}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="chat-message-user">{msg["content"]}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">כתוב בקצרה על הרקע המקצועי שלך, או השאר ריק והבינה המלאכותית תכתוב עבורך</span>', unsafe_allow_html=True)
+    fd["professional_summary"] = st.text_area(
+        "תקציר",
+        value=fd["professional_summary"],
+        key="bf_summary",
+        height=80,
+        label_visibility="collapsed",
+        placeholder="למשל: מפתח תוכנה עם 5 שנות ניסיון בפיתוח אפליקציות ווב..."
+    )
 
-    if not st.session_state.interview_complete:
-        with st.form(key="chat_form", clear_on_submit=True):
-            user_input = st.text_area(
-                "הקלד את תשובתך:",
-                height=80,
-                key="user_chat_input",
-                placeholder="הקלד כאן..."
-            )
-            col1, col2 = st.columns([3, 1])
-            with col2:
-                submit = st.form_submit_button("שלח", use_container_width=True, type="primary")
-            with col1:
-                finish = st.form_submit_button("סיים ובנה קורות חיים ✨", use_container_width=True)
+    st.markdown('<div class="section-header">💼 ניסיון תעסוקתי</div>', unsafe_allow_html=True)
+    experience = fd["experience"]
+    exp_to_delete = []
+    for i, exp in enumerate(experience):
+        if i > 0:
+            st.markdown("---")
+        col_header, col_del = st.columns([5, 1])
+        with col_header:
+            st.markdown(f'<span style="font-size:14px; font-weight:600; color:#6b7c93;">תפקיד {i+1}</span>', unsafe_allow_html=True)
+        with col_del:
+            if len(experience) > 1:
+                if st.button("🗑️", key=f"bf_del_exp_{i}", help="מחק"):
+                    exp_to_delete.append(i)
 
-            if submit and user_input.strip():
-                st.session_state.chat_history.append({
-                    "role": "user",
-                    "content": user_input.strip()
-                })
-                st.session_state.interview_step += 1
+        ec1, ec2, ec3 = st.columns(3)
+        with ec3:
+            exp["title"] = st.text_input("תפקיד", value=exp.get("title", ""), key=f"bf_exp_title_{i}", placeholder="מנהל פרויקטים")
+        with ec2:
+            exp["company"] = st.text_input("חברה", value=exp.get("company", ""), key=f"bf_exp_company_{i}", placeholder="שם החברה")
+        with ec1:
+            exp["period"] = st.text_input("תקופה", value=exp.get("period", ""), key=f"bf_exp_period_{i}", placeholder="2020-2024")
 
-                with st.spinner("חושב..."):
-                    from ai_engine import get_interview_question
-                    ai_response = get_interview_question(st.session_state.chat_history, st.session_state.interview_step)
-                    st.session_state.chat_history.append({
-                        "role": "assistant",
-                        "content": ai_response
-                    })
-                st.rerun()
+        exp["achievements"] = st.text_area(
+            "תיאור ההישגים",
+            value=exp.get("achievements", ""),
+            key=f"bf_exp_ach_{i}",
+            height=70,
+            label_visibility="collapsed",
+            placeholder="הישג 1\nהישג 2\nהישג 3"
+        )
 
-            if finish:
-                if len(st.session_state.chat_history) < 3:
-                    st.warning("נא לענות על לפחות שאלה אחת לפני יצירת קורות החיים.")
-                else:
-                    st.session_state.interview_complete = True
-                    st.rerun()
+    if exp_to_delete:
+        for idx in sorted(exp_to_delete, reverse=True):
+            experience.pop(idx)
+        st.rerun()
 
-    if st.session_state.interview_complete and not st.session_state.generated_cv:
-        with st.spinner("יוצר את קורות החיים שלך... ⏳"):
-            from ai_engine import generate_cv_from_interview
-            cv_data = generate_cv_from_interview(st.session_state.chat_history)
-            st.session_state.generated_cv = cv_data
+    if st.button("➕ הוסף תפקיד נוסף", key="bf_add_exp"):
+        experience.append({"title": "", "company": "", "period": "", "achievements": ""})
+        st.rerun()
+
+    st.markdown('<div class="section-header">🎓 השכלה</div>', unsafe_allow_html=True)
+    education = fd["education"]
+    edu_to_delete = []
+    for i, edu in enumerate(education):
+        if i > 0:
+            st.markdown("---")
+        col_header, col_del = st.columns([5, 1])
+        with col_del:
+            if len(education) > 1:
+                if st.button("🗑️", key=f"bf_del_edu_{i}", help="מחק"):
+                    edu_to_delete.append(i)
+
+        ec1, ec2, ec3 = st.columns(3)
+        with ec3:
+            edu["degree"] = st.text_input("תואר / תעודה", value=edu.get("degree", ""), key=f"bf_edu_deg_{i}", placeholder="תואר ראשון הנדסת תוכנה")
+        with ec2:
+            edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"bf_edu_inst_{i}", placeholder="אוניברסיטת תל אביב")
+        with ec1:
+            edu["year"] = st.text_input("שנת סיום", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2020")
+
+    if edu_to_delete:
+        for idx in sorted(edu_to_delete, reverse=True):
+            education.pop(idx)
+        st.rerun()
+
+    if st.button("➕ הוסף השכלה נוספת", key="bf_add_edu"):
+        education.append({"degree": "", "institution": "", "year": ""})
+        st.rerun()
+
+    st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
+    fd["technical_skills"] = st.text_input(
+        "מיומנויות טכניות",
+        value=fd["technical_skills"],
+        key="bf_tech",
+        placeholder="Python, JavaScript, Excel, ניהול פרויקטים..."
+    )
+    fd["soft_skills"] = st.text_input(
+        "מיומנויות רכות",
+        value=fd["soft_skills"],
+        key="bf_soft",
+        placeholder="עבודת צוות, מנהיגות, תקשורת בינאישית..."
+    )
+
+    st.markdown('<div class="section-header">🌍 שפות</div>', unsafe_allow_html=True)
+    languages = fd["languages"]
+    lang_to_delete = []
+    for i, lang in enumerate(languages):
+        lc1, lc2, lc_del = st.columns([3, 3, 1])
+        with lc1:
+            lang["language"] = st.text_input("שפה", value=lang.get("language", ""), key=f"bf_lang_{i}", placeholder="עברית")
+        with lc2:
+            lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"bf_lang_lvl_{i}", placeholder="שפת אם / גבוהה / בסיסית")
+        with lc_del:
+            if len(languages) > 1:
+                if st.button("🗑️", key=f"bf_del_lang_{i}", help="מחק"):
+                    lang_to_delete.append(i)
+
+    if lang_to_delete:
+        for idx in sorted(lang_to_delete, reverse=True):
+            languages.pop(idx)
+        st.rerun()
+
+    if st.button("➕ הוסף שפה", key="bf_add_lang"):
+        languages.append({"language": "", "level": ""})
+        st.rerun()
+
+    st.markdown('<div class="section-header">📌 מידע נוסף</div>', unsafe_allow_html=True)
+    fd["additional"] = st.text_area(
+        "מידע נוסף",
+        value=fd["additional"],
+        key="bf_additional",
+        height=60,
+        label_visibility="collapsed",
+        placeholder="התנדבות, קורסים, הסמכות, שירות צבאי..."
+    )
+
+    st.session_state.build_form_data = fd
+
+    st.markdown("---")
+    if st.button("✨ צור קורות חיים מקצועיים", use_container_width=True, type="primary"):
+        if not fd["full_name"].strip():
+            st.warning("נא למלא לפחות את השם המלא")
+            return
+
+        has_content = (
+            fd["professional_summary"].strip() or
+            any(e.get("title", "").strip() or e.get("company", "").strip() for e in fd["experience"]) or
+            any(e.get("degree", "").strip() for e in fd["education"]) or
+            fd["technical_skills"].strip()
+        )
+        if not has_content:
+            st.warning("נא למלא לפחות תפקיד אחד או פרט נוסף כלשהו")
+            return
+
+        with st.status("יוצר את קורות החיים שלך...", expanded=True) as status:
+            st.write("📋 אוסף את הנתונים מהטופס...")
+            from ai_engine import generate_cv_from_form
+            st.write("🤖 הבינה המלאכותית מעבדת ומשפרת... (15-30 שניות)")
+            cv_data = generate_cv_from_form(fd)
+            st.write("✅ קורות החיים מוכנים!")
+            status.update(label="קורות החיים מוכנים!", state="complete")
+
+        st.session_state.generated_cv = cv_data
         go_to("build_preview")
         st.rerun()
 
@@ -441,15 +549,14 @@ def render_build_chat():
 def render_build_preview():
     render_header()
 
-    if st.button("→ חזרה לצ'אט", key="back_chat"):
-        st.session_state.interview_complete = False
+    if st.button("→ חזרה לטופס", key="back_form"):
         st.session_state.generated_cv = None
-        go_to("build_chat")
+        go_to("build_form")
         st.rerun()
 
     cv_data = st.session_state.generated_cv
     if not cv_data:
-        st.warning("לא נמצאו נתונים. חזור לצ'אט.")
+        st.warning("לא נמצאו נתונים. חזור לטופס.")
         return
 
     st.markdown('<div class="section-header">✨ קורות החיים שלך מוכנים!</div>', unsafe_allow_html=True)
@@ -655,7 +762,7 @@ pages = {
     "improve_upload": render_improve_upload,
     "improve_review": render_improve_review,
     "improve_export": render_improve_export,
-    "build_chat": render_build_chat,
+    "build_form": render_build_form,
     "build_preview": render_build_preview,
 }
 
