@@ -29,6 +29,8 @@ def register_hebrew_font():
             pdfmetrics.registerFont(TTFont("Assistant-Bold", font_bold_path))
         else:
             pdfmetrics.registerFont(TTFont("Assistant-Bold", font_path))
+        from reportlab.pdfbase.pdfmetrics import registerFontFamily
+        registerFontFamily("Assistant", normal="Assistant", bold="Assistant-Bold")
         return "Assistant"
     else:
         return "Helvetica"
