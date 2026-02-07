@@ -64,31 +64,13 @@ def render_home():
     col1, col2 = st.columns(2)
 
     with col2:
-        st.markdown("""
-        <div class="path-card">
-            <div class="path-card-icon">📤</div>
-            <div class="path-card-title">שיפור קורות חיים קיימים</div>
-            <div class="path-card-desc">
-                העלה קובץ קיים וקבל הצעות שיפור מבינה מלאכותית
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("התחל שיפור  ←", key="btn_improve", use_container_width=True):
+        if st.button("📤  שיפור קורות חיים קיימים", key="btn_improve", use_container_width=True):
             reset_improve()
             go_to("improve_upload")
             st.rerun()
 
     with col1:
-        st.markdown("""
-        <div class="path-card">
-            <div class="path-card-icon">✨</div>
-            <div class="path-card-title">בנייה מאפס</div>
-            <div class="path-card-desc">
-                מלא טופס חכם והבינה המלאכותית תבנה קורות חיים מקצועיים
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("התחל בנייה  ←", key="btn_build", use_container_width=True):
+        if st.button("✨  בנייה מאפס", key="btn_build", use_container_width=True):
             reset_build()
             go_to("build_form")
             st.rerun()

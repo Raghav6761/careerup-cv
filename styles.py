@@ -134,6 +134,26 @@ def inject_custom_css():
             line-height: 1.6;
         }
 
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:first-of-type button[kind="secondary"] {
+            background: #f8fafc !important;
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 16px !important;
+            padding: 30px 20px !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            color: #2c3e50 !important;
+            height: 120px !important;
+            transition: all 0.3s ease !important;
+            white-space: normal !important;
+            line-height: 1.4 !important;
+        }
+
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:first-of-type button[kind="secondary"]:hover {
+            border-color: #7fb3d8 !important;
+            box-shadow: 0 4px 16px rgba(127, 179, 216, 0.15) !important;
+            background: #f0f6fb !important;
+        }
+
         .section-header {
             background: #f0f6fb;
             border-right: 4px solid #7fb3d8;
