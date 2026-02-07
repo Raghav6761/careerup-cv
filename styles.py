@@ -28,7 +28,18 @@ def inject_custom_css():
 
         .main .block-container {
             max-width: 900px;
-            padding: 0.5rem 1rem 2rem 1rem;
+            padding: 0rem 1rem 2rem 1rem;
+        }
+
+        header[data-testid="stHeader"] {
+            height: 0px !important;
+            min-height: 0px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .stMainBlockContainer {
+            padding-top: 0.5rem !important;
         }
 
         h1, h2, h3, h4, h5, h6 {
@@ -93,7 +104,7 @@ def inject_custom_css():
             text-align: center !important;
             transition: all 0.3s ease;
             cursor: pointer;
-            min-height: 160px;
+            height: 180px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -307,7 +318,7 @@ def inject_custom_css():
 
             .path-card {
                 padding: 16px 12px;
-                min-height: 140px;
+                height: 160px;
             }
 
             .path-card-icon {
@@ -334,9 +345,9 @@ def inject_custom_css():
             }
         }
 
-        header[data-testid="stHeader"] {
+        header[data-testid="stHeader"][class] {
             background: #ffffff !important;
-            border-bottom: 1px solid #f0f0f0 !important;
+            border-bottom: none !important;
         }
 
         div[data-testid="stSidebarContent"] {
