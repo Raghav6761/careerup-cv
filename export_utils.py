@@ -269,7 +269,6 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
 
 def _add_docx_section_header(doc, text):
     p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     run = p.add_run(text)
     run.font.size = Pt(13)
     run.font.bold = True
@@ -283,6 +282,13 @@ def _add_docx_section_header(doc, text):
     rPr = run._r.get_or_add_rPr()
     rtl = OxmlElement('w:rtl')
     rPr.append(rtl)
+    bCs = OxmlElement('w:bCs')
+    rPr.append(bCs)
+    rFonts = rPr.find(qn('w:rFonts'))
+    if rFonts is None:
+        rFonts = OxmlElement('w:rFonts')
+        rPr.insert(0, rFonts)
+    rFonts.set(qn('w:cs'), 'Assistant')
     pBdr = OxmlElement('w:pBdr')
     bottom = OxmlElement('w:bottom')
     bottom.set(qn('w:val'), 'single')
@@ -317,7 +323,6 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
     font.size = Pt(10)
     font.color.rgb = RGBColor(51, 51, 51)
     paragraph_format = style.paragraph_format
-    paragraph_format.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     paragraph_format.space_after = Pt(2)
 
     for section in doc.sections:
@@ -336,6 +341,7 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         run.font.color.rgb = RGBColor(44, 62, 80)
         p.paragraph_format.space_after = Pt(2)
         _set_docx_rtl(p)
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     contact = cv_data.get("contact", {})
     contact_parts = []
@@ -353,12 +359,12 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         run.font.color.rgb = RGBColor(85, 85, 85)
         p.paragraph_format.space_after = Pt(4)
         _set_docx_rtl(p)
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     summary = cv_data.get("professional_summary", "")
     if summary:
         _add_docx_section_header(doc, "תקציר מקצועי")
         p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         run = p.add_run(summary)
         run.font.size = Pt(10)
         p.paragraph_format.space_after = Pt(2)
@@ -384,7 +390,6 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
                 header_parts.append(title)
             if header_parts:
                 p = doc.add_paragraph()
-                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                 run = p.add_run(" – ".join(header_parts))
                 run.font.bold = True
                 run.font.size = Pt(10)
@@ -396,7 +401,6 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
             for ach in exp.get("achievements", []):
                 if ach.strip():
                     p = doc.add_paragraph()
-                    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                     run = p.add_run(f"• {ach}")
                     run.font.size = Pt(9)
                     p.paragraph_format.space_after = Pt(1)
@@ -418,7 +422,6 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
                 parts.append(institution)
             if parts:
                 p = doc.add_paragraph()
-                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                 run = p.add_run(" | ".join(parts))
                 run.font.size = Pt(10)
                 _set_docx_rtl(p)
@@ -430,13 +433,11 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         _add_docx_section_header(doc, "מיומנויות")
         if technical:
             p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             run = p.add_run(", ".join(technical))
             run.font.size = Pt(10)
             _set_docx_rtl(p)
         if soft:
             p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             run = p.add_run(", ".join(soft))
             run.font.size = Pt(10)
             _set_docx_rtl(p)
@@ -455,7 +456,6 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
                 lang_parts.append(part)
         if lang_parts:
             p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             run = p.add_run(" | ".join(lang_parts))
             run.font.size = Pt(10)
             _set_docx_rtl(p)
@@ -466,7 +466,6 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         for item in additional:
             if item:
                 p = doc.add_paragraph()
-                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                 run = p.add_run(f"• {item}")
                 run.font.size = Pt(10)
                 _set_docx_rtl(p)
@@ -492,14 +491,25 @@ def _is_job_header_line(line: str) -> bool:
     return False
 
 
-def _set_docx_rtl(paragraph):
+def _set_docx_rtl(paragraph, font_name="Assistant"):
     pPr = paragraph._p.get_or_add_pPr()
     bidi = OxmlElement('w:bidi')
     pPr.append(bidi)
+    jc_elem = pPr.find(qn('w:jc'))
+    if jc_elem is not None:
+        pPr.remove(jc_elem)
     for run in paragraph.runs:
         rPr = run._r.get_or_add_rPr()
         rtl = OxmlElement('w:rtl')
         rPr.append(rtl)
+        rFonts = rPr.find(qn('w:rFonts'))
+        if rFonts is None:
+            rFonts = OxmlElement('w:rFonts')
+            rPr.insert(0, rFonts)
+        rFonts.set(qn('w:cs'), font_name)
+        if run.font.bold:
+            bCs = OxmlElement('w:bCs')
+            rPr.append(bCs)
 
 
 def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
@@ -572,7 +582,6 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
                     continue
                 if _is_job_header_line(stripped):
                     p = doc.add_paragraph()
-                    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                     run = p.add_run(stripped)
                     run.font.bold = True
                     run.font.size = Pt(10)
@@ -582,14 +591,12 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
                     _set_docx_rtl(p)
                 elif stripped.startswith("-") or stripped.startswith("•"):
                     p = doc.add_paragraph()
-                    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                     run = p.add_run(stripped)
                     run.font.size = Pt(10)
                     p.paragraph_format.space_after = Pt(1)
                     _set_docx_rtl(p)
                 else:
                     p = doc.add_paragraph()
-                    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                     run = p.add_run(stripped)
                     run.font.size = Pt(10)
                     _set_docx_rtl(p)
