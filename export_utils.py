@@ -194,19 +194,15 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
             if idx > 0:
                 elements.append(_make_job_separator())
 
-            period_text = period if period else ""
-            role_text = ""
-            if title and company:
-                role_text = f"{title} | {company}"
-            elif title:
-                role_text = title
-            elif company:
-                role_text = company
-
-            if period_text:
-                elements.append(Paragraph(reshape_hebrew(period_text), styles["job_period"]))
-            if role_text:
-                elements.append(Paragraph(reshape_hebrew(role_text), styles["job_title"]))
+            header_parts = []
+            if period:
+                header_parts.append(period)
+            if company:
+                header_parts.append(company)
+            if title:
+                header_parts.append(title)
+            if header_parts:
+                elements.append(Paragraph(reshape_hebrew(" – ".join(header_parts)), styles["job_title"]))
 
             for ach in exp.get("achievements", []):
                 if ach.strip():
@@ -371,28 +367,22 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
             if idx > 0:
                 _add_docx_job_separator(doc)
 
+            header_parts = []
             if period:
-                p = doc.add_paragraph()
-                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                run = p.add_run(period)
-                run.font.size = Pt(9)
-                run.font.color.rgb = RGBColor(107, 124, 147)
-                p.paragraph_format.space_after = Pt(0)
-                p.paragraph_format.space_before = Pt(2)
-
-            role_parts = []
-            if title:
-                role_parts.append(title)
+                header_parts.append(period)
             if company:
-                role_parts.append(company)
-            if role_parts:
+                header_parts.append(company)
+            if title:
+                header_parts.append(title)
+            if header_parts:
                 p = doc.add_paragraph()
                 p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                run = p.add_run(" | ".join(role_parts))
+                run = p.add_run(" – ".join(header_parts))
                 run.font.bold = True
                 run.font.size = Pt(10)
                 run.font.color.rgb = RGBColor(44, 62, 80)
                 p.paragraph_format.space_after = Pt(1)
+                p.paragraph_format.space_before = Pt(4)
 
             for ach in exp.get("achievements", []):
                 if ach.strip():
@@ -471,6 +461,16 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
     return buffer.getvalue()
 
 
+def _is_job_header_line(line: str) -> bool:
+    import re
+    line = line.strip()
+    if line.startswith("-") or line.startswith("•") or line.startswith("–"):
+        return False
+    if re.search(r'\d{4}', line) and ('–' in line or '-' in line or 'הווה' in line or 'נוכחי' in line):
+        return True
+    return False
+
+
 def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
     buffer = io.BytesIO()
     font_name = register_hebrew_font()
@@ -496,8 +496,15 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
             elements.append(_make_section_separator())
         if content:
             for line in content.split("\n"):
-                if line.strip():
-                    elements.append(Paragraph(reshape_hebrew(line.strip()), styles["body"]))
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                if _is_job_header_line(stripped):
+                    elements.append(Paragraph(reshape_hebrew(stripped), styles["job_title"]))
+                elif stripped.startswith("-") or stripped.startswith("•"):
+                    elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
+                else:
+                    elements.append(Paragraph(reshape_hebrew(stripped), styles["body"]))
 
     doc.build(elements)
     return buffer.getvalue()
@@ -529,8 +536,27 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
 
         if content:
             for line in content.split("\n"):
-                if line.strip():
-                    p = doc.add_paragraph(line.strip())
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                if _is_job_header_line(stripped):
+                    p = doc.add_paragraph()
+                    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    run = p.add_run(stripped)
+                    run.font.bold = True
+                    run.font.size = Pt(10)
+                    run.font.color.rgb = RGBColor(44, 62, 80)
+                    p.paragraph_format.space_after = Pt(1)
+                    p.paragraph_format.space_before = Pt(4)
+                elif stripped.startswith("-") or stripped.startswith("•"):
+                    p = doc.add_paragraph()
+                    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    run = p.add_run(stripped)
+                    run.font.size = Pt(9)
+                    p.paragraph_format.space_after = Pt(1)
+                    p.paragraph_format.left_indent = Pt(8)
+                else:
+                    p = doc.add_paragraph(stripped)
                     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
                     for run in p.runs:
                         run.font.size = Pt(10)
