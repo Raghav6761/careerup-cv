@@ -484,9 +484,7 @@ def _is_job_header_line(line: str) -> bool:
     for keyword in military_keywords:
         if keyword in line:
             return False
-    if '|' in line:
-        return False
-    if re.search(r'\d{4}', line) and ('–' in line or '-' in line or 'הווה' in line or 'נוכחי' in line):
+    if re.search(r'\d{4}', line) and ('–' in line or '-' in line or '|' in line or 'הווה' in line or 'נוכחי' in line or 'היום' in line):
         return True
     return False
 
