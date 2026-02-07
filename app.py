@@ -120,9 +120,12 @@ def render_improve_upload():
 
     if uploaded_file is not None:
         if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary"):
-            with st.spinner("מעבד את הקובץ..."):
-                try:
-                    from file_processor import process_uploaded_file
+            try:
+                from file_processor import process_uploaded_file
+                from ai_engine import analyze_cv
+
+                with st.status("מנתח את קורות החיים שלך...", expanded=True) as status:
+                    st.write("📂 מעבד את הקובץ...")
                     cv_text = process_uploaded_file(uploaded_file)
 
                     if not cv_text.strip():
@@ -131,16 +134,22 @@ def render_improve_upload():
 
                     st.session_state.cv_text = cv_text
 
-                    with st.spinner("הבינה המלאכותית מנתחת את קורות החיים שלך..."):
-                        from ai_engine import analyze_cv
-                        result = analyze_cv(cv_text)
-                        st.session_state.analysis_result = result
-                        st.session_state.section_decisions = {}
+                    st.write("🤖 הבינה המלאכותית מנתחת... (זמן משוער: 15-30 שניות)")
+                    st.write("🔍 קורא את קורות החיים...")
+                    st.write("📊 מזהה סעיפים ומנסח הצעות שיפור...")
 
-                    go_to("improve_review")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"שגיאה בעיבוד הקובץ: {str(e)}")
+                    result = analyze_cv(cv_text)
+
+                    st.write("✅ הניתוח הושלם!")
+                    status.update(label="הניתוח הושלם!", state="complete")
+
+                st.session_state.analysis_result = result
+                st.session_state.section_decisions = {}
+
+                go_to("improve_review")
+                st.rerun()
+            except Exception as e:
+                st.error(f"שגיאה בעיבוד הקובץ: {str(e)}")
 
 
 def render_improve_review():
@@ -258,7 +267,7 @@ def render_improve_export():
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header">📄 קורות החיים המשופרים שלך</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📄 תצוגה מקדימה</div>', unsafe_allow_html=True)
     st.markdown("ניתן לערוך, לשנות או למחוק כל סעיף לפני ההורדה")
 
     result = st.session_state.analysis_result

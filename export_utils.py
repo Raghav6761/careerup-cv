@@ -396,15 +396,6 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
     }
 
     elements = []
-    elements.append(Paragraph(reshape_hebrew("קורות חיים משופרים"), styles["title"]))
-
-    line_data = [[""]]
-    line_table = Table(line_data, colWidths=[170 * mm])
-    line_table.setStyle(TableStyle([
-        ("LINEBELOW", (0, 0), (-1, -1), 1, HexColor("#e2e8f0")),
-    ]))
-    elements.append(line_table)
-    elements.append(Spacer(1, 8))
 
     for section in sections:
         title = section.get("title", "")
@@ -434,13 +425,6 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
         s.left_margin = Inches(0.8)
         s.top_margin = Inches(0.6)
         s.bottom_margin = Inches(0.6)
-
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("קורות חיים משופרים")
-    run.font.size = Pt(20)
-    run.font.bold = True
-    run.font.color.rgb = RGBColor(44, 62, 80)
 
     for section in sections:
         title = section.get("title", "")
