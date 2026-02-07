@@ -2,7 +2,7 @@ import io
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -10,8 +10,10 @@ from reportlab.lib.enums import TA_RIGHT, TA_CENTER
 from bidi.algorithm import get_display
 import arabic_reshaper
 from docx import Document
-from docx.shared import Pt, Inches, RGBColor
+from docx.shared import Pt, Inches, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 import os
 
 
@@ -37,7 +39,107 @@ def reshape_hebrew(text: str) -> str:
     if not text:
         return ""
     reshaped = arabic_reshaper.reshape(text)
-    return get_display(reshaped)
+    return str(get_display(reshaped))
+
+
+def _make_section_separator(width_mm=170):
+    return HRFlowable(
+        width="100%",
+        thickness=1,
+        color=HexColor("#7fb3d8"),
+        spaceAfter=2,
+        spaceBefore=6
+    )
+
+
+def _make_job_separator(width_mm=170):
+    return HRFlowable(
+        width="100%",
+        thickness=1,
+        color=HexColor("#e2e8f0"),
+        spaceAfter=2,
+        spaceBefore=3
+    )
+
+
+def _get_pdf_styles(font_name, bold_font):
+    return {
+        "name": ParagraphStyle(
+            "Name",
+            fontName=bold_font,
+            fontSize=20,
+            leading=24,
+            alignment=TA_CENTER,
+            textColor=HexColor("#2c3e50"),
+            spaceAfter=2
+        ),
+        "contact": ParagraphStyle(
+            "Contact",
+            fontName=font_name,
+            fontSize=9,
+            leading=12,
+            alignment=TA_CENTER,
+            textColor=HexColor("#555555"),
+            spaceAfter=6
+        ),
+        "section_header": ParagraphStyle(
+            "SectionHeader",
+            fontName=bold_font,
+            fontSize=12,
+            leading=16,
+            alignment=TA_RIGHT,
+            textColor=HexColor("#2c3e50"),
+            spaceAfter=2,
+            spaceBefore=8
+        ),
+        "job_title": ParagraphStyle(
+            "JobTitle",
+            fontName=bold_font,
+            fontSize=10,
+            leading=13,
+            alignment=TA_RIGHT,
+            textColor=HexColor("#2c3e50"),
+            spaceAfter=1,
+            spaceBefore=2
+        ),
+        "job_period": ParagraphStyle(
+            "JobPeriod",
+            fontName=font_name,
+            fontSize=9,
+            leading=12,
+            alignment=TA_RIGHT,
+            textColor=HexColor("#6b7c93"),
+            spaceAfter=1
+        ),
+        "body": ParagraphStyle(
+            "Body",
+            fontName=font_name,
+            fontSize=9,
+            leading=13,
+            alignment=TA_RIGHT,
+            textColor=HexColor("#333333"),
+            spaceAfter=2
+        ),
+        "body_bold": ParagraphStyle(
+            "BodyBold",
+            fontName=bold_font,
+            fontSize=9,
+            leading=13,
+            alignment=TA_RIGHT,
+            textColor=HexColor("#2c3e50"),
+            spaceAfter=1
+        ),
+        "bullet": ParagraphStyle(
+            "Bullet",
+            fontName=font_name,
+            fontSize=9,
+            leading=12,
+            alignment=TA_RIGHT,
+            textColor=HexColor("#333333"),
+            spaceAfter=1,
+            rightIndent=8
+        ),
+    }
 
 
 def export_cv_to_pdf(cv_data: dict) -> bytes:
@@ -48,71 +150,13 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        rightMargin=20 * mm,
-        leftMargin=20 * mm,
-        topMargin=15 * mm,
-        bottomMargin=15 * mm
+        rightMargin=18 * mm,
+        leftMargin=18 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm
     )
 
-    styles = {
-        "name": ParagraphStyle(
-            "Name",
-            fontName=bold_font,
-            fontSize=22,
-            leading=28,
-            alignment=TA_CENTER,
-            textColor=HexColor("#2c3e50"),
-            spaceAfter=4
-        ),
-        "contact": ParagraphStyle(
-            "Contact",
-            fontName=font_name,
-            fontSize=10,
-            leading=14,
-            alignment=TA_CENTER,
-            textColor=HexColor("#6b7c93"),
-            spaceAfter=12
-        ),
-        "section_header": ParagraphStyle(
-            "SectionHeader",
-            fontName=bold_font,
-            fontSize=13,
-            leading=18,
-            alignment=TA_RIGHT,
-            textColor=HexColor("#7fb3d8"),
-            spaceAfter=6,
-            spaceBefore=14
-        ),
-        "body": ParagraphStyle(
-            "Body",
-            fontName=font_name,
-            fontSize=10,
-            leading=15,
-            alignment=TA_RIGHT,
-            textColor=HexColor("#2c3e50"),
-            spaceAfter=4
-        ),
-        "body_bold": ParagraphStyle(
-            "BodyBold",
-            fontName=bold_font,
-            fontSize=10,
-            leading=15,
-            alignment=TA_RIGHT,
-            textColor=HexColor("#2c3e50"),
-            spaceAfter=2
-        ),
-        "bullet": ParagraphStyle(
-            "Bullet",
-            fontName=font_name,
-            fontSize=10,
-            leading=14,
-            alignment=TA_RIGHT,
-            textColor=HexColor("#444444"),
-            spaceAfter=3,
-            rightIndent=10
-        ),
-    }
-
+    styles = _get_pdf_styles(font_name, bold_font)
     elements = []
 
     name = cv_data.get("full_name", "")
@@ -130,65 +174,79 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
     if contact_parts:
         elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
 
-    line_data = [[""]]
-    line_table = Table(line_data, colWidths=[170 * mm])
-    line_table.setStyle(TableStyle([
-        ("LINEBELOW", (0, 0), (-1, -1), 1, HexColor("#e2e8f0")),
-    ]))
-    elements.append(line_table)
-    elements.append(Spacer(1, 6))
+    elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
     summary = cv_data.get("professional_summary", "")
     if summary:
         elements.append(Paragraph(reshape_hebrew("תקציר מקצועי"), styles["section_header"]))
+        elements.append(_make_section_separator())
         elements.append(Paragraph(reshape_hebrew(summary), styles["body"]))
 
     experience = cv_data.get("experience", [])
     if experience:
         elements.append(Paragraph(reshape_hebrew("ניסיון תעסוקתי"), styles["section_header"]))
-        for exp in experience:
+        elements.append(_make_section_separator())
+        for idx, exp in enumerate(experience):
             title = exp.get("title", "")
             company = exp.get("company", "")
             period = exp.get("period", "")
-            header_text = f"{title}"
-            if company:
-                header_text += f" | {company}"
-            if period:
-                header_text += f" | {period}"
-            elements.append(Paragraph(reshape_hebrew(header_text), styles["body_bold"]))
+
+            if idx > 0:
+                elements.append(_make_job_separator())
+
+            period_text = period if period else ""
+            role_text = ""
+            if title and company:
+                role_text = f"{title} | {company}"
+            elif title:
+                role_text = title
+            elif company:
+                role_text = company
+
+            if period_text:
+                elements.append(Paragraph(reshape_hebrew(period_text), styles["job_period"]))
+            if role_text:
+                elements.append(Paragraph(reshape_hebrew(role_text), styles["job_title"]))
+
             for ach in exp.get("achievements", []):
-                elements.append(Paragraph(reshape_hebrew(f"• {ach}"), styles["bullet"]))
-            elements.append(Spacer(1, 4))
+                if ach.strip():
+                    elements.append(Paragraph(reshape_hebrew(f"• {ach}"), styles["bullet"]))
 
     education = cv_data.get("education", [])
     if education:
         elements.append(Paragraph(reshape_hebrew("השכלה"), styles["section_header"]))
+        elements.append(_make_section_separator())
         for edu in education:
             degree = edu.get("degree", "")
             institution = edu.get("institution", "")
             year = edu.get("year", "")
-            edu_text = degree
-            if institution:
-                edu_text += f" | {institution}"
+            parts = []
             if year:
-                edu_text += f" | {year}"
-            elements.append(Paragraph(reshape_hebrew(edu_text), styles["body"]))
+                parts.append(year)
+            if degree:
+                parts.append(degree)
+            if institution:
+                parts.append(institution)
+            if parts:
+                elements.append(Paragraph(reshape_hebrew(" | ".join(parts)), styles["body"]))
 
     skills = cv_data.get("skills", {})
     technical = skills.get("technical", [])
     soft = skills.get("soft", [])
     if technical or soft:
         elements.append(Paragraph(reshape_hebrew("מיומנויות"), styles["section_header"]))
+        elements.append(_make_section_separator())
         if technical:
-            tech_text = reshape_hebrew("טכניות: " + " ,".join(technical))
+            tech_text = reshape_hebrew(", ".join(technical))
             elements.append(Paragraph(tech_text, styles["body"]))
         if soft:
-            soft_text = reshape_hebrew("רכות: " + " ,".join(soft))
+            soft_text = reshape_hebrew(", ".join(soft))
             elements.append(Paragraph(soft_text, styles["body"]))
 
     languages = cv_data.get("languages", [])
     if languages:
         elements.append(Paragraph(reshape_hebrew("שפות"), styles["section_header"]))
+        elements.append(_make_section_separator())
         lang_parts = []
         for lang in languages:
             lang_name = lang.get("language", "")
@@ -196,7 +254,7 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
             if lang_name:
                 part = lang_name
                 if level:
-                    part += f" - {level}"
+                    part += f" – {level}"
                 lang_parts.append(part)
         if lang_parts:
             elements.append(Paragraph(reshape_hebrew(" | ".join(lang_parts)), styles["body"]))
@@ -204,6 +262,7 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
     additional = cv_data.get("additional", [])
     if additional:
         elements.append(Paragraph(reshape_hebrew("מידע נוסף"), styles["section_header"]))
+        elements.append(_make_section_separator())
         for item in additional:
             if item:
                 elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
@@ -212,31 +271,69 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
     return buffer.getvalue()
 
 
+def _add_docx_section_header(doc, text):
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    run = p.add_run(text)
+    run.font.size = Pt(13)
+    run.font.bold = True
+    run.font.color.rgb = RGBColor(44, 62, 80)
+    p.paragraph_format.space_before = Pt(10)
+    p.paragraph_format.space_after = Pt(3)
+
+    pPr = p._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    bottom = OxmlElement('w:bottom')
+    bottom.set(qn('w:val'), 'single')
+    bottom.set(qn('w:sz'), '8')
+    bottom.set(qn('w:space'), '1')
+    bottom.set(qn('w:color'), '7fb3d8')
+    pBdr.append(bottom)
+    pPr.append(pBdr)
+
+
+def _add_docx_job_separator(doc):
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(2)
+    p.paragraph_format.space_after = Pt(2)
+    pPr = p._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    bottom = OxmlElement('w:bottom')
+    bottom.set(qn('w:val'), 'single')
+    bottom.set(qn('w:sz'), '4')
+    bottom.set(qn('w:space'), '1')
+    bottom.set(qn('w:color'), 'e2e8f0')
+    pBdr.append(bottom)
+    pPr.append(pBdr)
+
+
 def export_cv_to_docx(cv_data: dict) -> bytes:
     doc = Document()
 
     style = doc.styles["Normal"]
     font = style.font
     font.name = "Assistant"
-    font.size = Pt(11)
-    font.color.rgb = RGBColor(44, 62, 80)
+    font.size = Pt(10)
+    font.color.rgb = RGBColor(51, 51, 51)
     paragraph_format = style.paragraph_format
     paragraph_format.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    paragraph_format.space_after = Pt(2)
 
     for section in doc.sections:
-        section.right_margin = Inches(0.8)
-        section.left_margin = Inches(0.8)
-        section.top_margin = Inches(0.6)
-        section.bottom_margin = Inches(0.6)
+        section.right_margin = Cm(1.8)
+        section.left_margin = Cm(1.8)
+        section.top_margin = Cm(1.2)
+        section.bottom_margin = Cm(1.2)
 
     name = cv_data.get("full_name", "")
     if name:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         run = p.add_run(name)
-        run.font.size = Pt(24)
+        run.font.size = Pt(20)
         run.font.bold = True
         run.font.color.rgb = RGBColor(44, 62, 80)
+        p.paragraph_format.space_after = Pt(2)
 
     contact = cv_data.get("contact", {})
     contact_parts = []
@@ -250,80 +347,100 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         run = p.add_run(" | ".join(contact_parts))
-        run.font.size = Pt(10)
-        run.font.color.rgb = RGBColor(107, 124, 147)
-
-    def add_section_header(text):
-        p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        run = p.add_run(text)
-        run.font.size = Pt(14)
-        run.font.bold = True
-        run.font.color.rgb = RGBColor(127, 179, 216)
-        p.paragraph_format.space_before = Pt(14)
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(85, 85, 85)
         p.paragraph_format.space_after = Pt(4)
 
     summary = cv_data.get("professional_summary", "")
     if summary:
-        add_section_header("תקציר מקצועי")
+        _add_docx_section_header(doc, "תקציר מקצועי")
         p = doc.add_paragraph(summary)
         p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p.paragraph_format.space_after = Pt(2)
+        for run in p.runs:
+            run.font.size = Pt(10)
 
     experience = cv_data.get("experience", [])
     if experience:
-        add_section_header("ניסיון תעסוקתי")
-        for exp in experience:
+        _add_docx_section_header(doc, "ניסיון תעסוקתי")
+        for idx, exp in enumerate(experience):
             title = exp.get("title", "")
             company = exp.get("company", "")
             period = exp.get("period", "")
 
-            p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            header_text = title
-            if company:
-                header_text += f" | {company}"
-            if period:
-                header_text += f" | {period}"
-            run = p.add_run(header_text)
-            run.font.bold = True
-            run.font.size = Pt(11)
+            if idx > 0:
+                _add_docx_job_separator(doc)
 
-            for ach in exp.get("achievements", []):
+            if period:
                 p = doc.add_paragraph()
                 p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                run = p.add_run(f"• {ach}")
+                run = p.add_run(period)
+                run.font.size = Pt(9)
+                run.font.color.rgb = RGBColor(107, 124, 147)
+                p.paragraph_format.space_after = Pt(0)
+                p.paragraph_format.space_before = Pt(2)
+
+            role_parts = []
+            if title:
+                role_parts.append(title)
+            if company:
+                role_parts.append(company)
+            if role_parts:
+                p = doc.add_paragraph()
+                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                run = p.add_run(" | ".join(role_parts))
+                run.font.bold = True
                 run.font.size = Pt(10)
+                run.font.color.rgb = RGBColor(44, 62, 80)
+                p.paragraph_format.space_after = Pt(1)
+
+            for ach in exp.get("achievements", []):
+                if ach.strip():
+                    p = doc.add_paragraph()
+                    p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    run = p.add_run(f"• {ach}")
+                    run.font.size = Pt(9)
+                    p.paragraph_format.space_after = Pt(1)
 
     education = cv_data.get("education", [])
     if education:
-        add_section_header("השכלה")
+        _add_docx_section_header(doc, "השכלה")
         for edu in education:
             degree = edu.get("degree", "")
             institution = edu.get("institution", "")
             year = edu.get("year", "")
-            edu_text = degree
-            if institution:
-                edu_text += f" | {institution}"
+            parts = []
             if year:
-                edu_text += f" | {year}"
-            p = doc.add_paragraph(edu_text)
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                parts.append(year)
+            if degree:
+                parts.append(degree)
+            if institution:
+                parts.append(institution)
+            if parts:
+                p = doc.add_paragraph(" | ".join(parts))
+                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                for run in p.runs:
+                    run.font.size = Pt(10)
 
     skills = cv_data.get("skills", {})
     technical = skills.get("technical", [])
     soft = skills.get("soft", [])
     if technical or soft:
-        add_section_header("מיומנויות")
+        _add_docx_section_header(doc, "מיומנויות")
         if technical:
-            p = doc.add_paragraph("טכניות: " + ", ".join(technical))
+            p = doc.add_paragraph(", ".join(technical))
             p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            for run in p.runs:
+                run.font.size = Pt(10)
         if soft:
-            p = doc.add_paragraph("רכות: " + ", ".join(soft))
+            p = doc.add_paragraph(", ".join(soft))
             p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            for run in p.runs:
+                run.font.size = Pt(10)
 
     languages = cv_data.get("languages", [])
     if languages:
-        add_section_header("שפות")
+        _add_docx_section_header(doc, "שפות")
         lang_parts = []
         for lang in languages:
             lang_name = lang.get("language", "")
@@ -331,19 +448,23 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
             if lang_name:
                 part = lang_name
                 if level:
-                    part += f" - {level}"
+                    part += f" – {level}"
                 lang_parts.append(part)
         if lang_parts:
             p = doc.add_paragraph(" | ".join(lang_parts))
             p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            for run in p.runs:
+                run.font.size = Pt(10)
 
     additional = cv_data.get("additional", [])
     if additional:
-        add_section_header("מידע נוסף")
+        _add_docx_section_header(doc, "מידע נוסף")
         for item in additional:
             if item:
                 p = doc.add_paragraph(f"• {item}")
                 p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                for run in p.runs:
+                    run.font.size = Pt(10)
 
     buffer = io.BytesIO()
     doc.save(buffer)
@@ -358,43 +479,13 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        rightMargin=20 * mm,
-        leftMargin=20 * mm,
-        topMargin=15 * mm,
-        bottomMargin=15 * mm
+        rightMargin=18 * mm,
+        leftMargin=18 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm
     )
 
-    styles = {
-        "section_header": ParagraphStyle(
-            "SectionHeader",
-            fontName=bold_font,
-            fontSize=14,
-            leading=18,
-            alignment=TA_RIGHT,
-            textColor=HexColor("#7fb3d8"),
-            spaceAfter=6,
-            spaceBefore=14
-        ),
-        "body": ParagraphStyle(
-            "Body",
-            fontName=font_name,
-            fontSize=10,
-            leading=15,
-            alignment=TA_RIGHT,
-            textColor=HexColor("#2c3e50"),
-            spaceAfter=6
-        ),
-        "title": ParagraphStyle(
-            "Title",
-            fontName=bold_font,
-            fontSize=18,
-            leading=24,
-            alignment=TA_CENTER,
-            textColor=HexColor("#2c3e50"),
-            spaceAfter=12
-        ),
-    }
-
+    styles = _get_pdf_styles(font_name, bold_font)
     elements = []
 
     for section in sections:
@@ -402,6 +493,7 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
         content = section.get("final_text", section.get("improved", ""))
         if title:
             elements.append(Paragraph(reshape_hebrew(title), styles["section_header"]))
+            elements.append(_make_section_separator())
         if content:
             for line in content.split("\n"):
                 if line.strip():
@@ -417,33 +509,31 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
     style = doc.styles["Normal"]
     font = style.font
     font.name = "Assistant"
-    font.size = Pt(11)
-    font.color.rgb = RGBColor(44, 62, 80)
+    font.size = Pt(10)
+    font.color.rgb = RGBColor(51, 51, 51)
+    paragraph_format = style.paragraph_format
+    paragraph_format.space_after = Pt(2)
 
     for s in doc.sections:
-        s.right_margin = Inches(0.8)
-        s.left_margin = Inches(0.8)
-        s.top_margin = Inches(0.6)
-        s.bottom_margin = Inches(0.6)
+        s.right_margin = Cm(1.8)
+        s.left_margin = Cm(1.8)
+        s.top_margin = Cm(1.2)
+        s.bottom_margin = Cm(1.2)
 
     for section in sections:
         title = section.get("title", "")
         content = section.get("final_text", section.get("improved", ""))
 
         if title:
-            p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            run = p.add_run(title)
-            run.font.size = Pt(14)
-            run.font.bold = True
-            run.font.color.rgb = RGBColor(127, 179, 216)
-            p.paragraph_format.space_before = Pt(14)
+            _add_docx_section_header(doc, title)
 
         if content:
             for line in content.split("\n"):
                 if line.strip():
                     p = doc.add_paragraph(line.strip())
                     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    for run in p.runs:
+                        run.font.size = Pt(10)
 
     buffer = io.BytesIO()
     doc.save(buffer)
