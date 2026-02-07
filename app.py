@@ -2,11 +2,16 @@ import streamlit as st
 from styles import inject_custom_css
 
 st.set_page_config(
-    page_title="CV-Master AI",
+    page_title="Career Up | CV Master AI",
     page_icon="📄",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+st.markdown("""
+<meta name="robots" content="noindex, nofollow">
+<title>Career Up | CV Master AI</title>
+""", unsafe_allow_html=True)
 
 inject_custom_css()
 
