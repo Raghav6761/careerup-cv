@@ -59,8 +59,17 @@ def call_ai(system_prompt: str, user_prompt: str) -> str:
     return content
 
 
-def analyze_cv(cv_text: str) -> dict:
-    system_prompt = """אתה מומחה בכתיבת קורות חיים מקצועיים.
+def analyze_cv(cv_text: str, target_position: str = "") -> dict:
+    ats_instruction = ""
+    if target_position.strip():
+        ats_instruction = f"""
+- התפקיד אליו המועמד מתמודד: "{target_position}"
+- שלב מילות מפתח רלוונטיות לתפקיד זה בטקסט המשופר כדי לעבור מערכות סינון ATS
+- התאם את התקציר המקצועי, ההישגים והמיומנויות לתפקיד היעד
+- בשדה keywords_to_add הוסף מילות מפתח ספציפיות לתפקיד שיסייעו בעבירת מסנני ATS
+- אל תשנה עובדות, רק נסח מחדש כדי להדגיש התאמה לתפקיד"""
+
+    system_prompt = f"""אתה מומחה בכתיבת קורות חיים מקצועיים.
 תפקידך לנתח קורות חיים קיימים ולהציע שיפורים מפורטים לכל סעיף בנפרד.
 
 עליך להחזיר תשובה בפורמט JSON בלבד (ללא markdown, ללא סימני קוד).
@@ -72,19 +81,19 @@ def analyze_cv(cv_text: str) -> dict:
 4. אם סעיף מסוים לא קיים בקורות החיים אך מומלץ להוסיפו, כתוב "לא קיים במקור" בשדה original
 
 המבנה הנדרש:
-{
+{{
     "sections": [
-        {
+        {{
             "title": "שם הסעיף (לדוגמה: פרטים אישיים)",
             "original": "הטקסט המקורי המדויק מקורות החיים - חובה למלא!",
             "improved": "הגרסה המשופרת של הטקסט",
             "explanation": "הסבר קצר מה שופר ולמה"
-        }
+        }}
     ],
     "general_tips": ["טיפ 1", "טיפ 2"],
     "keywords_to_add": ["מילת מפתח 1", "מילת מפתח 2"],
     "score": 72
-}
+}}
 
 כללים חשובים:
 - השתמש בעברית בלבד
@@ -99,7 +108,11 @@ def analyze_cv(cv_text: str) -> dict:
 - הישגים: עד 2-3 נקודות לכל תפקיד, כל נקודה משפט אחד קצר בלבד
 - אל תוסיף טקסט מיותר, פסקאות ארוכות, או תיאורים מפורטים מדי
 - לא להוסיף כותרות כמו "קורות חיים" או "קורות חיים משופרים" - רק תוכן
-- סדר הצגת תפקידים: תאריך ראשון, אחריו שם החברה והתפקיד"""
+- סדר הצגת תפקידים: תאריך ראשון, אחריו שם החברה והתפקיד{ats_instruction}"""
+
+    target_note = ""
+    if target_position.strip():
+        target_note = f"\n\nהתפקיד אליו המועמד מתמודד: {target_position}\nשלב מילות מפתח רלוונטיות לתפקיד זה בשיפורים."
 
     user_prompt = f"""נתח את קורות החיים הבאים. חשוב: זהה כל סעיף, העתק את הטקסט המקורי שלו לשדה original, וכתוב גרסה משופרת בשדה improved.
 
@@ -108,7 +121,7 @@ def analyze_cv(cv_text: str) -> dict:
 {cv_text}
 ---
 
-זכור: שדה original חייב להכיל את הטקסט המקורי מקורות החיים. אל תשאיר אותו ריק."""
+זכור: שדה original חייב להכיל את הטקסט המקורי מקורות החיים. אל תשאיר אותו ריק.{target_note}"""
 
     logger.info(f"Analyzing CV with {len(cv_text)} characters")
     result = call_ai(system_prompt, user_prompt)
@@ -298,8 +311,16 @@ def generate_cv_from_interview(conversation_history: list) -> dict:
         }
 
 
-def generate_cv_from_form(form_data: dict) -> dict:
-    system_prompt = """אתה מומחה בכתיבת קורות חיים מקצועיים.
+def generate_cv_from_form(form_data: dict, target_position: str = "") -> dict:
+    ats_instruction = ""
+    if target_position.strip():
+        ats_instruction = f"""
+- התפקיד אליו המועמד מתמודד: "{target_position}"
+- שלב מילות מפתח רלוונטיות לתפקיד זה בתקציר המקצועי, בהישגים ובמיומנויות כדי לעבור מערכות סינון ATS
+- התאם את הניסוח כך שידגיש התאמה לתפקיד היעד
+- אל תמציא מידע שלא קיים בטופס, רק נסח מחדש כדי להדגיש התאמה"""
+
+    system_prompt = f"""אתה מומחה בכתיבת קורות חיים מקצועיים.
 קיבלת נתוני טופס מהמשתמש. תפקידך:
 1. לשפר ולנסח מחדש את התוכן בצורה מקצועית
 2. לכתוב תקציר מקצועי אם המשתמש לא כתב אחד
@@ -307,18 +328,18 @@ def generate_cv_from_form(form_data: dict) -> dict:
 4. להוסיף מילות מפתח רלוונטיות
 
 החזר את התוצאה בפורמט JSON בלבד (ללא markdown, ללא ```):
-{
+{{
     "full_name": "שם מלא",
-    "contact": {"phone": "טלפון", "email": "אימייל", "city": "עיר"},
+    "contact": {{"phone": "טלפון", "email": "אימייל", "city": "עיר"}},
     "professional_summary": "תקציר מקצועי של 2-3 משפטים",
     "experience": [
-        {"title": "תפקיד", "company": "חברה", "period": "תקופה", "achievements": ["הישג 1", "הישג 2"]}
+        {{"title": "תפקיד", "company": "חברה", "period": "תקופה", "achievements": ["הישג 1", "הישג 2"]}}
     ],
-    "education": [{"degree": "תואר", "institution": "מוסד", "year": "שנה"}],
-    "skills": {"technical": ["מיומנות"], "soft": ["מיומנות"]},
-    "languages": [{"language": "שפה", "level": "רמה"}],
+    "education": [{{"degree": "תואר", "institution": "מוסד", "year": "שנה"}}],
+    "skills": {{"technical": ["מיומנות"], "soft": ["מיומנות"]}},
+    "languages": [{{"language": "שפה", "level": "רמה"}}],
     "additional": ["פריט נוסף"]
-}
+}}
 
 כללים:
 - שמור על הנתונים המקוריים (שם, טלפון, אימייל, תקופות, מוסדות)
@@ -327,7 +348,7 @@ def generate_cv_from_form(form_data: dict) -> dict:
 - תקציר מקצועי: 2-3 משפטים קצרים בלבד
 - הישגים: עד 2-3 נקודות לכל תפקיד, כל נקודה משפט אחד קצר
 - אל תמציא מידע שלא קיים בטופס
-- כתוב בעברית בלבד"""
+- כתוב בעברית בלבד{ats_instruction}"""
 
     form_text = f"""שם: {form_data.get('full_name', '')}
 טלפון: {form_data.get('phone', '')}
@@ -370,9 +391,13 @@ def generate_cv_from_form(form_data: dict) -> dict:
     if additional:
         form_text += f"\nמידע נוסף: {additional}\n"
 
+    target_note = ""
+    if target_position.strip():
+        target_note = f"\n\nהתפקיד אליו המועמד מתמודד: {target_position}\nשלב מילות מפתח רלוונטיות לתפקיד זה."
+
     user_prompt = f"""צור קורות חיים מקצועיים על סמך נתוני הטופס הבאים:
 
-{form_text}"""
+{form_text}{target_note}"""
 
     result = call_ai(system_prompt, user_prompt)
 

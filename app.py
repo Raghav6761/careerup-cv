@@ -32,12 +32,16 @@ def reset_improve():
     st.session_state.section_decisions = {}
     if "improve_final_sections" in st.session_state:
         del st.session_state.improve_final_sections
+    if "improve_target_position" in st.session_state:
+        del st.session_state.improve_target_position
 
 
 def reset_build():
     st.session_state.generated_cv = None
     if "build_form_data" in st.session_state:
         del st.session_state.build_form_data
+    if "build_target_position" in st.session_state:
+        del st.session_state.build_target_position
 
 
 def render_header():
@@ -109,6 +113,18 @@ def render_improve_upload():
         help="פורמטים נתמכים: PDF, DOCX, TXT"
     )
 
+    st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את התפקיד אליו אתה מתמודד - הבינה המלאכותית תשלב מילות מפתח שיסייעו לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
+    if "improve_target_position" not in st.session_state:
+        st.session_state.improve_target_position = ""
+    st.session_state.improve_target_position = st.text_input(
+        "תפקיד יעד",
+        value=st.session_state.improve_target_position,
+        key="improve_target_input",
+        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack, מנהל פרויקטים...",
+        label_visibility="collapsed"
+    )
+
     if uploaded_file is not None:
         if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary"):
             try:
@@ -129,7 +145,7 @@ def render_improve_upload():
                     st.write("🔍 קורא את קורות החיים...")
                     st.write("📊 מזהה סעיפים ומנסח הצעות שיפור...")
 
-                    result = analyze_cv(cv_text)
+                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position)
 
                     st.write("✅ הניתוח הושלם!")
                     status.update(label="הניתוח הושלם!", state="complete")
@@ -432,6 +448,18 @@ def render_build_form():
     _init_build_form_data()
     fd = st.session_state.build_form_data
 
+    st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את התפקיד אליו אתה מתמודד - הבינה המלאכותית תשלב מילות מפתח שיסייעו לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
+    if "build_target_position" not in st.session_state:
+        st.session_state.build_target_position = ""
+    st.session_state.build_target_position = st.text_input(
+        "תפקיד יעד",
+        value=st.session_state.build_target_position,
+        key="build_target_input",
+        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack, מנהל פרויקטים...",
+        label_visibility="collapsed"
+    )
+
     st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
     fd["full_name"] = st.text_input("שם מלא", value=fd["full_name"], key="bf_name", placeholder="ישראל ישראלי")
     c1, c2, c3 = st.columns(3)
@@ -591,7 +619,7 @@ def render_build_form():
             st.write("📋 אוסף את הנתונים מהטופס...")
             from ai_engine import generate_cv_from_form
             st.write("🤖 הבינה המלאכותית מעבדת ומשפרת... (15-30 שניות)")
-            cv_data = generate_cv_from_form(fd)
+            cv_data = generate_cv_from_form(fd, target_position=st.session_state.build_target_position)
             st.write("✅ קורות החיים מוכנים!")
             status.update(label="קורות החיים מוכנים!", state="complete")
 
