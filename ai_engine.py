@@ -186,6 +186,7 @@ def analyze_cv(cv_text: str, target_position: str = "") -> dict:
 - זהה והתייחס לפערים תעסוקתיים (חורים בקורות החיים) - המלץ כיצד להתמודד איתם
 - אל תוסיף טקסט מיותר, פסקאות ארוכות, או תיאורים מפורטים מדי
 - לא להוסיף כותרות כמו "קורות חיים" או "קורות חיים משופרים" - רק תוכן
+- אל תוסיף כותרות משנה חוזרות בתוך סעיפים כמו "הישגים נבחרים", "תיאור התפקיד" וכו' - פשוט רשום את ההישגים כנקודות ישירות מתחת לשורת התפקיד/חברה/תקופה
 - הוסף מילות מפתח רלוונטיות לתחום
 - ציון (score) בין 0-100 המשקף את איכות קורות החיים המקוריים
 - סעיפים מומלצים: פרטים אישיים, תקציר מקצועי, ניסיון תעסוקתי, השכלה, מיומנויות, שפות
@@ -560,6 +561,7 @@ Rules:
 - Use professional CV language and action verbs
 - Keep dates and numbers as-is
 - Preserve line breaks and bullet points (• or -)
+- Do NOT add repetitive sub-headers like "Selected Achievements", "Key Achievements", or "Role Description" under each job. Just list the achievements directly as bullet points under the job title/company/period line. The section header "Professional Experience" or "Work Experience" should appear only once at the top
 - For military service lines, translate them as regular text (not as job positions). Mark them clearly, e.g., "Military Service: Israeli Air Force, Intelligence – Clerk (full service)"
 - Do NOT add any explanations, just return the translated text"""
 
