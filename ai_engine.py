@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import logging
 from openai import OpenAI
@@ -59,6 +60,69 @@ def call_ai(system_prompt: str, user_prompt: str) -> str:
     return content
 
 
+def _safe_json_parse(text: str) -> dict:
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    fixed = text
+    fixed = re.sub(r'(?<=: )"([^"]*)"([^",\n\r\]\}]*)(")', lambda m: ': "' + m.group(1) + '\\"' + m.group(2) + '"', fixed)
+
+    try:
+        return json.loads(fixed)
+    except json.JSONDecodeError:
+        pass
+
+    fixed = text
+    in_string = False
+    escape_next = False
+    result_chars = []
+    i = 0
+    while i < len(fixed):
+        c = fixed[i]
+        if escape_next:
+            result_chars.append(c)
+            escape_next = False
+            i += 1
+            continue
+        if c == '\\':
+            result_chars.append(c)
+            escape_next = True
+            i += 1
+            continue
+        if c == '"':
+            if not in_string:
+                in_string = True
+                result_chars.append(c)
+            else:
+                rest = fixed[i+1:].lstrip()
+                if rest and rest[0] in (',', '}', ']', ':'):
+                    in_string = False
+                    result_chars.append(c)
+                elif not rest:
+                    in_string = False
+                    result_chars.append(c)
+                else:
+                    result_chars.append('\\"')
+        else:
+            result_chars.append(c)
+        i += 1
+
+    repaired = "".join(result_chars)
+    try:
+        return json.loads(repaired)
+    except json.JSONDecodeError:
+        pass
+
+    repaired2 = re.sub(r'[\x00-\x1f]', lambda m: '\\n' if m.group() == '\n' else '', text)
+    try:
+        return json.loads(repaired2)
+    except json.JSONDecodeError as e:
+        logger.error(f"All JSON repair attempts failed: {e}")
+        raise
+
+
 def analyze_cv(cv_text: str, target_position: str = "") -> dict:
     ats_instruction = ""
     if target_position.strip():
@@ -73,6 +137,7 @@ def analyze_cv(cv_text: str, target_position: str = "") -> dict:
 תפקידך לנתח קורות חיים קיימים ולהציע שיפורים מפורטים לכל סעיף בנפרד.
 
 עליך להחזיר תשובה בפורמט JSON בלבד (ללא markdown, ללא סימני קוד).
+חשוב: ודא שכל גרש כפול (") בתוך ערכי טקסט מיוחלף ב-\\" כדי שה-JSON יהיה תקין. לדוגמה: דוא\\"ל ולא דוא"ל.
 
 חשוב מאוד:
 1. זהה כל סעיף בקורות החיים בנפרד (פרטים אישיים, ניסיון, השכלה, מיומנויות וכו')
@@ -153,7 +218,7 @@ def analyze_cv(cv_text: str, target_position: str = "") -> dict:
     result = result.strip()
 
     try:
-        parsed = json.loads(result)
+        parsed = _safe_json_parse(result)
         sections = parsed.get("sections", [])
         logger.info(f"Parsed {len(sections)} sections successfully")
         for section in sections:
@@ -320,8 +385,8 @@ def generate_cv_from_interview(conversation_history: list) -> dict:
     result = result.strip()
 
     try:
-        return json.loads(result)
-    except json.JSONDecodeError:
+        return _safe_json_parse(result)
+    except (json.JSONDecodeError, Exception):
         return {
             "full_name": "",
             "contact": {"phone": "", "email": "", "city": ""},
@@ -460,8 +525,8 @@ def generate_cv_from_form(form_data: dict, target_position: str = "") -> dict:
     result = result.strip()
 
     try:
-        return json.loads(result)
-    except json.JSONDecodeError:
+        return _safe_json_parse(result)
+    except (json.JSONDecodeError, Exception):
         return {
             "full_name": form_data.get("full_name", ""),
             "contact": {
@@ -540,8 +605,8 @@ Rules:
     result = result.strip()
 
     try:
-        return json.loads(result)
-    except json.JSONDecodeError:
+        return _safe_json_parse(result)
+    except (json.JSONDecodeError, Exception):
         return cv_data
 
 
