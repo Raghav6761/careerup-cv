@@ -108,7 +108,7 @@ def render_improve_upload():
         "תפקיד יעד",
         value=st.session_state.improve_target_position,
         key="improve_target_input",
-        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\n\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
+        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
         label_visibility="collapsed",
         height=68
     )
@@ -447,7 +447,7 @@ def render_build_form():
         "תפקיד יעד",
         value=st.session_state.build_target_position,
         key="build_target_input",
-        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\n\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
+        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
         label_visibility="collapsed",
         height=68
     )
