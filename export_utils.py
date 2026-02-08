@@ -36,13 +36,20 @@ def register_hebrew_font():
         return "Helvetica"
 
 
-def reshape_hebrew(text: str) -> str:
+def _clean_hebrew_text(text: str) -> str:
     if not text:
         return ""
     text = text.replace('\u200f', '').replace('\u200e', '')
     text = text.replace('(', ' - ').replace(')', '').replace('（', ' - ').replace('）', '')
     text = text.replace('"', "'").replace('"', "'").replace('"', "'")
     text = text.replace('״', "'").replace('׳', "'")
+    return text
+
+
+def reshape_hebrew(text: str) -> str:
+    if not text:
+        return ""
+    text = _clean_hebrew_text(text)
     lines = text.split('\n')
     result_lines = []
     for line in lines:
@@ -52,6 +59,19 @@ def reshape_hebrew(text: str) -> str:
         displayed = str(get_display(line, base_dir='R'))
         result_lines.append(displayed)
     return '\n'.join(result_lines)
+
+
+def reshape_hebrew_paragraph(text: str) -> str:
+    if not text:
+        return ""
+    text = _clean_hebrew_text(text)
+    text = text.replace('\n', ' ')
+    words = text.split()
+    result_words = []
+    for word in words:
+        displayed = str(get_display(word, base_dir='R'))
+        result_words.append(displayed)
+    return ' '.join(result_words)
 
 
 def _make_section_separator(width_mm=170):
@@ -130,7 +150,8 @@ def _get_pdf_styles(font_name, bold_font):
             leading=13,
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
-            spaceAfter=2
+            spaceAfter=2,
+            wordWrap='RTL'
         ),
         "body_bold": ParagraphStyle(
             "BodyBold",
@@ -149,7 +170,8 @@ def _get_pdf_styles(font_name, bold_font):
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
             spaceAfter=1,
-            rightIndent=8
+            rightIndent=8,
+            wordWrap='RTL'
         ),
     }
 
@@ -194,7 +216,7 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
     if summary:
         elements.append(Paragraph(reshape_hebrew("תקציר מקצועי"), styles["section_header"]))
         elements.append(_make_section_separator())
-        elements.append(Paragraph(reshape_hebrew(summary), styles["body"]))
+        elements.append(Paragraph(reshape_hebrew_paragraph(summary), styles["body"]))
 
     experience = cv_data.get("experience", [])
     if experience:
@@ -626,7 +648,7 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
                 elif stripped.startswith("-") or stripped.startswith("•"):
                     elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
                 else:
-                    elements.append(Paragraph(reshape_hebrew(stripped), styles["body"]))
+                    elements.append(Paragraph(reshape_hebrew_paragraph(stripped), styles["body"]))
 
     doc.build(elements)
     return buffer.getvalue()
