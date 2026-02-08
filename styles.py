@@ -88,11 +88,11 @@ def inject_custom_css():
             transform: translateY(-1px) !important;
         }
 
-        /* Bare icon delete buttons */
-        .delete-btn-wrap .stButton > button {
+        /* Bare icon delete buttons - will be marked by JS */
+        .del-btn-bare > button {
             min-height: 0px !important;
             height: auto !important;
-            padding: 2px !important;
+            padding: 2px 4px !important;
             font-size: 16px !important;
             line-height: 1 !important;
             border-radius: 4px !important;
@@ -103,16 +103,12 @@ def inject_custom_css():
             cursor: pointer !important;
         }
 
-        .delete-btn-wrap .stButton > button:hover {
+        .del-btn-bare > button:hover {
             background: none !important;
             border: none !important;
             box-shadow: none !important;
             color: #ef4444 !important;
-        }
-
-        .delete-btn-wrap .stButton {
-            margin-top: 0px !important;
-            padding-top: 0px !important;
+            transform: none !important;
         }
 
         div[data-testid="stFileUploader"] {
@@ -386,6 +382,12 @@ def inject_custom_css():
                 font-size: 17px !important;
             }
 
+            .del-btn-bare > button {
+                min-height: 0px !important;
+                width: auto !important;
+                font-size: 16px !important;
+            }
+
             .chat-message-user,
             .chat-message-ai {
                 max-width: 95%;
@@ -403,3 +405,25 @@ def inject_custom_css():
         }
     </style>
     """, unsafe_allow_html=True)
+
+    import streamlit.components.v1 as components
+    components.html("""
+    <script>
+    function markDeleteButtons() {
+        const doc = window.parent.document;
+        doc.querySelectorAll('button[data-testid="stBaseButton-secondary"]').forEach(btn => {
+            if (btn.textContent.trim().includes('🗑')) {
+                const wrapper = btn.closest('.stButton');
+                if (wrapper && !wrapper.classList.contains('del-btn-bare')) {
+                    wrapper.classList.add('del-btn-bare');
+                }
+            }
+        });
+    }
+    const doc = window.parent.document;
+    const obs = new MutationObserver(markDeleteButtons);
+    obs.observe(doc.body, {childList: true, subtree: true});
+    setTimeout(markDeleteButtons, 500);
+    setTimeout(markDeleteButtons, 1500);
+    </script>
+    """, height=0)
