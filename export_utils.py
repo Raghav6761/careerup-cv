@@ -171,6 +171,8 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
         contact_parts.append(contact["email"])
     if contact.get("city"):
         contact_parts.append(reshape_hebrew(contact["city"]))
+    if contact.get("linkedin"):
+        contact_parts.append(contact["linkedin"])
     if contact_parts:
         elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
 
@@ -208,6 +210,10 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
                 if ach.strip():
                     elements.append(Paragraph(reshape_hebrew(f"• {ach}"), styles["bullet"]))
 
+            honors = exp.get("honors", "")
+            if honors and honors.strip():
+                elements.append(Paragraph(reshape_hebrew(f"★ {honors}"), styles["bullet"]))
+
     education = cv_data.get("education", [])
     if education:
         elements.append(Paragraph(reshape_hebrew("השכלה"), styles["section_header"]))
@@ -216,6 +222,7 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
             degree = edu.get("degree", "")
             institution = edu.get("institution", "")
             year = edu.get("year", "")
+            honors = edu.get("honors", "")
             parts = []
             if year:
                 parts.append(year)
@@ -225,6 +232,8 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
                 parts.append(institution)
             if parts:
                 elements.append(Paragraph(reshape_hebrew(" | ".join(parts)), styles["body"]))
+            if honors and honors.strip():
+                elements.append(Paragraph(reshape_hebrew(f"★ {honors}"), styles["bullet"]))
 
     skills = cv_data.get("skills", {})
     technical = skills.get("technical", [])
@@ -254,6 +263,22 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
                 lang_parts.append(part)
         if lang_parts:
             elements.append(Paragraph(reshape_hebrew(" | ".join(lang_parts)), styles["body"]))
+
+    volunteering = cv_data.get("volunteering", [])
+    if volunteering:
+        elements.append(Paragraph(reshape_hebrew("התנדבות"), styles["section_header"]))
+        elements.append(_make_section_separator())
+        for item in volunteering:
+            if item and item.strip():
+                elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
+
+    projects = cv_data.get("projects", [])
+    if projects:
+        elements.append(Paragraph(reshape_hebrew("פרויקטים עצמאיים"), styles["section_header"]))
+        elements.append(_make_section_separator())
+        for item in projects:
+            if item and item.strip():
+                elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
 
     additional = cv_data.get("additional", [])
     if additional:
@@ -351,6 +376,8 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         contact_parts.append(contact["email"])
     if contact.get("city"):
         contact_parts.append(contact["city"])
+    if contact.get("linkedin"):
+        contact_parts.append(contact["linkedin"])
     if contact_parts:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -406,6 +433,14 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
                     p.paragraph_format.space_after = Pt(1)
                     _set_docx_rtl(p)
 
+            honors = exp.get("honors", "")
+            if honors and honors.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"★ {honors}")
+                run.font.size = Pt(9)
+                p.paragraph_format.space_after = Pt(1)
+                _set_docx_rtl(p)
+
     education = cv_data.get("education", [])
     if education:
         _add_docx_section_header(doc, "השכלה")
@@ -413,6 +448,7 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
             degree = edu.get("degree", "")
             institution = edu.get("institution", "")
             year = edu.get("year", "")
+            honors = edu.get("honors", "")
             parts = []
             if year:
                 parts.append(year)
@@ -424,6 +460,12 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
                 p = doc.add_paragraph()
                 run = p.add_run(" | ".join(parts))
                 run.font.size = Pt(10)
+                _set_docx_rtl(p)
+            if honors and honors.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"★ {honors}")
+                run.font.size = Pt(9)
+                p.paragraph_format.space_after = Pt(1)
                 _set_docx_rtl(p)
 
     skills = cv_data.get("skills", {})
@@ -459,6 +501,26 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
             run = p.add_run(" | ".join(lang_parts))
             run.font.size = Pt(10)
             _set_docx_rtl(p)
+
+    volunteering = cv_data.get("volunteering", [])
+    if volunteering:
+        _add_docx_section_header(doc, "התנדבות")
+        for item in volunteering:
+            if item and item.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"• {item}")
+                run.font.size = Pt(10)
+                _set_docx_rtl(p)
+
+    projects = cv_data.get("projects", [])
+    if projects:
+        _add_docx_section_header(doc, "פרויקטים עצמאיים")
+        for item in projects:
+            if item and item.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"• {item}")
+                run.font.size = Pt(10)
+                _set_docx_rtl(p)
 
     additional = cv_data.get("additional", [])
     if additional:
@@ -714,6 +776,8 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
         contact_parts.append(contact["email"])
     if contact.get("city"):
         contact_parts.append(contact["city"])
+    if contact.get("linkedin"):
+        contact_parts.append(contact["linkedin"])
     if contact_parts:
         elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
 
@@ -747,6 +811,9 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
             for ach in exp.get("achievements", []):
                 if ach.strip():
                     elements.append(Paragraph(f"• {ach}", styles["bullet"]))
+            honors = exp.get("honors", "")
+            if honors and honors.strip():
+                elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
 
     education = cv_data.get("education", [])
     if education:
@@ -756,6 +823,7 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
             degree = edu.get("degree", "")
             institution = edu.get("institution", "")
             year = edu.get("year", "")
+            honors = edu.get("honors", "")
             parts = []
             if year:
                 parts.append(year)
@@ -765,6 +833,8 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
                 parts.append(institution)
             if parts:
                 elements.append(Paragraph(" | ".join(parts), styles["body"]))
+            if honors and honors.strip():
+                elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
 
     skills = cv_data.get("skills", {})
     technical = skills.get("technical", [])
@@ -792,6 +862,22 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
                 lang_parts.append(part)
         if lang_parts:
             elements.append(Paragraph(" | ".join(lang_parts), styles["body"]))
+
+    volunteering = cv_data.get("volunteering", [])
+    if volunteering:
+        elements.append(Paragraph("Volunteering", styles["section_header"]))
+        elements.append(_make_section_separator())
+        for item in volunteering:
+            if item and item.strip():
+                elements.append(Paragraph(f"• {item}", styles["bullet"]))
+
+    projects = cv_data.get("projects", [])
+    if projects:
+        elements.append(Paragraph("Personal Projects", styles["section_header"]))
+        elements.append(_make_section_separator())
+        for item in projects:
+            if item and item.strip():
+                elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
     additional = cv_data.get("additional", [])
     if additional:
@@ -840,6 +926,8 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
         contact_parts.append(contact["email"])
     if contact.get("city"):
         contact_parts.append(contact["city"])
+    if contact.get("linkedin"):
+        contact_parts.append(contact["linkedin"])
     if contact_parts:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -886,6 +974,12 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
                     run = p.add_run(f"• {ach}")
                     run.font.size = Pt(9)
                     p.paragraph_format.space_after = Pt(1)
+            honors = exp.get("honors", "")
+            if honors and honors.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"★ {honors}")
+                run.font.size = Pt(9)
+                p.paragraph_format.space_after = Pt(1)
 
     education = cv_data.get("education", [])
     if education:
@@ -894,6 +988,7 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
             degree = edu.get("degree", "")
             institution = edu.get("institution", "")
             year = edu.get("year", "")
+            honors = edu.get("honors", "")
             parts = []
             if year:
                 parts.append(year)
@@ -905,6 +1000,11 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
                 p = doc.add_paragraph()
                 run = p.add_run(" | ".join(parts))
                 run.font.size = Pt(10)
+            if honors and honors.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"★ {honors}")
+                run.font.size = Pt(9)
+                p.paragraph_format.space_after = Pt(1)
 
     skills = cv_data.get("skills", {})
     technical = skills.get("technical", [])
@@ -936,6 +1036,24 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
             p = doc.add_paragraph()
             run = p.add_run(" | ".join(lang_parts))
             run.font.size = Pt(10)
+
+    volunteering = cv_data.get("volunteering", [])
+    if volunteering:
+        _add_docx_section_header_en(doc, "Volunteering")
+        for item in volunteering:
+            if item and item.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"• {item}")
+                run.font.size = Pt(10)
+
+    projects = cv_data.get("projects", [])
+    if projects:
+        _add_docx_section_header_en(doc, "Personal Projects")
+        for item in projects:
+            if item and item.strip():
+                p = doc.add_paragraph()
+                run = p.add_run(f"• {item}")
+                run.font.size = Pt(10)
 
     additional = cv_data.get("additional", [])
     if additional:

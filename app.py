@@ -415,12 +415,15 @@ def _init_build_form_data():
             "phone": "",
             "email": "",
             "city": "",
+            "linkedin": "",
             "professional_summary": "",
-            "experience": [{"title": "", "company": "", "period": "", "achievements": ""}],
-            "education": [{"degree": "", "institution": "", "year": ""}],
+            "experience": [{"title": "", "company": "", "period": "", "achievements": "", "honors": ""}],
+            "education": [{"degree": "", "institution": "", "year": "", "honors": ""}],
             "technical_skills": "",
             "soft_skills": "",
             "languages": [{"language": "עברית", "level": "שפת אם"}, {"language": "אנגלית", "level": ""}],
+            "volunteering": "",
+            "projects": "",
             "additional": "",
         }
 
@@ -456,6 +459,7 @@ def render_build_form():
         fd["email"] = st.text_input("אימייל", value=fd["email"], key="bf_email", placeholder="email@example.com")
     with c1:
         fd["city"] = st.text_input("עיר", value=fd["city"], key="bf_city", placeholder="תל אביב")
+    fd["linkedin"] = st.text_input("פרופיל לינקדאין (אופציונלי)", value=fd.get("linkedin", ""), key="bf_linkedin", placeholder="https://linkedin.com/in/your-profile")
 
     st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
     st.markdown('<span style="font-size:13px; color:#6b7c93;">כתוב בקצרה על הרקע המקצועי שלך, או השאר ריק והבינה המלאכותית תכתוב עבורך</span>', unsafe_allow_html=True)
@@ -498,6 +502,7 @@ def render_build_form():
             label_visibility="collapsed",
             placeholder="הישג 1\nהישג 2\nהישג 3"
         )
+        exp["honors"] = st.text_input("הצטיינות (אופציונלי)", value=exp.get("honors", ""), key=f"bf_exp_hon_{i}", placeholder="למשל: עובד מצטיין, פרס חדשנות...")
 
     if exp_to_delete:
         for idx in sorted(exp_to_delete, reverse=True):
@@ -505,7 +510,7 @@ def render_build_form():
         st.rerun()
 
     if st.button("➕ הוסף תפקיד נוסף", key="bf_add_exp"):
-        experience.append({"title": "", "company": "", "period": "", "achievements": ""})
+        experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
         st.rerun()
 
     st.markdown('<div class="section-header">🎓 השכלה</div>', unsafe_allow_html=True)
@@ -527,6 +532,7 @@ def render_build_form():
             edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"bf_edu_inst_{i}", placeholder="אוניברסיטת תל אביב")
         with ec1:
             edu["year"] = st.text_input("שנת סיום", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2020")
+        edu["honors"] = st.text_input("הצטיינות (אופציונלי)", value=edu.get("honors", ""), key=f"bf_edu_hon_{i}", placeholder="למשל: בוגר הצטיינות, דין של הדיקן...")
 
     if edu_to_delete:
         for idx in sorted(edu_to_delete, reverse=True):
@@ -534,7 +540,7 @@ def render_build_form():
         st.rerun()
 
     if st.button("➕ הוסף השכלה נוספת", key="bf_add_edu"):
-        education.append({"degree": "", "institution": "", "year": ""})
+        education.append({"degree": "", "institution": "", "year": "", "honors": ""})
         st.rerun()
 
     st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
@@ -574,6 +580,28 @@ def render_build_form():
         languages.append({"language": "", "level": ""})
         st.rerun()
 
+    st.markdown('<div class="section-header">🤝 התנדבות בקהילה (אופציונלי)</div>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">פעילות התנדבותית מלמדת על ערכים ויוצרת חיבור עם מגייסים</span>', unsafe_allow_html=True)
+    fd["volunteering"] = st.text_area(
+        "התנדבות",
+        value=fd.get("volunteering", ""),
+        key="bf_volunteering",
+        height=60,
+        label_visibility="collapsed",
+        placeholder="למשל: מנטור בעמותת יוניסטרים, מתנדב בלמ״ן..."
+    )
+
+    st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים (אופציונלי)</div>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">פרויקטים אישיים שביצעת - במיוחד רלוונטי לתחומי פיתוח וטכנולוגיה</span>', unsafe_allow_html=True)
+    fd["projects"] = st.text_area(
+        "פרויקטים",
+        value=fd.get("projects", ""),
+        key="bf_projects",
+        height=60,
+        label_visibility="collapsed",
+        placeholder="למשל: פיתוח אפליקציה לניהול משימות בReact, בניית אתר אישי..."
+    )
+
     st.markdown('<div class="section-header">📌 מידע נוסף</div>', unsafe_allow_html=True)
     fd["additional"] = st.text_area(
         "מידע נוסף",
@@ -581,7 +609,7 @@ def render_build_form():
         key="bf_additional",
         height=60,
         label_visibility="collapsed",
-        placeholder="התנדבות, קורסים, הסמכות, שירות צבאי..."
+        placeholder="קורסים, הסמכות, שירות צבאי..."
     )
 
     st.session_state.build_form_data = fd
@@ -644,6 +672,7 @@ def render_build_preview():
         contact["email"] = st.text_input("אימייל", value=contact.get("email", ""), key="build_email")
     with c1:
         contact["city"] = st.text_input("עיר", value=contact.get("city", ""), key="build_city")
+    contact["linkedin"] = st.text_input("לינקדאין", value=contact.get("linkedin", ""), key="build_linkedin")
     cv_data["contact"] = contact
 
     st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
@@ -682,6 +711,7 @@ def render_build_preview():
                 height=80
             )
             exp["achievements"] = [a.strip() for a in new_ach.split("\n") if a.strip()]
+            exp["honors"] = st.text_input("הצטיינות", value=exp.get("honors", ""), key=f"exp_hon_{i}")
             st.markdown("---")
 
     if exp_to_delete:
@@ -691,7 +721,7 @@ def render_build_preview():
         need_rerun = True
 
     if st.button("➕ הוסף ניסיון תעסוקתי", key="add_exp"):
-        experience.append({"title": "", "company": "", "period": "", "achievements": []})
+        experience.append({"title": "", "company": "", "period": "", "achievements": [], "honors": ""})
         cv_data["experience"] = experience
         need_rerun = True
 
@@ -712,6 +742,7 @@ def render_build_preview():
                 edu["institution"] = st.text_input("מוסד", value=edu.get("institution", ""), key=f"edu_inst_{i}")
             with ec1:
                 edu["year"] = st.text_input("שנה", value=edu.get("year", ""), key=f"edu_year_{i}")
+            edu["honors"] = st.text_input("הצטיינות", value=edu.get("honors", ""), key=f"edu_hon_{i}")
             st.markdown("---")
 
     if edu_to_delete:
@@ -721,7 +752,7 @@ def render_build_preview():
         need_rerun = True
 
     if st.button("➕ הוסף השכלה", key="add_edu"):
-        education.append({"degree": "", "institution": "", "year": ""})
+        education.append({"degree": "", "institution": "", "year": "", "honors": ""})
         cv_data["education"] = education
         need_rerun = True
 
@@ -769,6 +800,32 @@ def render_build_preview():
         cv_data["languages"] = languages
         need_rerun = True
 
+    st.markdown('<div class="section-header">🤝 התנדבות</div>', unsafe_allow_html=True)
+    volunteering = cv_data.get("volunteering", [])
+    vol_text = "\n".join(volunteering) if isinstance(volunteering, list) else str(volunteering)
+    new_vol = st.text_area(
+        "התנדבות (שורה לכל פריט)",
+        value=vol_text,
+        key="build_volunteering",
+        height=60,
+        label_visibility="collapsed",
+        placeholder="מנטור בעמותה, מתנדב בארגון..."
+    )
+    cv_data["volunteering"] = [v.strip() for v in new_vol.split("\n") if v.strip()]
+
+    st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים</div>', unsafe_allow_html=True)
+    projects = cv_data.get("projects", [])
+    proj_text = "\n".join(projects) if isinstance(projects, list) else str(projects)
+    new_proj = st.text_area(
+        "פרויקטים (שורה לכל פריט)",
+        value=proj_text,
+        key="build_projects",
+        height=60,
+        label_visibility="collapsed",
+        placeholder="פיתוח אפליקציה, בניית אתר..."
+    )
+    cv_data["projects"] = [p.strip() for p in new_proj.split("\n") if p.strip()]
+
     st.markdown('<div class="section-header">📌 מידע נוסף</div>', unsafe_allow_html=True)
     additional = cv_data.get("additional", [])
     add_text = "\n".join(additional)
@@ -778,7 +835,7 @@ def render_build_preview():
         key="build_additional",
         height=80,
         label_visibility="collapsed",
-        placeholder="התנדבות, קורסים, הסמכות..."
+        placeholder="קורסים, הסמכות, שירות צבאי..."
     )
     cv_data["additional"] = [a.strip() for a in new_add.split("\n") if a.strip()]
 
