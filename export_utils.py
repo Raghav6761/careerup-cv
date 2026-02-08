@@ -39,6 +39,7 @@ def register_hebrew_font():
 def reshape_hebrew(text: str) -> str:
     if not text:
         return ""
+    text = text.replace('\u200f', '').replace('\u200e', '')
     lines = text.split('\n')
     result_lines = []
     for line in lines:
@@ -46,8 +47,6 @@ def reshape_hebrew(text: str) -> str:
             result_lines.append(line)
             continue
         displayed = str(get_display(line, base_dir='R'))
-        displayed = displayed.replace('(', '\u200f(\u200f').replace(')', '\u200f)\u200f')
-        displayed = displayed.replace('"', '\u200f"\u200f')
         result_lines.append(displayed)
     return '\n'.join(result_lines)
 

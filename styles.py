@@ -88,19 +88,15 @@ def inject_custom_css():
             transform: translateY(-1px) !important;
         }
 
-        /* Small delete buttons */
-        button[kind="secondary"][data-testid="stBaseButton-secondary"]:has(+ div[data-testid]) {
-            min-height: 32px !important;
-            padding: 4px 8px !important;
-            font-size: 14px !important;
-        }
-
-        /* Target delete buttons by their emoji content - narrow column buttons */
+        /* Compact delete buttons in narrow last-columns */
         [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button {
-            min-height: 32px !important;
-            padding: 4px 10px !important;
-            font-size: 13px !important;
-            border-radius: 8px !important;
+            min-height: 20px !important;
+            max-height: 24px !important;
+            height: 24px !important;
+            padding: 0px 6px !important;
+            font-size: 12px !important;
+            line-height: 1 !important;
+            border-radius: 6px !important;
             background-color: transparent !important;
             border: 1px solid #e2e8f0 !important;
             color: #999 !important;
@@ -110,6 +106,16 @@ def inject_custom_css():
             background-color: #fee2e2 !important;
             border-color: #fca5a5 !important;
             color: #ef4444 !important;
+        }
+
+        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton {
+            margin-top: 0px !important;
+            padding-top: 0px !important;
+        }
+
+        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child [data-testid="stVerticalBlockBorderWrapper"] {
+            padding-top: 0px !important;
+            margin-top: 0px !important;
         }
 
         div[data-testid="stFileUploader"] {
