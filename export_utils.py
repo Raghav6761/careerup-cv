@@ -40,6 +40,9 @@ def reshape_hebrew(text: str) -> str:
     if not text:
         return ""
     text = text.replace('\u200f', '').replace('\u200e', '')
+    text = text.replace('(', ' - ').replace(')', '').replace('（', ' - ').replace('）', '')
+    text = text.replace('"', "'").replace('"', "'").replace('"', "'")
+    text = text.replace('״', "'").replace('׳', "'")
     lines = text.split('\n')
     result_lines = []
     for line in lines:
