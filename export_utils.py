@@ -7,7 +7,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER
-
+from bidi.algorithm import get_display
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -49,14 +49,46 @@ def _clean_hebrew_text(text: str) -> str:
 def reshape_hebrew(text: str) -> str:
     if not text:
         return ""
-    return _clean_hebrew_text(text)
+    text = _clean_hebrew_text(text)
+    lines = text.split('\n')
+    result_lines = []
+    for line in lines:
+        if not line.strip():
+            result_lines.append(line)
+            continue
+        displayed = str(get_display(line, base_dir='R'))
+        result_lines.append(displayed)
+    return '\n'.join(result_lines)
 
 
-def reshape_hebrew_paragraph(text: str) -> str:
+def reshape_hebrew_paragraph(text: str, font_name="Assistant", font_size=9, max_width=None) -> str:
     if not text:
         return ""
     text = _clean_hebrew_text(text)
-    return text.replace('\n', ' ')
+    text = text.replace('\n', ' ')
+    if max_width is None:
+        max_width = (210 - 2 * 20) * mm
+    from reportlab.pdfbase.pdfmetrics import stringWidth
+    words = text.split()
+    lines = []
+    current_words = []
+    current_width = 0
+    space_w = stringWidth(' ', font_name, font_size)
+    for word in words:
+        w = stringWidth(word, font_name, font_size)
+        test_width = current_width + (space_w if current_words else 0) + w
+        if current_words and test_width > max_width:
+            line_text = ' '.join(current_words)
+            lines.append(str(get_display(line_text, base_dir='R')))
+            current_words = [word]
+            current_width = w
+        else:
+            current_words.append(word)
+            current_width = test_width
+    if current_words:
+        line_text = ' '.join(current_words)
+        lines.append(str(get_display(line_text, base_dir='R')))
+    return '<br/>'.join(lines)
 
 
 def _make_section_separator(width_mm=170):
@@ -88,8 +120,7 @@ def _get_pdf_styles(font_name, bold_font):
             leading=24,
             alignment=TA_CENTER,
             textColor=HexColor("#2c3e50"),
-            spaceAfter=2,
-            wordWrap='RTL'
+            spaceAfter=2
         ),
         "contact": ParagraphStyle(
             "Contact",
@@ -98,8 +129,7 @@ def _get_pdf_styles(font_name, bold_font):
             leading=12,
             alignment=TA_CENTER,
             textColor=HexColor("#555555"),
-            spaceAfter=6,
-            wordWrap='RTL'
+            spaceAfter=6
         ),
         "section_header": ParagraphStyle(
             "SectionHeader",
@@ -109,8 +139,7 @@ def _get_pdf_styles(font_name, bold_font):
             alignment=TA_RIGHT,
             textColor=HexColor("#2c3e50"),
             spaceAfter=2,
-            spaceBefore=8,
-            wordWrap='RTL'
+            spaceBefore=8
         ),
         "job_title": ParagraphStyle(
             "JobTitle",
@@ -120,8 +149,7 @@ def _get_pdf_styles(font_name, bold_font):
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
             spaceAfter=1,
-            spaceBefore=4,
-            wordWrap='RTL'
+            spaceBefore=4
         ),
         "job_period": ParagraphStyle(
             "JobPeriod",
@@ -130,8 +158,7 @@ def _get_pdf_styles(font_name, bold_font):
             leading=12,
             alignment=TA_RIGHT,
             textColor=HexColor("#6b7c93"),
-            spaceAfter=1,
-            wordWrap='RTL'
+            spaceAfter=1
         ),
         "body": ParagraphStyle(
             "Body",
@@ -140,8 +167,7 @@ def _get_pdf_styles(font_name, bold_font):
             leading=13,
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
-            spaceAfter=2,
-            wordWrap='RTL'
+            spaceAfter=2
         ),
         "body_bold": ParagraphStyle(
             "BodyBold",
@@ -150,8 +176,7 @@ def _get_pdf_styles(font_name, bold_font):
             leading=13,
             alignment=TA_RIGHT,
             textColor=HexColor("#2c3e50"),
-            spaceAfter=1,
-            wordWrap='RTL'
+            spaceAfter=1
         ),
         "bullet": ParagraphStyle(
             "Bullet",
@@ -161,8 +186,7 @@ def _get_pdf_styles(font_name, bold_font):
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
             spaceAfter=1,
-            rightIndent=8,
-            wordWrap='RTL'
+            rightIndent=8
         ),
     }
 
