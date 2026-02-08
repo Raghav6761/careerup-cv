@@ -88,23 +88,25 @@ def inject_custom_css():
             transform: translateY(-1px) !important;
         }
 
-        /* Compact delete buttons - targeted by wrapper class */
+        /* Bare icon delete buttons */
         .delete-btn-wrap .stButton > button {
-            min-height: 20px !important;
-            max-height: 24px !important;
-            height: 24px !important;
-            padding: 0px 6px !important;
-            font-size: 12px !important;
+            min-height: 0px !important;
+            height: auto !important;
+            padding: 2px !important;
+            font-size: 16px !important;
             line-height: 1 !important;
-            border-radius: 6px !important;
-            background-color: transparent !important;
-            border: 1px solid #e2e8f0 !important;
-            color: #999 !important;
+            border-radius: 4px !important;
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: #bbb !important;
+            cursor: pointer !important;
         }
 
         .delete-btn-wrap .stButton > button:hover {
-            background-color: #fee2e2 !important;
-            border-color: #fca5a5 !important;
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
             color: #ef4444 !important;
         }
 
