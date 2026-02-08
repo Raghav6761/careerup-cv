@@ -291,8 +291,10 @@ def render_improve_export():
                 )
                 st.session_state.improve_final_sections[i]["title"] = new_title
             with col_delete:
+                st.markdown('<div class="delete-btn-wrap">', unsafe_allow_html=True)
                 if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף"):
                     sections_to_delete.append(i)
+                st.markdown('</div>', unsafe_allow_html=True)
 
             new_text = st.text_area(
                 "תוכן",
@@ -484,9 +486,11 @@ def render_build_form():
         with col_header:
             st.markdown(f'<span style="font-size:14px; font-weight:600; color:#6b7c93;">תפקיד {i+1}</span>', unsafe_allow_html=True)
         with col_del:
+            st.markdown('<div class="delete-btn-wrap">', unsafe_allow_html=True)
             if len(experience) > 1:
                 if st.button("🗑️", key=f"bf_del_exp_{i}", help="מחק"):
                     exp_to_delete.append(i)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         ec1, ec2, ec3 = st.columns(3)
         with ec3:
@@ -523,9 +527,11 @@ def render_build_form():
             st.markdown("---")
         col_header, col_del = st.columns([5, 1])
         with col_del:
+            st.markdown('<div class="delete-btn-wrap">', unsafe_allow_html=True)
             if len(education) > 1:
                 if st.button("🗑️", key=f"bf_del_edu_{i}", help="מחק"):
                     edu_to_delete.append(i)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         ec1, ec2, ec3 = st.columns(3)
         with ec3:
@@ -569,9 +575,11 @@ def render_build_form():
         with lc2:
             lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"bf_lang_lvl_{i}", placeholder="שפת אם / גבוהה / בסיסית")
         with lc_del:
+            st.markdown('<div class="delete-btn-wrap">', unsafe_allow_html=True)
             if len(languages) > 1:
                 if st.button("🗑️", key=f"bf_del_lang_{i}", help="מחק"):
                     lang_to_delete.append(i)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     if lang_to_delete:
         for idx in sorted(lang_to_delete, reverse=True):
@@ -693,8 +701,10 @@ def render_build_preview():
         with st.container():
             col_header, col_del = st.columns([5, 1])
             with col_del:
+                st.markdown('<div class="delete-btn-wrap">', unsafe_allow_html=True)
                 if st.button("🗑️", key=f"del_exp_{i}", help="מחק ניסיון"):
                     exp_to_delete.append(i)
+                st.markdown('</div>', unsafe_allow_html=True)
 
             ec1, ec2, ec3 = st.columns(3)
             with ec3:
@@ -734,8 +744,10 @@ def render_build_preview():
         with st.container():
             col_header, col_del = st.columns([5, 1])
             with col_del:
+                st.markdown('<div class="delete-btn-wrap">', unsafe_allow_html=True)
                 if st.button("🗑️", key=f"del_edu_{i}", help="מחק השכלה"):
                     edu_to_delete.append(i)
+                st.markdown('</div>', unsafe_allow_html=True)
 
             ec1, ec2, ec3 = st.columns(3)
             with ec3:
@@ -788,8 +800,10 @@ def render_build_preview():
         with lc2:
             lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"lang_level_{i}")
         with lc_del:
+            st.markdown('<div class="delete-btn-wrap">', unsafe_allow_html=True)
             if st.button("🗑️", key=f"del_lang_{i}", help="מחק שפה"):
                 lang_to_delete.append(i)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     if lang_to_delete:
         for idx in sorted(lang_to_delete, reverse=True):

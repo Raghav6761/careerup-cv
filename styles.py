@@ -88,8 +88,8 @@ def inject_custom_css():
             transform: translateY(-1px) !important;
         }
 
-        /* Compact delete buttons in narrow last-columns */
-        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button {
+        /* Compact delete buttons - targeted by wrapper class */
+        .delete-btn-wrap .stButton > button {
             min-height: 20px !important;
             max-height: 24px !important;
             height: 24px !important;
@@ -102,20 +102,15 @@ def inject_custom_css():
             color: #999 !important;
         }
 
-        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button:hover {
+        .delete-btn-wrap .stButton > button:hover {
             background-color: #fee2e2 !important;
             border-color: #fca5a5 !important;
             color: #ef4444 !important;
         }
 
-        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton {
+        .delete-btn-wrap .stButton {
             margin-top: 0px !important;
             padding-top: 0px !important;
-        }
-
-        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child [data-testid="stVerticalBlockBorderWrapper"] {
-            padding-top: 0px !important;
-            margin-top: 0px !important;
         }
 
         div[data-testid="stFileUploader"] {
