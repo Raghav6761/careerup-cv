@@ -39,7 +39,17 @@ def register_hebrew_font():
 def reshape_hebrew(text: str) -> str:
     if not text:
         return ""
-    return str(get_display(text, base_dir='R'))
+    lines = text.split('\n')
+    result_lines = []
+    for line in lines:
+        if not line.strip():
+            result_lines.append(line)
+            continue
+        displayed = str(get_display(line, base_dir='R'))
+        displayed = displayed.replace('(', '\u200f(\u200f').replace(')', '\u200f)\u200f')
+        displayed = displayed.replace('"', '\u200f"\u200f')
+        result_lines.append(displayed)
+    return '\n'.join(result_lines)
 
 
 def _make_section_separator(width_mm=170):

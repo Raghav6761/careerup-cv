@@ -88,6 +88,30 @@ def inject_custom_css():
             transform: translateY(-1px) !important;
         }
 
+        /* Small delete buttons */
+        button[kind="secondary"][data-testid="stBaseButton-secondary"]:has(+ div[data-testid]) {
+            min-height: 32px !important;
+            padding: 4px 8px !important;
+            font-size: 14px !important;
+        }
+
+        /* Target delete buttons by their emoji content - narrow column buttons */
+        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button {
+            min-height: 32px !important;
+            padding: 4px 10px !important;
+            font-size: 13px !important;
+            border-radius: 8px !important;
+            background-color: transparent !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #999 !important;
+        }
+
+        [data-testid="stHorizontalBlock"] [data-testid="stColumn"]:last-child .stButton > button:hover {
+            background-color: #fee2e2 !important;
+            border-color: #fca5a5 !important;
+            color: #ef4444 !important;
+        }
+
         div[data-testid="stFileUploader"] {
             direction: rtl !important;
         }
