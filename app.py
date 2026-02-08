@@ -101,15 +101,16 @@ def render_improve_upload():
     )
 
     st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את התפקיד אליו אתה מתמודד - הבינה המלאכותית תשלב מילות מפתח שיסייעו לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - הבינה המלאכותית תחלץ מילות מפתח ותשלב אותן בקורות החיים כדי לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
     if "improve_target_position" not in st.session_state:
         st.session_state.improve_target_position = ""
-    st.session_state.improve_target_position = st.text_input(
+    st.session_state.improve_target_position = st.text_area(
         "תפקיד יעד",
         value=st.session_state.improve_target_position,
         key="improve_target_input",
-        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack, מנהל פרויקטים...",
-        label_visibility="collapsed"
+        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\n\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
+        label_visibility="collapsed",
+        height=68
     )
 
     if uploaded_file is not None:
@@ -439,15 +440,16 @@ def render_build_form():
     fd = st.session_state.build_form_data
 
     st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את התפקיד אליו אתה מתמודד - הבינה המלאכותית תשלב מילות מפתח שיסייעו לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - הבינה המלאכותית תחלץ מילות מפתח ותשלב אותן בקורות החיים כדי לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
     if "build_target_position" not in st.session_state:
         st.session_state.build_target_position = ""
-    st.session_state.build_target_position = st.text_input(
+    st.session_state.build_target_position = st.text_area(
         "תפקיד יעד",
         value=st.session_state.build_target_position,
         key="build_target_input",
-        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack, מנהל פרויקטים...",
-        label_visibility="collapsed"
+        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\n\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
+        label_visibility="collapsed",
+        height=68
     )
 
     st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
