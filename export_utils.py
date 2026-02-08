@@ -604,7 +604,7 @@ def _is_job_header_line(line: str) -> bool:
     for keyword in military_keywords_en:
         if keyword in lower:
             return False
-    if re.search(r'\d{4}', line) and ('–' in line or '-' in line or '|' in line or 'הווה' in line or 'נוכחי' in line or 'היום' in line or 'present' in lower):
+    if re.search(r'(19|20)\d{2}', line) and ('–' in line or '-' in line or '|' in line or 'הווה' in line or 'נוכחי' in line or 'היום' in line or 'present' in lower):
         return True
     return False
 
@@ -647,23 +647,37 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
     styles = _get_pdf_styles(font_name, bold_font)
     elements = []
 
+    is_first_section = True
     for section in sections:
         title = section.get("title", "")
         content = section.get("final_text", section.get("improved", ""))
-        if title:
+        is_personal = title and any(k in title for k in ["פרטים", "אישיים", "personal", "Personal"])
+        if title and not is_personal:
             elements.append(Paragraph(reshape_hebrew(title), styles["section_header"]))
             elements.append(_make_section_separator())
         if content:
+            first_line = True
             for line in content.split("\n"):
                 stripped = line.strip()
                 if not stripped:
                     continue
+                if is_personal and first_line:
+                    elements.append(Paragraph(reshape_hebrew(stripped), styles["name"]))
+                    first_line = False
+                    continue
+                if is_personal:
+                    elements.append(Paragraph(reshape_hebrew(stripped), styles["contact"]))
+                    continue
+                first_line = False
                 if _is_job_header_line(stripped):
                     elements.append(Paragraph(reshape_hebrew(stripped), styles["job_title"]))
                 elif stripped.startswith("-") or stripped.startswith("•"):
                     elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
                 else:
                     elements.append(Paragraph(reshape_hebrew_paragraph(stripped), styles["body"]))
+            if is_personal:
+                elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+        is_first_section = False
 
     doc.build(elements)
     return buffer.getvalue()
@@ -689,15 +703,38 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
     for section in sections:
         title = section.get("title", "")
         content = section.get("final_text", section.get("improved", ""))
+        is_personal = title and any(k in title for k in ["פרטים", "אישיים", "personal", "Personal"])
 
-        if title:
+        if title and not is_personal:
             _add_docx_section_header(doc, title)
 
         if content:
+            first_line = True
             for line in content.split("\n"):
                 stripped = line.strip()
                 if not stripped:
                     continue
+                if is_personal and first_line:
+                    p = doc.add_paragraph()
+                    run = p.add_run(stripped)
+                    run.font.bold = True
+                    run.font.size = Pt(16)
+                    run.font.color.rgb = RGBColor(44, 62, 80)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    _set_docx_rtl(p)
+                    first_line = False
+                    continue
+                if is_personal:
+                    p = doc.add_paragraph()
+                    run = p.add_run(stripped)
+                    run.font.size = Pt(9)
+                    run.font.color.rgb = RGBColor(85, 85, 85)
+                    p.paragraph_format.space_after = Pt(1)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    _set_docx_rtl(p)
+                    continue
+                first_line = False
                 if _is_job_header_line(stripped):
                     p = doc.add_paragraph()
                     run = p.add_run(stripped)
@@ -1185,19 +1222,41 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
     styles = _get_pdf_styles_en(font_name, bold_font)
     elements = []
 
+    last_header = None
+    in_personal = False
+    personal_first_line = False
     for line in translated_text.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
         if _is_section_header_en(stripped):
-            elements.append(Paragraph(_clean_section_title(stripped), styles["section_header"]))
+            header_text = _clean_section_title(stripped)
+            if header_text == last_header:
+                continue
+            lower_header = header_text.lower()
+            if any(k in lower_header for k in ["personal", "contact"]):
+                in_personal = True
+                personal_first_line = True
+                last_header = header_text
+                continue
+            in_personal = False
+            last_header = header_text
+            elements.append(Paragraph(header_text, styles["section_header"]))
             elements.append(_make_section_separator())
+        elif in_personal and personal_first_line:
+            elements.append(Paragraph(stripped, styles["name"]))
+            personal_first_line = False
+        elif in_personal:
+            elements.append(Paragraph(stripped, styles["contact"]))
         elif _is_job_header_line(stripped):
             elements.append(Paragraph(stripped, styles["job_title"]))
         elif stripped.startswith("-") or stripped.startswith("•"):
             elements.append(Paragraph(stripped, styles["bullet"]))
         else:
             elements.append(Paragraph(stripped, styles["body"]))
+
+    if in_personal and elements:
+        elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
     doc.build(elements)
     return buffer.getvalue()
@@ -1220,12 +1279,42 @@ def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
         s.top_margin = Cm(1.2)
         s.bottom_margin = Cm(1.2)
 
+    last_header = None
+    in_personal = False
+    personal_first_line = False
     for line in translated_text.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
         if _is_section_header_en(stripped):
-            _add_docx_section_header_en(doc, _clean_section_title(stripped))
+            header_text = _clean_section_title(stripped)
+            if header_text == last_header:
+                continue
+            lower_header = header_text.lower()
+            if any(k in lower_header for k in ["personal", "contact"]):
+                in_personal = True
+                personal_first_line = True
+                last_header = header_text
+                continue
+            in_personal = False
+            last_header = header_text
+            _add_docx_section_header_en(doc, header_text)
+        elif in_personal and personal_first_line:
+            p = doc.add_paragraph()
+            run = p.add_run(stripped)
+            run.font.bold = True
+            run.font.size = Pt(16)
+            run.font.color.rgb = RGBColor(44, 62, 80)
+            p.paragraph_format.space_after = Pt(2)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            personal_first_line = False
+        elif in_personal:
+            p = doc.add_paragraph()
+            run = p.add_run(stripped)
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(85, 85, 85)
+            p.paragraph_format.space_after = Pt(1)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         elif _is_job_header_line(stripped):
             p = doc.add_paragraph()
             run = p.add_run(stripped)
