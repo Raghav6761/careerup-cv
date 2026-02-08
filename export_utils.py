@@ -199,12 +199,12 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
             header_parts = []
             if period:
                 header_parts.append(period)
-            if company:
-                header_parts.append(company)
             if title:
                 header_parts.append(title)
+            if company:
+                header_parts.append(company)
             if header_parts:
-                elements.append(Paragraph(reshape_hebrew(" – ".join(header_parts)), styles["job_title"]))
+                elements.append(Paragraph(reshape_hebrew(" | ".join(header_parts)), styles["job_title"]))
 
             for ach in exp.get("achievements", []):
                 if ach.strip():
@@ -411,13 +411,13 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
             header_parts = []
             if period:
                 header_parts.append(period)
-            if company:
-                header_parts.append(company)
             if title:
                 header_parts.append(title)
+            if company:
+                header_parts.append(company)
             if header_parts:
                 p = doc.add_paragraph()
-                run = p.add_run(" – ".join(header_parts))
+                run = p.add_run(" | ".join(header_parts))
                 run.font.bold = True
                 run.font.size = Pt(10)
                 run.font.color.rgb = RGBColor(51, 51, 51)
@@ -802,12 +802,12 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
             header_parts = []
             if period:
                 header_parts.append(period)
-            if company:
-                header_parts.append(company)
             if title:
                 header_parts.append(title)
+            if company:
+                header_parts.append(company)
             if header_parts:
-                elements.append(Paragraph(" – ".join(header_parts), styles["job_title"]))
+                elements.append(Paragraph(" | ".join(header_parts), styles["job_title"]))
             for ach in exp.get("achievements", []):
                 if ach.strip():
                     elements.append(Paragraph(f"• {ach}", styles["bullet"]))
@@ -956,13 +956,13 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
             header_parts = []
             if period:
                 header_parts.append(period)
-            if company:
-                header_parts.append(company)
             if title:
                 header_parts.append(title)
+            if company:
+                header_parts.append(company)
             if header_parts:
                 p = doc.add_paragraph()
-                run = p.add_run(" – ".join(header_parts))
+                run = p.add_run(" | ".join(header_parts))
                 run.font.bold = True
                 run.font.size = Pt(10)
                 run.font.color.rgb = RGBColor(51, 51, 51)
