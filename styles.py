@@ -88,26 +88,27 @@ def inject_custom_css():
             transform: translateY(-1px) !important;
         }
 
-        /* Bare icon delete buttons - will be marked by JS */
-        .del-btn-bare > button {
+        /* Bare icon delete buttons using tertiary type */
+        button[data-testid="stBaseButton-tertiary"] {
             min-height: 0px !important;
             height: auto !important;
-            padding: 2px 4px !important;
-            font-size: 16px !important;
+            padding: 2px !important;
+            font-size: 15px !important;
             line-height: 1 !important;
-            border-radius: 4px !important;
             background: none !important;
             border: none !important;
             box-shadow: none !important;
-            color: #bbb !important;
+            color: #ccc !important;
             cursor: pointer !important;
+            opacity: 0.7 !important;
         }
 
-        .del-btn-bare > button:hover {
+        button[data-testid="stBaseButton-tertiary"]:hover {
             background: none !important;
             border: none !important;
             box-shadow: none !important;
             color: #ef4444 !important;
+            opacity: 1 !important;
             transform: none !important;
         }
 
@@ -382,10 +383,10 @@ def inject_custom_css():
                 font-size: 17px !important;
             }
 
-            .del-btn-bare > button {
+            button[data-testid="stBaseButton-tertiary"] {
                 min-height: 0px !important;
                 width: auto !important;
-                font-size: 16px !important;
+                font-size: 15px !important;
             }
 
             .chat-message-user,
@@ -405,25 +406,3 @@ def inject_custom_css():
         }
     </style>
     """, unsafe_allow_html=True)
-
-    import streamlit.components.v1 as components
-    components.html("""
-    <script>
-    function markDeleteButtons() {
-        const doc = window.parent.document;
-        doc.querySelectorAll('button[data-testid="stBaseButton-secondary"]').forEach(btn => {
-            if (btn.textContent.trim().includes('🗑')) {
-                const wrapper = btn.closest('.stButton');
-                if (wrapper && !wrapper.classList.contains('del-btn-bare')) {
-                    wrapper.classList.add('del-btn-bare');
-                }
-            }
-        });
-    }
-    const doc = window.parent.document;
-    const obs = new MutationObserver(markDeleteButtons);
-    obs.observe(doc.body, {childList: true, subtree: true});
-    setTimeout(markDeleteButtons, 500);
-    setTimeout(markDeleteButtons, 1500);
-    </script>
-    """, height=0)

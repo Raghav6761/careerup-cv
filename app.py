@@ -291,7 +291,7 @@ def render_improve_export():
                 )
                 st.session_state.improve_final_sections[i]["title"] = new_title
             with col_delete:
-                if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף"):
+                if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף", type="tertiary"):
                     sections_to_delete.append(i)
 
             new_text = st.text_area(
@@ -485,7 +485,7 @@ def render_build_form():
             st.markdown(f'<span style="font-size:14px; font-weight:600; color:#6b7c93;">תפקיד {i+1}</span>', unsafe_allow_html=True)
         with col_del:
             if len(experience) > 1:
-                if st.button("🗑️", key=f"bf_del_exp_{i}", help="מחק"):
+                if st.button("🗑️", key=f"bf_del_exp_{i}", help="מחק", type="tertiary"):
                     exp_to_delete.append(i)
 
         ec1, ec2, ec3 = st.columns(3)
@@ -524,7 +524,7 @@ def render_build_form():
         col_header, col_del = st.columns([5, 1])
         with col_del:
             if len(education) > 1:
-                if st.button("🗑️", key=f"bf_del_edu_{i}", help="מחק"):
+                if st.button("🗑️", key=f"bf_del_edu_{i}", help="מחק", type="tertiary"):
                     edu_to_delete.append(i)
 
         ec1, ec2, ec3 = st.columns(3)
@@ -570,7 +570,7 @@ def render_build_form():
             lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"bf_lang_lvl_{i}", placeholder="שפת אם / גבוהה / בסיסית")
         with lc_del:
             if len(languages) > 1:
-                if st.button("🗑️", key=f"bf_del_lang_{i}", help="מחק"):
+                if st.button("🗑️", key=f"bf_del_lang_{i}", help="מחק", type="tertiary"):
                     lang_to_delete.append(i)
 
     if lang_to_delete:
@@ -693,7 +693,7 @@ def render_build_preview():
         with st.container():
             col_header, col_del = st.columns([5, 1])
             with col_del:
-                if st.button("🗑️", key=f"del_exp_{i}", help="מחק ניסיון"):
+                if st.button("🗑️", key=f"del_exp_{i}", help="מחק ניסיון", type="tertiary"):
                     exp_to_delete.append(i)
 
             ec1, ec2, ec3 = st.columns(3)
@@ -734,7 +734,7 @@ def render_build_preview():
         with st.container():
             col_header, col_del = st.columns([5, 1])
             with col_del:
-                if st.button("🗑️", key=f"del_edu_{i}", help="מחק השכלה"):
+                if st.button("🗑️", key=f"del_edu_{i}", help="מחק השכלה", type="tertiary"):
                     edu_to_delete.append(i)
 
             ec1, ec2, ec3 = st.columns(3)
@@ -788,7 +788,7 @@ def render_build_preview():
         with lc2:
             lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"lang_level_{i}")
         with lc_del:
-            if st.button("🗑️", key=f"del_lang_{i}", help="מחק שפה"):
+            if st.button("🗑️", key=f"del_lang_{i}", help="מחק שפה", type="tertiary"):
                 lang_to_delete.append(i)
 
     if lang_to_delete:
