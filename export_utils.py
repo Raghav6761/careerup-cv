@@ -609,6 +609,18 @@ def _is_job_header_line(line: str) -> bool:
     return False
 
 
+def _extract_contact_value(line: str) -> str:
+    labels = ["טלפון", "אימייל", "מייל", "דוא\"ל", "לינקדאין", "עיר מגורים", "עיר", "כתובת", "אזור מגורים", "מגורים", "linkedin", "phone", "email", "city", "address", "residence"]
+    val = line.strip()
+    val_lower = val.lower()
+    for label in labels:
+        if val_lower.startswith(label.lower()):
+            val = val[len(label):].strip()
+            val = val.lstrip("-–—:").strip()
+            break
+    return val
+
+
 def _set_docx_rtl(paragraph, font_name="Assistant"):
     pPr = paragraph._p.get_or_add_pPr()
     bidi = OxmlElement('w:bidi')
@@ -656,27 +668,29 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
             elements.append(Paragraph(reshape_hebrew(title), styles["section_header"]))
             elements.append(_make_section_separator())
         if content:
-            first_line = True
-            for line in content.split("\n"):
-                stripped = line.strip()
-                if not stripped:
-                    continue
-                if is_personal and first_line:
-                    elements.append(Paragraph(reshape_hebrew(stripped), styles["name"]))
-                    first_line = False
-                    continue
-                if is_personal:
-                    elements.append(Paragraph(reshape_hebrew(stripped), styles["contact"]))
-                    continue
-                first_line = False
-                if _is_job_header_line(stripped):
-                    elements.append(Paragraph(reshape_hebrew(stripped), styles["job_title"]))
-                elif stripped.startswith("-") or stripped.startswith("•"):
-                    elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
-                else:
-                    elements.append(Paragraph(reshape_hebrew_paragraph(stripped), styles["body"]))
             if is_personal:
-                elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+                lines = [l.strip() for l in content.split("\n") if l.strip()]
+                if lines:
+                    elements.append(Paragraph(reshape_hebrew(lines[0]), styles["name"]))
+                    contact_values = []
+                    for cl in lines[1:]:
+                        val = _extract_contact_value(cl)
+                        if val:
+                            contact_values.append(reshape_hebrew(val))
+                    if contact_values:
+                        elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+                    elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+            else:
+                for line in content.split("\n"):
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    if _is_job_header_line(stripped):
+                        elements.append(Paragraph(reshape_hebrew(stripped), styles["job_title"]))
+                    elif stripped.startswith("-") or stripped.startswith("•"):
+                        elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
+                    else:
+                        elements.append(Paragraph(reshape_hebrew_paragraph(stripped), styles["body"]))
         is_first_section = False
 
     doc.build(elements)
@@ -709,52 +723,55 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
             _add_docx_section_header(doc, title)
 
         if content:
-            first_line = True
-            for line in content.split("\n"):
-                stripped = line.strip()
-                if not stripped:
-                    continue
-                if is_personal and first_line:
+            if is_personal:
+                lines = [l.strip() for l in content.split("\n") if l.strip()]
+                if lines:
                     p = doc.add_paragraph()
-                    run = p.add_run(stripped)
+                    run = p.add_run(lines[0])
                     run.font.bold = True
                     run.font.size = Pt(16)
                     run.font.color.rgb = RGBColor(44, 62, 80)
                     p.paragraph_format.space_after = Pt(2)
                     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     _set_docx_rtl(p)
-                    first_line = False
-                    continue
-                if is_personal:
-                    p = doc.add_paragraph()
-                    run = p.add_run(stripped)
-                    run.font.size = Pt(9)
-                    run.font.color.rgb = RGBColor(85, 85, 85)
-                    p.paragraph_format.space_after = Pt(1)
-                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    _set_docx_rtl(p)
-                    continue
-                first_line = False
-                if _is_job_header_line(stripped):
-                    p = doc.add_paragraph()
-                    run = p.add_run(stripped)
-                    run.font.bold = True
-                    run.font.size = Pt(10)
-                    run.font.color.rgb = RGBColor(51, 51, 51)
-                    p.paragraph_format.space_after = Pt(1)
-                    p.paragraph_format.space_before = Pt(4)
-                    _set_docx_rtl(p)
-                elif stripped.startswith("-") or stripped.startswith("•"):
-                    p = doc.add_paragraph()
-                    run = p.add_run(stripped)
-                    run.font.size = Pt(10)
-                    p.paragraph_format.space_after = Pt(1)
-                    _set_docx_rtl(p)
-                else:
-                    p = doc.add_paragraph()
-                    run = p.add_run(stripped)
-                    run.font.size = Pt(10)
-                    _set_docx_rtl(p)
+                    contact_values = []
+                    for cl in lines[1:]:
+                        val = _extract_contact_value(cl)
+                        if val:
+                            contact_values.append(val)
+                    if contact_values:
+                        p = doc.add_paragraph()
+                        run = p.add_run(" | ".join(contact_values))
+                        run.font.size = Pt(9)
+                        run.font.color.rgb = RGBColor(85, 85, 85)
+                        p.paragraph_format.space_after = Pt(1)
+                        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        _set_docx_rtl(p)
+            else:
+                for line in content.split("\n"):
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    if _is_job_header_line(stripped):
+                        p = doc.add_paragraph()
+                        run = p.add_run(stripped)
+                        run.font.bold = True
+                        run.font.size = Pt(10)
+                        run.font.color.rgb = RGBColor(51, 51, 51)
+                        p.paragraph_format.space_after = Pt(1)
+                        p.paragraph_format.space_before = Pt(4)
+                        _set_docx_rtl(p)
+                    elif stripped.startswith("-") or stripped.startswith("•"):
+                        p = doc.add_paragraph()
+                        run = p.add_run(stripped)
+                        run.font.size = Pt(10)
+                        p.paragraph_format.space_after = Pt(1)
+                        _set_docx_rtl(p)
+                    else:
+                        p = doc.add_paragraph()
+                        run = p.add_run(stripped)
+                        run.font.size = Pt(10)
+                        _set_docx_rtl(p)
 
     buffer = io.BytesIO()
     doc.save(buffer)
@@ -1224,30 +1241,37 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
 
     last_header = None
     in_personal = False
-    personal_first_line = False
+    personal_lines = []
     for line in translated_text.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
         if _is_section_header_en(stripped):
+            if in_personal and personal_lines:
+                elements.append(Paragraph(personal_lines[0], styles["name"]))
+                contact_values = []
+                for cl in personal_lines[1:]:
+                    val = _extract_contact_value(cl)
+                    if val:
+                        contact_values.append(val)
+                if contact_values:
+                    elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+                elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+                personal_lines = []
             header_text = _clean_section_title(stripped)
             if header_text == last_header:
                 continue
             lower_header = header_text.lower()
             if any(k in lower_header for k in ["personal", "contact"]):
                 in_personal = True
-                personal_first_line = True
                 last_header = header_text
                 continue
             in_personal = False
             last_header = header_text
             elements.append(Paragraph(header_text, styles["section_header"]))
             elements.append(_make_section_separator())
-        elif in_personal and personal_first_line:
-            elements.append(Paragraph(stripped, styles["name"]))
-            personal_first_line = False
         elif in_personal:
-            elements.append(Paragraph(stripped, styles["contact"]))
+            personal_lines.append(stripped)
         elif _is_job_header_line(stripped):
             elements.append(Paragraph(stripped, styles["job_title"]))
         elif stripped.startswith("-") or stripped.startswith("•"):
@@ -1255,7 +1279,15 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
         else:
             elements.append(Paragraph(stripped, styles["body"]))
 
-    if in_personal and elements:
+    if in_personal and personal_lines:
+        elements.append(Paragraph(personal_lines[0], styles["name"]))
+        contact_values = []
+        for cl in personal_lines[1:]:
+            val = _extract_contact_value(cl)
+            if val:
+                contact_values.append(val)
+        if contact_values:
+            elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
         elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
     doc.build(elements)
@@ -1281,40 +1313,46 @@ def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
 
     last_header = None
     in_personal = False
-    personal_first_line = False
+    personal_lines = []
     for line in translated_text.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
         if _is_section_header_en(stripped):
+            if in_personal and personal_lines:
+                p = doc.add_paragraph()
+                run = p.add_run(personal_lines[0])
+                run.font.bold = True
+                run.font.size = Pt(16)
+                run.font.color.rgb = RGBColor(44, 62, 80)
+                p.paragraph_format.space_after = Pt(2)
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                contact_values = []
+                for cl in personal_lines[1:]:
+                    val = _extract_contact_value(cl)
+                    if val:
+                        contact_values.append(val)
+                if contact_values:
+                    p = doc.add_paragraph()
+                    run = p.add_run(" | ".join(contact_values))
+                    run.font.size = Pt(9)
+                    run.font.color.rgb = RGBColor(85, 85, 85)
+                    p.paragraph_format.space_after = Pt(1)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                personal_lines = []
             header_text = _clean_section_title(stripped)
             if header_text == last_header:
                 continue
             lower_header = header_text.lower()
             if any(k in lower_header for k in ["personal", "contact"]):
                 in_personal = True
-                personal_first_line = True
                 last_header = header_text
                 continue
             in_personal = False
             last_header = header_text
             _add_docx_section_header_en(doc, header_text)
-        elif in_personal and personal_first_line:
-            p = doc.add_paragraph()
-            run = p.add_run(stripped)
-            run.font.bold = True
-            run.font.size = Pt(16)
-            run.font.color.rgb = RGBColor(44, 62, 80)
-            p.paragraph_format.space_after = Pt(2)
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            personal_first_line = False
         elif in_personal:
-            p = doc.add_paragraph()
-            run = p.add_run(stripped)
-            run.font.size = Pt(9)
-            run.font.color.rgb = RGBColor(85, 85, 85)
-            p.paragraph_format.space_after = Pt(1)
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            personal_lines.append(stripped)
         elif _is_job_header_line(stripped):
             p = doc.add_paragraph()
             run = p.add_run(stripped)
@@ -1332,6 +1370,27 @@ def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
             p = doc.add_paragraph()
             run = p.add_run(stripped)
             run.font.size = Pt(10)
+
+    if in_personal and personal_lines:
+        p = doc.add_paragraph()
+        run = p.add_run(personal_lines[0])
+        run.font.bold = True
+        run.font.size = Pt(16)
+        run.font.color.rgb = RGBColor(44, 62, 80)
+        p.paragraph_format.space_after = Pt(2)
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        contact_values = []
+        for cl in personal_lines[1:]:
+            val = _extract_contact_value(cl)
+            if val:
+                contact_values.append(val)
+        if contact_values:
+            p = doc.add_paragraph()
+            run = p.add_run(" | ".join(contact_values))
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(85, 85, 85)
+            p.paragraph_format.space_after = Pt(1)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     buffer = io.BytesIO()
     doc.save(buffer)
