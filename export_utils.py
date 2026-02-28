@@ -638,7 +638,9 @@ def _set_docx_rtl(paragraph, font_name="Assistant"):
     pPr.append(bidi)
     jc_elem = pPr.find(qn('w:jc'))
     if jc_elem is not None:
-        pPr.remove(jc_elem)
+        jc_val = jc_elem.get(qn('w:val'))
+        if jc_val != 'center':
+            pPr.remove(jc_elem)
     for run in paragraph.runs:
         rPr = run._r.get_or_add_rPr()
         rtl = OxmlElement('w:rtl')
