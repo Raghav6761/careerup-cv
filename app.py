@@ -647,6 +647,20 @@ def render_build_form():
             st.write("✅ קורות החיים מוכנים!")
             status.update(label="קורות החיים מוכנים!", state="complete")
 
+        from export_utils import _is_empty_content, _filter_list
+        for exp in cv_data.get("experience", []):
+            if _is_empty_content(exp.get("honors", "")):
+                exp["honors"] = ""
+            exp["achievements"] = _filter_list(exp.get("achievements", []))
+        for edu in cv_data.get("education", []):
+            if _is_empty_content(edu.get("honors", "")):
+                edu["honors"] = ""
+        cv_data["volunteering"] = _filter_list(cv_data.get("volunteering", []))
+        cv_data["projects"] = _filter_list(cv_data.get("projects", []))
+        cv_data["additional"] = _filter_list(cv_data.get("additional", []))
+        if _is_empty_content(cv_data.get("professional_summary", "")):
+            cv_data["professional_summary"] = ""
+
         st.session_state.generated_cv = cv_data
         go_to("build_preview")
         st.rerun()
