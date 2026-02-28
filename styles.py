@@ -215,6 +215,9 @@ def inject_custom_css():
             color: #5a5a5a;
             font-size: 15px;
             line-height: 1.7;
+            direction: rtl;
+            unicode-bidi: plaintext;
+            text-align: right;
         }
 
         .improved-text {
@@ -226,6 +229,9 @@ def inject_custom_css():
             color: #2c3e50;
             font-size: 15px;
             line-height: 1.7;
+            direction: rtl;
+            unicode-bidi: plaintext;
+            text-align: right;
         }
 
         .chat-message-user {
