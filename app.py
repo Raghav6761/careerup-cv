@@ -52,7 +52,7 @@ def reset_build():
 def render_header():
     st.markdown("""
     <div class="app-header">
-        <h1>📄 CV-Master <span class="logo-text">AI</span></h1>
+        <h1><span class="logo-cv">CV-Master</span> <span class="logo-ai">AI</span></h1>
         <p>כלי חכם ליצירה ושיפור קורות חיים מקצועיים</p>
     </div>
     """, unsafe_allow_html=True)
@@ -61,18 +61,25 @@ def render_header():
 def render_home():
     render_header()
 
+    st.markdown("""
+    <div class="home-buttons-row">
+        <div class="home-btn-wrap" id="btn-build-wrap"></div>
+        <div class="home-btn-wrap" id="btn-improve-wrap"></div>
+    </div>
+    """, unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
 
-    with col2:
-        if st.button("📤  שיפור קורות חיים קיימים", key="btn_improve", use_container_width=True):
-            reset_improve()
-            go_to("improve_upload")
-            st.rerun()
-
     with col1:
-        if st.button("✨  בנייה מאפס", key="btn_build", use_container_width=True):
+        if st.button("כתיבת קורות חיים", key="btn_build", use_container_width=True, type="primary"):
             reset_build()
             go_to("build_form")
+            st.rerun()
+
+    with col2:
+        if st.button("העלאת קו״ח קיימים", key="btn_improve", use_container_width=True):
+            reset_improve()
+            go_to("improve_upload")
             st.rerun()
 
 

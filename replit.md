@@ -52,6 +52,9 @@ streamlit run app.py --server.port 5000
 
 ## Design
 - Hebrew RTL interface
-- White background, pastel blue (#7fb3d8) accent, light gray borders
-- Assistant Google Font
+- White background (#ffffff), vibrant blue (#0066FF) accent, dark text (#1a1a2e)
+- Homepage: "CV-Master" (dark) + "AI" (blue) header, two CTA buttons (filled blue + outlined)
+- Button text: "כתיבת קורות חיים" (primary/filled), "העלאת קו״ח קיימים" (secondary/outlined)
+- Assistant Google Font, 38px header, 18px buttons
+- Modern rounded corners (14px), subtle shadows
 - Mobile-first responsive design

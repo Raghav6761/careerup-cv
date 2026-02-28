@@ -44,7 +44,7 @@ def inject_custom_css():
 
         h1, h2, h3, h4, h5, h6 {
             text-align: right !important;
-            color: #2c3e50 !important;
+            color: #1a1a2e !important;
             font-family: 'Assistant', sans-serif !important;
         }
 
@@ -62,29 +62,62 @@ def inject_custom_css():
             direction: rtl !important;
             text-align: right !important;
             font-family: 'Assistant', sans-serif !important;
-            border: 1px solid #d1d9e6 !important;
-            border-radius: 10px !important;
+            border: 1.5px solid #e0e4ea !important;
+            border-radius: 12px !important;
             padding: 12px !important;
             font-size: 16px !important;
+            background: #ffffff !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
         .stTextInput > div > div > input:focus,
         .stTextArea > div > div > textarea:focus {
-            border-color: #7fb3d8 !important;
-            box-shadow: 0 0 0 2px rgba(127, 179, 216, 0.2) !important;
+            border-color: #0066FF !important;
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1) !important;
         }
 
-        .stButton > button {
+        /* Primary buttons - filled blue */
+        .stButton > button[kind="primary"],
+        .stButton > button[data-testid="stBaseButton-primary"] {
             font-family: 'Assistant', sans-serif !important;
-            font-weight: 600 !important;
-            font-size: 16px !important;
-            border-radius: 12px !important;
-            padding: 12px 28px !important;
-            min-height: 48px !important;
-            transition: all 0.2s ease !important;
+            font-weight: 700 !important;
+            font-size: 18px !important;
+            border-radius: 14px !important;
+            padding: 14px 32px !important;
+            min-height: 56px !important;
+            background: #0066FF !important;
+            color: #ffffff !important;
+            border: none !important;
+            transition: all 0.25s ease !important;
+            box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2) !important;
         }
 
-        .stButton > button:hover {
+        .stButton > button[kind="primary"]:hover,
+        .stButton > button[data-testid="stBaseButton-primary"]:hover {
+            background: #0055DD !important;
+            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Secondary buttons - outlined */
+        .stButton > button[kind="secondary"],
+        .stButton > button[data-testid="stBaseButton-secondary"] {
+            font-family: 'Assistant', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 18px !important;
+            border-radius: 14px !important;
+            padding: 14px 32px !important;
+            min-height: 56px !important;
+            background: #ffffff !important;
+            color: #0066FF !important;
+            border: 2px solid #0066FF !important;
+            transition: all 0.25s ease !important;
+        }
+
+        .stButton > button[kind="secondary"]:hover,
+        .stButton > button[data-testid="stBaseButton-secondary"]:hover {
+            background: #f0f6ff !important;
+            border-color: #0055DD !important;
             transform: translateY(-1px) !important;
         }
 
@@ -120,79 +153,21 @@ def inject_custom_css():
             direction: rtl !important;
         }
 
-        .path-card {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 20px 20px;
-            text-align: center !important;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .path-card:hover {
-            border-color: #7fb3d8;
-            box-shadow: 0 4px 16px rgba(127, 179, 216, 0.15);
-        }
-
-        .path-card-icon {
-            font-size: 36px;
-            margin-bottom: 8px;
-        }
-
-        .path-card-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 4px;
-        }
-
-        .path-card-desc {
-            font-size: 15px;
-            color: #6b7c93;
-            line-height: 1.6;
-        }
-
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:first-of-type button[kind="secondary"] {
-            background: #f8fafc !important;
-            border: 2px solid #e2e8f0 !important;
-            border-radius: 16px !important;
-            padding: 30px 20px !important;
-            font-size: 18px !important;
-            font-weight: 700 !important;
-            color: #2c3e50 !important;
-            height: 120px !important;
-            transition: all 0.3s ease !important;
-            white-space: normal !important;
-            line-height: 1.4 !important;
-        }
-
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:first-of-type button[kind="secondary"]:hover {
-            border-color: #7fb3d8 !important;
-            box-shadow: 0 4px 16px rgba(127, 179, 216, 0.15) !important;
-            background: #f0f6fb !important;
-        }
-
         .section-header {
-            background: #f0f6fb;
-            border-right: 4px solid #7fb3d8;
+            background: #f0f6ff;
+            border-right: 4px solid #0066FF;
             padding: 8px 16px;
             border-radius: 0 10px 10px 0;
             margin: 8px 0 8px 0;
             font-size: 17px;
             font-weight: 700;
-            color: #2c3e50;
+            color: #1a1a2e;
         }
 
         .suggestion-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            background: #fafbfc;
+            border: 1px solid #e0e4ea;
+            border-radius: 14px;
             padding: 20px;
             margin: 12px 0;
         }
@@ -200,7 +175,7 @@ def inject_custom_css():
         .suggestion-label {
             font-size: 13px;
             font-weight: 600;
-            color: #7fb3d8;
+            color: #0066FF;
             margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -222,11 +197,11 @@ def inject_custom_css():
 
         .improved-text {
             background: #f0faf0;
-            border-right: 3px solid #7fb3d8;
+            border-right: 3px solid #0066FF;
             padding: 12px 16px;
             border-radius: 0 8px 8px 0;
             margin: 8px 0;
-            color: #2c3e50;
+            color: #1a1a2e;
             font-size: 15px;
             line-height: 1.7;
             direction: rtl;
@@ -235,7 +210,7 @@ def inject_custom_css():
         }
 
         .chat-message-user {
-            background: #7fb3d8;
+            background: #0066FF;
             color: white;
             padding: 14px 20px;
             border-radius: 16px 16px 4px 16px;
@@ -247,8 +222,8 @@ def inject_custom_css():
         }
 
         .chat-message-ai {
-            background: #f0f6fb;
-            color: #2c3e50;
+            background: #f0f6ff;
+            color: #1a1a2e;
             padding: 14px 20px;
             border-radius: 16px 16px 16px 4px;
             margin: 8px 0;
@@ -260,26 +235,31 @@ def inject_custom_css():
 
         .app-header {
             text-align: center !important;
-            padding: 8px 0 4px 0;
+            padding: 24px 0 20px 0;
         }
 
         .app-header h1 {
             text-align: center !important;
-            font-size: 32px !important;
+            font-size: 38px !important;
             font-weight: 800 !important;
-            color: #2c3e50 !important;
-            margin-bottom: 0px !important;
+            margin-bottom: 4px !important;
+            letter-spacing: -0.5px !important;
+        }
+
+        .logo-cv {
+            color: #1a1a2e !important;
+        }
+
+        .logo-ai {
+            color: #0066FF !important;
         }
 
         .app-header p {
             text-align: center !important;
-            font-size: 15px;
-            color: #6b7c93;
+            font-size: 16px;
+            color: #6b7280;
             margin-bottom: 0px !important;
-        }
-
-        .logo-text {
-            color: #7fb3d8;
+            font-weight: 400;
         }
 
         .step-indicator {
@@ -294,34 +274,34 @@ def inject_custom_css():
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #e2e8f0;
+            background: #e0e4ea;
         }
 
         .step-dot.active {
-            background: #7fb3d8;
+            background: #0066FF;
             width: 28px;
             border-radius: 5px;
         }
 
         .cv-preview {
             background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
+            border: 1px solid #e0e4ea;
+            border-radius: 14px;
             padding: 28px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
 
         .cv-preview h2 {
             text-align: center !important;
-            color: #2c3e50 !important;
+            color: #1a1a2e !important;
             font-size: 24px !important;
             margin-bottom: 4px !important;
         }
 
         .cv-preview h3 {
-            color: #7fb3d8 !important;
+            color: #0066FF !important;
             font-size: 18px !important;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid #e0e4ea;
             padding-bottom: 6px;
         }
 
@@ -330,26 +310,29 @@ def inject_custom_css():
         }
 
         .stDownloadButton > button {
-            background-color: #7fb3d8 !important;
+            background-color: #0066FF !important;
             color: white !important;
             border: none !important;
             font-family: 'Assistant', sans-serif !important;
-            font-weight: 600 !important;
+            font-weight: 700 !important;
             font-size: 16px !important;
-            border-radius: 12px !important;
-            padding: 12px 28px !important;
-            min-height: 48px !important;
+            border-radius: 14px !important;
+            padding: 14px 28px !important;
+            min-height: 52px !important;
             width: 100% !important;
+            box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2) !important;
+            transition: all 0.25s ease !important;
         }
 
         .stDownloadButton > button:hover {
-            background-color: #6a9fc4 !important;
+            background-color: #0055DD !important;
+            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3) !important;
         }
 
         div[data-testid="stExpander"] {
             direction: rtl !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 12px !important;
+            border: 1px solid #e0e4ea !important;
+            border-radius: 14px !important;
             margin-bottom: 8px !important;
         }
 
@@ -366,25 +349,11 @@ def inject_custom_css():
                 padding: 0.25rem 0.5rem 2rem 0.5rem;
             }
 
-            .path-card {
-                padding: 16px 12px;
-                height: 160px;
-            }
-
-            .path-card-icon {
-                font-size: 28px;
-            }
-
-            .path-card-title {
-                font-size: 17px;
-            }
-
             .app-header h1 {
-                font-size: 26px !important;
+                font-size: 30px !important;
             }
 
             .stButton > button {
-                width: 100% !important;
                 min-height: 52px !important;
                 font-size: 17px !important;
             }
@@ -408,7 +377,7 @@ def inject_custom_css():
 
         div[data-testid="stSidebarContent"] {
             direction: rtl !important;
-            background: #f8fafc !important;
+            background: #fafbfc !important;
         }
     </style>
     """, unsafe_allow_html=True)
