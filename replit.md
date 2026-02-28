@@ -40,6 +40,16 @@ fonts/              - Assistant font files for PDF export
 streamlit run app.py --server.port 5000
 ```
 
+## Export Formatting
+- PDF and DOCX exports use identical visual properties across all flows (build/improve, Hebrew/English)
+- Shared DOCX helper functions: `_add_docx_body_paragraph`, `_add_docx_bullet_paragraph`, `_add_docx_job_header`, `_add_docx_separator_line`
+- Font sizes: name=20pt, section header=12pt, body/job/bullet=9pt, contact=9pt
+- Line spacing: body/job leading=13pt, bullet leading=12pt, name leading=24pt, contact leading=12pt
+- Section headers use a separate blue (#7fb3d8) separator line underneath
+- Personal details: name bold centered + contact pipe-separated centered + dark HR separator
+- Contact labels (טלפון, אימייל, etc.) are stripped via `_extract_contact_value()` (case-insensitive)
+- Bullet paragraphs have 8pt indent (rightIndent for RTL, leftIndent for LTR)
+
 ## Design
 - Hebrew RTL interface
 - White background, pastel blue (#7fb3d8) accent, light gray borders
