@@ -522,7 +522,7 @@ def render_build_form():
         experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
         st.rerun()
 
-    st.markdown('<div class="section-header">🎓 השכלה</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
     education = fd["education"]
     edu_to_delete = []
     for i, edu in enumerate(education):
@@ -540,7 +540,7 @@ def render_build_form():
         with ec2:
             edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"bf_edu_inst_{i}", placeholder="אוניברסיטת תל אביב")
         with ec1:
-            edu["year"] = st.text_input("שנת סיום", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2020")
+            edu["year"] = st.text_input("תקופה", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2018-2022 או 2022-היום")
         edu["honors"] = st.text_input("הצטיינות (אופציונלי)", value=edu.get("honors", ""), key=f"bf_edu_hon_{i}", placeholder="למשל: בוגר הצטיינות, דין של הדיקן...")
 
     if edu_to_delete:
@@ -748,7 +748,7 @@ def render_build_preview():
         cv_data["experience"] = experience
         need_rerun = True
 
-    st.markdown('<div class="section-header">🎓 השכלה</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
     education = cv_data.get("education", [])
     edu_to_delete = []
     for i, edu in enumerate(education):
@@ -760,11 +760,11 @@ def render_build_preview():
 
             ec1, ec2, ec3 = st.columns(3)
             with ec3:
-                edu["degree"] = st.text_input("תואר", value=edu.get("degree", ""), key=f"edu_degree_{i}")
+                edu["degree"] = st.text_input("תואר / תעודה", value=edu.get("degree", ""), key=f"edu_degree_{i}")
             with ec2:
-                edu["institution"] = st.text_input("מוסד", value=edu.get("institution", ""), key=f"edu_inst_{i}")
+                edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"edu_inst_{i}")
             with ec1:
-                edu["year"] = st.text_input("שנה", value=edu.get("year", ""), key=f"edu_year_{i}")
+                edu["year"] = st.text_input("תקופה", value=edu.get("year", ""), key=f"edu_year_{i}", placeholder="2018-2022 או 2022-היום")
             edu["honors"] = st.text_input("הצטיינות", value=edu.get("honors", ""), key=f"edu_hon_{i}")
             st.markdown("---")
 

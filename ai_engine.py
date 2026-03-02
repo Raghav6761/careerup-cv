@@ -501,7 +501,7 @@ def generate_cv_from_form(form_data: dict, target_position: str = "") -> dict:
     "experience": [
         {{"title": "תפקיד", "company": "חברה", "period": "תקופה", "achievements": ["הישג 1", "הישג 2"], "honors": "הצטיינות אם יש"}}
     ],
-    "education": [{{"degree": "תואר", "institution": "מוסד", "year": "שנה", "honors": "הצטיינות אם יש"}}],
+    "education": [{{"degree": "תואר", "institution": "מוסד", "year": "תקופה למשל 2018-2022 או 2022-היום", "honors": "הצטיינות אם יש"}}],
     "skills": {{"technical": ["מיומנות"], "soft": ["מיומנות"]}},
     "languages": [{{"language": "שפה", "level": "רמה"}}],
     "volunteering": ["פעילות התנדבותית"],
