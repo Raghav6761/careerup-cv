@@ -643,6 +643,20 @@ def _is_job_header_line(line: str) -> bool:
     return False
 
 
+def _is_military_line(line: str) -> bool:
+    lower = line.lower().strip()
+    military_keywords = [
+        'military service', 'military', 'idf', 'israeli defense', 'israeli air force',
+        'israeli navy', 'combat', 'national service', 'army', 'navy', 'air force',
+        'שירות צבאי', 'שירות סדיר', 'שירות מלא', 'שירות לאומי', 'צה"ל', 'צבא',
+        'חיל הים', 'חיל האוויר',
+    ]
+    for keyword in military_keywords:
+        if keyword in lower:
+            return True
+    return False
+
+
 def _extract_contact_value(line: str) -> str:
     labels = ["טלפון", "אימייל", "מייל", "דוא\"ל", "לינקדאין", "עיר מגורים", "עיר", "כתובת", "אזור מגורים", "מגורים", "linkedin", "phone", "email", "city", "address", "residence"]
     val = line.strip()
@@ -708,10 +722,11 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
         if content:
             if is_personal:
                 lines = [l.strip() for l in content.split("\n") if l.strip()]
-                if lines:
-                    elements.append(Paragraph(reshape_hebrew(lines[0]), styles["name"]))
+                contact_only = [l for l in lines if not _is_military_line(l)]
+                if contact_only:
+                    elements.append(Paragraph(reshape_hebrew(contact_only[0]), styles["name"]))
                     contact_values = []
-                    for cl in lines[1:]:
+                    for cl in contact_only[1:]:
                         val = _extract_contact_value(cl)
                         if val:
                             contact_values.append(reshape_hebrew(val))
@@ -766,9 +781,10 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
         if content:
             if is_personal:
                 lines = [l.strip() for l in content.split("\n") if l.strip()]
-                if lines:
+                contact_only = [l for l in lines if not _is_military_line(l)]
+                if contact_only:
                     p = doc.add_paragraph()
-                    run = p.add_run(lines[0])
+                    run = p.add_run(contact_only[0])
                     run.font.bold = True
                     run.font.size = Pt(20)
                     run.font.color.rgb = RGBColor(44, 62, 80)
@@ -777,7 +793,7 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
                     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     _set_docx_rtl(p)
                     contact_values = []
-                    for cl in lines[1:]:
+                    for cl in contact_only[1:]:
                         val = _extract_contact_value(cl)
                         if val:
                             contact_values.append(val)
@@ -1238,20 +1254,25 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
     last_header = None
     in_personal = False
     personal_lines = []
+    deferred_military_lines = []
     for line in translated_text.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
         if _is_section_header_en(stripped):
             if in_personal and personal_lines:
-                elements.append(Paragraph(personal_lines[0], styles["name"]))
-                contact_values = []
-                for cl in personal_lines[1:]:
-                    val = _extract_contact_value(cl)
-                    if val:
-                        contact_values.append(val)
-                if contact_values:
-                    elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+                contact_only = [l for l in personal_lines if not _is_military_line(l)]
+                military_only = [l for l in personal_lines if _is_military_line(l)]
+                deferred_military_lines.extend(military_only)
+                if contact_only:
+                    elements.append(Paragraph(contact_only[0], styles["name"]))
+                    contact_values = []
+                    for cl in contact_only[1:]:
+                        val = _extract_contact_value(cl)
+                        if val:
+                            contact_values.append(val)
+                    if contact_values:
+                        elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
                 elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
                 personal_lines = []
             header_text = _clean_section_title(stripped)
@@ -1276,14 +1297,18 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
             elements.append(Paragraph(stripped, styles["body"]))
 
     if in_personal and personal_lines:
-        elements.append(Paragraph(personal_lines[0], styles["name"]))
-        contact_values = []
-        for cl in personal_lines[1:]:
-            val = _extract_contact_value(cl)
-            if val:
-                contact_values.append(val)
-        if contact_values:
-            elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+        contact_only = [l for l in personal_lines if not _is_military_line(l)]
+        military_only = [l for l in personal_lines if _is_military_line(l)]
+        deferred_military_lines.extend(military_only)
+        if contact_only:
+            elements.append(Paragraph(contact_only[0], styles["name"]))
+            contact_values = []
+            for cl in contact_only[1:]:
+                val = _extract_contact_value(cl)
+                if val:
+                    contact_values.append(val)
+            if contact_values:
+                elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
         elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
     doc.build(elements)
@@ -1292,9 +1317,14 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
 
 def _add_docx_personal_block_en(doc, personal_lines):
     if not personal_lines:
-        return
+        return []
+    contact_only = [l for l in personal_lines if not _is_military_line(l)]
+    military_only = [l for l in personal_lines if _is_military_line(l)]
+    if not contact_only:
+        _add_docx_hr(doc)
+        return military_only
     p = doc.add_paragraph()
-    run = p.add_run(personal_lines[0])
+    run = p.add_run(contact_only[0])
     run.font.bold = True
     run.font.size = Pt(20)
     run.font.color.rgb = RGBColor(44, 62, 80)
@@ -1302,7 +1332,7 @@ def _add_docx_personal_block_en(doc, personal_lines):
     p.paragraph_format.line_spacing = Pt(24)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     contact_values = []
-    for cl in personal_lines[1:]:
+    for cl in contact_only[1:]:
         val = _extract_contact_value(cl)
         if val:
             contact_values.append(val)
@@ -1315,6 +1345,7 @@ def _add_docx_personal_block_en(doc, personal_lines):
         p.paragraph_format.line_spacing = Pt(12)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     _add_docx_hr(doc)
+    return military_only
 
 
 def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
@@ -1337,13 +1368,15 @@ def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
     last_header = None
     in_personal = False
     personal_lines = []
+    deferred_military_lines = []
     for line in translated_text.split("\n"):
         stripped = line.strip()
         if not stripped:
             continue
         if _is_section_header_en(stripped):
             if in_personal and personal_lines:
-                _add_docx_personal_block_en(doc, personal_lines)
+                mil = _add_docx_personal_block_en(doc, personal_lines)
+                deferred_military_lines.extend(mil)
                 personal_lines = []
             header_text = _clean_section_title(stripped)
             if header_text == last_header:
@@ -1366,7 +1399,8 @@ def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
             _add_docx_body_paragraph(doc, stripped, is_rtl=False)
 
     if in_personal and personal_lines:
-        _add_docx_personal_block_en(doc, personal_lines)
+        mil = _add_docx_personal_block_en(doc, personal_lines)
+        deferred_military_lines.extend(mil)
 
     buffer = io.BytesIO()
     doc.save(buffer)

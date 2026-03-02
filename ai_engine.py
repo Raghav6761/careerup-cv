@@ -626,6 +626,7 @@ Rules:
 - Preserve line breaks and bullet points (• or -)
 - Do NOT add repetitive sub-headers like "Selected Achievements", "Key Achievements", or "Role Description" under each job. Just list the achievements directly as bullet points under the job title/company/period line. The section header "Professional Experience" or "Work Experience" should appear only once at the top
 - For military service lines, translate them as regular text (not as job positions). Mark them clearly, e.g., "Military Service: Israeli Air Force, Intelligence – Clerk (full service)"
+- CRITICAL: Military service information must NEVER appear in the personal details/contact section at the top of the CV. It should only appear in its own separate section (e.g., "Military Service") or under "Additional Information". The contact/personal section should only contain: name, phone, email, city, LinkedIn
 - Do NOT add any explanations, just return the translated text"""
 
     return call_ai(system_prompt, f"Translate this CV to English:\n\n{cv_text}")
