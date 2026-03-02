@@ -510,7 +510,7 @@ def render_build_form():
             key=f"bf_exp_ach_{i}",
             height=70,
             label_visibility="collapsed",
-            placeholder="הישג 1\nהישג 2\nהישג 3"
+            placeholder="הישגים ו/או כישורים שהבאת לידי ביטוי במסגרת התפקיד"
         )
         exp["honors"] = st.text_input("הצטיינות (אופציונלי)", value=exp.get("honors", ""), key=f"bf_exp_hon_{i}", placeholder="למשל: עובד מצטיין, פרס חדשנות...")
 
