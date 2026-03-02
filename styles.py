@@ -344,6 +344,10 @@ def inject_custom_css():
             direction: ltr !important;
         }
 
+        .stTextArea div[data-testid="InputInstructions"] {
+            display: none !important;
+        }
+
         @media (max-width: 768px) {
             .main .block-container {
                 padding: 0.25rem 0.5rem 2rem 0.5rem;
