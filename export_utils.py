@@ -342,6 +342,13 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
         if lang_parts:
             elements.append(Paragraph(reshape_hebrew(" | ".join(lang_parts)), styles["body"]))
 
+    military = _filter_list(cv_data.get("military", []))
+    if military:
+        elements.append(Paragraph(reshape_hebrew("שירות צבאי / לאומי"), styles["section_header"]))
+        elements.append(_make_section_separator())
+        for item in military:
+            elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
+
     volunteering = _filter_list(cv_data.get("volunteering", []))
     if volunteering:
         elements.append(Paragraph(reshape_hebrew("התנדבות"), styles["section_header"]))
@@ -596,6 +603,12 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
                 lang_parts.append(part)
         if lang_parts:
             _add_docx_body_paragraph(doc, " | ".join(lang_parts))
+
+    military = _filter_list(cv_data.get("military", []))
+    if military:
+        _add_docx_section_header(doc, "שירות צבאי / לאומי")
+        for item in military:
+            _add_docx_bullet_paragraph(doc, f"• {item}")
 
     volunteering = _filter_list(cv_data.get("volunteering", []))
     if volunteering:
@@ -1012,29 +1025,33 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
         if lang_parts:
             elements.append(Paragraph(" | ".join(lang_parts), styles["body"]))
 
-    volunteering = cv_data.get("volunteering", [])
+    military = _filter_list(cv_data.get("military", []))
+    if military:
+        elements.append(Paragraph("Military / National Service", styles["section_header"]))
+        elements.append(_make_section_separator())
+        for item in military:
+            elements.append(Paragraph(f"• {item}", styles["bullet"]))
+
+    volunteering = _filter_list(cv_data.get("volunteering", []))
     if volunteering:
         elements.append(Paragraph("Volunteering", styles["section_header"]))
         elements.append(_make_section_separator())
         for item in volunteering:
-            if item and item.strip():
-                elements.append(Paragraph(f"• {item}", styles["bullet"]))
+            elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
-    projects = cv_data.get("projects", [])
+    projects = _filter_list(cv_data.get("projects", []))
     if projects:
         elements.append(Paragraph("Personal Projects", styles["section_header"]))
         elements.append(_make_section_separator())
         for item in projects:
-            if item and item.strip():
-                elements.append(Paragraph(f"• {item}", styles["bullet"]))
+            elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
-    additional = cv_data.get("additional", [])
+    additional = _filter_list(cv_data.get("additional", []))
     if additional:
         elements.append(Paragraph("Additional Information", styles["section_header"]))
         elements.append(_make_section_separator())
         for item in additional:
-            if item:
-                elements.append(Paragraph(f"• {item}", styles["bullet"]))
+            elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
     doc.build(elements)
     return buffer.getvalue()
@@ -1164,28 +1181,29 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
         if lang_parts:
             _add_docx_body_paragraph(doc, " | ".join(lang_parts), is_rtl=False)
 
-    volunteering = cv_data.get("volunteering", [])
+    military = _filter_list(cv_data.get("military", []))
+    if military:
+        _add_docx_section_header_en(doc, "Military / National Service")
+        for item in military:
+            _add_docx_bullet_paragraph(doc, f"• {item}", is_rtl=False)
+
+    volunteering = _filter_list(cv_data.get("volunteering", []))
     if volunteering:
         _add_docx_section_header_en(doc, "Volunteering")
         for item in volunteering:
-            if item and item.strip():
-                _add_docx_bullet_paragraph(doc, f"• {item}", is_rtl=False)
+            _add_docx_bullet_paragraph(doc, f"• {item}", is_rtl=False)
 
-    projects = cv_data.get("projects", [])
+    projects = _filter_list(cv_data.get("projects", []))
     if projects:
         _add_docx_section_header_en(doc, "Personal Projects")
         for item in projects:
-            if item and item.strip():
-                _add_docx_bullet_paragraph(doc, f"• {item}", is_rtl=False)
+            _add_docx_bullet_paragraph(doc, f"• {item}", is_rtl=False)
 
-    additional = cv_data.get("additional", [])
+    additional = _filter_list(cv_data.get("additional", []))
     if additional:
         _add_docx_section_header_en(doc, "Additional Information")
         for item in additional:
-            if item:
-                _add_docx_bullet_paragraph(doc, f"• {item}", is_rtl=False)
-                run = p.add_run(f"• {item}")
-                run.font.size = Pt(10)
+            _add_docx_bullet_paragraph(doc, f"• {item}", is_rtl=False)
 
     buffer = io.BytesIO()
     doc.save(buffer)

@@ -32,7 +32,7 @@ fonts/              - Assistant font files for PDF export
 - `improve_upload` - File upload page
 - `improve_review` - Side-by-side comparison with approve/edit
 - `improve_export` - Final preview and download
-- `build_form` - Smart form for filling CV fields (personal details, experience, education, skills, languages)
+- `build_form` - Smart form for filling CV fields (personal details, experience, education, skills, languages, military service, volunteering, projects, additional info)
 - `build_preview` - Generated CV preview and download
 
 ## Running
@@ -49,6 +49,9 @@ streamlit run app.py --server.port 5000
 - Personal details: name bold centered + contact pipe-separated centered + dark HR separator
 - Contact labels (טלפון, אימייל, etc.) are stripped via `_extract_contact_value()` (case-insensitive)
 - Bullet paragraphs have 8pt indent (rightIndent for RTL, leftIndent for LTR)
+- Military service rendered as separate section "שירות צבאי / לאומי" (optional), ordered: languages → military → volunteering → projects → additional
+- Military lines filtered from personal/contact section in improve exports via `_is_military_line()` helper
+- Optional sections (military, volunteering, projects, additional) only appear if user provided content
 
 ## Design
 - Hebrew RTL interface

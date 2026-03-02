@@ -430,6 +430,7 @@ def _init_build_form_data():
             "technical_skills": "",
             "soft_skills": "",
             "languages": [{"language": "עברית", "level": "שפת אם"}, {"language": "אנגלית", "level": ""}],
+            "military": "",
             "volunteering": "",
             "projects": "",
             "additional": "",
@@ -589,8 +590,17 @@ def render_build_form():
         languages.append({"language": "", "level": ""})
         st.rerun()
 
+    st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי (אופציונלי)</div>', unsafe_allow_html=True)
+    fd["military"] = st.text_area(
+        "שירות צבאי",
+        value=fd.get("military", ""),
+        key="bf_military",
+        height=60,
+        label_visibility="collapsed",
+        placeholder="למשל: חיל המודיעין - קצינת מחקר, שירות מלא 2018-2020"
+    )
+
     st.markdown('<div class="section-header">🤝 התנדבות בקהילה (אופציונלי)</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:13px; color:#6b7c93;">פעילות התנדבותית מלמדת על ערכים ויוצרת חיבור עם מגייסים</span>', unsafe_allow_html=True)
     fd["volunteering"] = st.text_area(
         "התנדבות",
         value=fd.get("volunteering", ""),
@@ -601,7 +611,6 @@ def render_build_form():
     )
 
     st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים (אופציונלי)</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:13px; color:#6b7c93;">פרויקטים אישיים שביצעת - במיוחד רלוונטי לתחומי פיתוח וטכנולוגיה</span>', unsafe_allow_html=True)
     fd["projects"] = st.text_area(
         "פרויקטים",
         value=fd.get("projects", ""),
@@ -611,14 +620,14 @@ def render_build_form():
         placeholder="למשל: פיתוח אפליקציה לניהול משימות בReact, בניית אתר אישי..."
     )
 
-    st.markdown('<div class="section-header">📌 מידע נוסף</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">📌 מידע נוסף (אופציונלי)</div>', unsafe_allow_html=True)
     fd["additional"] = st.text_area(
         "מידע נוסף",
         value=fd["additional"],
         key="bf_additional",
         height=60,
         label_visibility="collapsed",
-        placeholder="קורסים, הסמכות, שירות צבאי..."
+        placeholder="קורסים, הסמכות, פרסומים..."
     )
 
     st.session_state.build_form_data = fd
@@ -655,6 +664,7 @@ def render_build_form():
         for edu in cv_data.get("education", []):
             if _is_empty_content(edu.get("honors", "")):
                 edu["honors"] = ""
+        cv_data["military"] = _filter_list(cv_data.get("military", []))
         cv_data["volunteering"] = _filter_list(cv_data.get("volunteering", []))
         cv_data["projects"] = _filter_list(cv_data.get("projects", []))
         cv_data["additional"] = _filter_list(cv_data.get("additional", []))
@@ -667,6 +677,7 @@ def render_build_form():
 
 
 def render_build_preview():
+    from export_utils import _filter_list
     render_header()
 
     if st.button("→ חזרה לטופס", key="back_form"):
@@ -823,44 +834,61 @@ def render_build_preview():
         cv_data["languages"] = languages
         need_rerun = True
 
-    st.markdown('<div class="section-header">🤝 התנדבות</div>', unsafe_allow_html=True)
+    military = cv_data.get("military", [])
+    if military and _filter_list(military):
+        st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי</div>', unsafe_allow_html=True)
+        mil_text = "\n".join(military) if isinstance(military, list) else str(military)
+        new_mil = st.text_area(
+            "שירות צבאי (שורה לכל פריט)",
+            value=mil_text,
+            key="build_military",
+            height=60,
+            label_visibility="collapsed",
+            placeholder="חיל המודיעין - קצינת מחקר, שירות מלא"
+        )
+        cv_data["military"] = [m.strip() for m in new_mil.split("\n") if m.strip()]
+
     volunteering = cv_data.get("volunteering", [])
-    vol_text = "\n".join(volunteering) if isinstance(volunteering, list) else str(volunteering)
-    new_vol = st.text_area(
-        "התנדבות (שורה לכל פריט)",
-        value=vol_text,
-        key="build_volunteering",
-        height=60,
-        label_visibility="collapsed",
-        placeholder="מנטור בעמותה, מתנדב בארגון..."
-    )
-    cv_data["volunteering"] = [v.strip() for v in new_vol.split("\n") if v.strip()]
+    if volunteering and _filter_list(volunteering):
+        st.markdown('<div class="section-header">🤝 התנדבות</div>', unsafe_allow_html=True)
+        vol_text = "\n".join(volunteering) if isinstance(volunteering, list) else str(volunteering)
+        new_vol = st.text_area(
+            "התנדבות (שורה לכל פריט)",
+            value=vol_text,
+            key="build_volunteering",
+            height=60,
+            label_visibility="collapsed",
+            placeholder="מנטור בעמותה, מתנדב בארגון..."
+        )
+        cv_data["volunteering"] = [v.strip() for v in new_vol.split("\n") if v.strip()]
 
-    st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים</div>', unsafe_allow_html=True)
     projects = cv_data.get("projects", [])
-    proj_text = "\n".join(projects) if isinstance(projects, list) else str(projects)
-    new_proj = st.text_area(
-        "פרויקטים (שורה לכל פריט)",
-        value=proj_text,
-        key="build_projects",
-        height=60,
-        label_visibility="collapsed",
-        placeholder="פיתוח אפליקציה, בניית אתר..."
-    )
-    cv_data["projects"] = [p.strip() for p in new_proj.split("\n") if p.strip()]
+    if projects and _filter_list(projects):
+        st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים</div>', unsafe_allow_html=True)
+        proj_text = "\n".join(projects) if isinstance(projects, list) else str(projects)
+        new_proj = st.text_area(
+            "פרויקטים (שורה לכל פריט)",
+            value=proj_text,
+            key="build_projects",
+            height=60,
+            label_visibility="collapsed",
+            placeholder="פיתוח אפליקציה, בניית אתר..."
+        )
+        cv_data["projects"] = [p.strip() for p in new_proj.split("\n") if p.strip()]
 
-    st.markdown('<div class="section-header">📌 מידע נוסף</div>', unsafe_allow_html=True)
     additional = cv_data.get("additional", [])
-    add_text = "\n".join(additional)
-    new_add = st.text_area(
-        "מידע נוסף (שורה לכל פריט)",
-        value=add_text,
-        key="build_additional",
-        height=80,
-        label_visibility="collapsed",
-        placeholder="קורסים, הסמכות, שירות צבאי..."
-    )
-    cv_data["additional"] = [a.strip() for a in new_add.split("\n") if a.strip()]
+    if additional and _filter_list(additional):
+        st.markdown('<div class="section-header">📌 מידע נוסף</div>', unsafe_allow_html=True)
+        add_text = "\n".join(additional)
+        new_add = st.text_area(
+            "מידע נוסף (שורה לכל פריט)",
+            value=add_text,
+            key="build_additional",
+            height=80,
+            label_visibility="collapsed",
+            placeholder="קורסים, הסמכות, פרסומים..."
+        )
+        cv_data["additional"] = [a.strip() for a in new_add.split("\n") if a.strip()]
 
     st.session_state.generated_cv = cv_data
 

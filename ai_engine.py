@@ -504,6 +504,7 @@ def generate_cv_from_form(form_data: dict, target_position: str = "") -> dict:
     "education": [{{"degree": "תואר", "institution": "מוסד", "year": "תקופה למשל 2018-2022 או 2022-היום", "honors": "הצטיינות אם יש"}}],
     "skills": {{"technical": ["מיומנות"], "soft": ["מיומנות"]}},
     "languages": [{{"language": "שפה", "level": "רמה"}}],
+    "military": ["שירות צבאי / לאומי"],
     "volunteering": ["פעילות התנדבותית"],
     "projects": ["פרויקט עצמאי"],
     "additional": ["פריט נוסף"]
@@ -512,7 +513,7 @@ def generate_cv_from_form(form_data: dict, target_position: str = "") -> dict:
 כללים טכניים:
 - שמור על תמציתיות מקסימלית - קורות חיים חייבים להיכנס לעמוד אחד בלבד
 - אל תוסיף כותרות כמו "קורות חיים" - רק התוכן עצמו
-- אם יש התנדבות או פרויקטים עצמאיים, כלול אותם בשדות המתאימים. אם אין - השאר מערך ריק []
+- אם יש שירות צבאי/לאומי, התנדבות או פרויקטים עצמאיים, כלול אותם בשדות המתאימים. אם אין - השאר מערך ריק []
 - אם יש הצטיינויות מעבודה, צבא או לימודים - הבלט אותן
 - חשוב מאוד: אל תשתמש בסוגריים עגולים או בגרשיים כפולים בטקסט העברי. במקום סוגריים השתמש במקף - או בפסיק. במקום גרשיים השתמש בגרש בודד או פשוט השמט אותם
 - חשוב ביותר: אם שדה לא סופק בנתוני הטופס - השאר אותו כמחרוזת ריקה "" או מערך ריק []. לא לכתוב "לא צוין", "לא סופק", "לא מולא" או כל טקסט ממלא מקום! אם אין מידע - פשוט השאר ריק
@@ -563,6 +564,10 @@ def generate_cv_from_form(form_data: dict, target_position: str = "") -> dict:
         level = lang.get("level", "")
         if lang_name:
             form_text += f"- {lang_name}: {level}\n"
+
+    military = form_data.get("military", "")
+    if military:
+        form_text += f"\nשירות צבאי / לאומי: {military}\n"
 
     volunteering = form_data.get("volunteering", "")
     if volunteering:
