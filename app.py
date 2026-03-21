@@ -213,11 +213,11 @@ def render_improve_review():
             col_right, col_left = st.columns(2)
 
             with col_right:
-                st.markdown('<div class="suggestion-label">מקור</div>', unsafe_allow_html=True)
+                st.markdown('<div class="suggestion-label">נוסח מקור</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="original-text">{original}</div>', unsafe_allow_html=True)
 
             with col_left:
-                st.markdown('<div class="suggestion-label">מוצע</div>', unsafe_allow_html=True)
+                st.markdown('<div class="suggestion-label">נוסח מחודש / מוצע</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="improved-text">{improved}</div>', unsafe_allow_html=True)
 
             decision_key = f"decision_{i}"
