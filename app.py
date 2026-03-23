@@ -1,5 +1,41 @@
+import re
 import streamlit as st
 from styles import inject_custom_css
+
+
+def _format_cv_html(text: str) -> str:
+    """Convert plain CV text into formatted HTML with bold headers and styled bullets."""
+    if not text:
+        return ""
+    lines = text.split("\n")
+    html_parts = []
+    # Regex: line that starts with a 4-digit year or year range (job header)
+    year_pattern = re.compile(r"^(19|20)\d{2}[\–\-–]")
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            html_parts.append('<div style="height:6px"></div>')
+            continue
+        # Bullet point
+        if stripped.startswith("•") or stripped.startswith("-") or stripped.startswith("–"):
+            content = stripped.lstrip("•–- ").strip()
+            html_parts.append(
+                f'<div style="display:flex;gap:8px;align-items:flex-start;margin:3px 0;">'
+                f'<span style="color:#0066FF;font-weight:700;flex-shrink:0;">•</span>'
+                f'<span>{content}</span></div>'
+            )
+        # Job/period header line (starts with year or contains year range)
+        elif year_pattern.match(stripped) or re.search(r"(19|20)\d{2}[\–\-–](19|20)\d{2}", stripped):
+            html_parts.append(f'<div style="font-weight:700;color:#1a1a2e;margin:6px 0 2px 0;">{stripped}</div>')
+        # Pipe-separated line (contact details)
+        elif "|" in stripped and len(stripped.split("|")) >= 2:
+            html_parts.append(f'<div style="font-weight:500;color:#555;margin:2px 0;">{stripped}</div>')
+        # Short line (≤60 chars, no period at end) → treat as sub-header/title
+        elif len(stripped) <= 60 and not stripped.endswith(".") and not stripped.endswith(","):
+            html_parts.append(f'<div style="font-weight:600;color:#1a1a2e;margin:4px 0 1px 0;">{stripped}</div>')
+        else:
+            html_parts.append(f'<div style="margin:2px 0;">{stripped}</div>')
+    return "".join(html_parts)
 
 st.set_page_config(
     page_title="Career Up | CV Master AI",
@@ -214,11 +250,11 @@ def render_improve_review():
 
             with col_right:
                 st.markdown('<div class="suggestion-label">נוסח מקור</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="original-text">{original}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="original-text">{_format_cv_html(original)}</div>', unsafe_allow_html=True)
 
             with col_left:
                 st.markdown('<div class="suggestion-label">נוסח מחודש / מוצע</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="improved-text">{improved}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="improved-text">{_format_cv_html(improved)}</div>', unsafe_allow_html=True)
 
             decision_key = f"decision_{i}"
             current_decision = st.session_state.section_decisions.get(decision_key, "improved")

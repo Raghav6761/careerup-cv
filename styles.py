@@ -189,10 +189,17 @@ def inject_custom_css():
             margin: 8px 0;
             color: #5a5a5a;
             font-size: 15px;
-            line-height: 1.7;
+            line-height: 1.75;
             direction: rtl;
-            unicode-bidi: plaintext;
             text-align: right;
+        }
+
+        .original-text div, .original-text span {
+            direction: rtl !important;
+            text-align: right !important;
+            font-family: 'Assistant', sans-serif !important;
+            font-size: 15px;
+            color: #5a5a5a;
         }
 
         .improved-text {
@@ -203,10 +210,16 @@ def inject_custom_css():
             margin: 8px 0;
             color: #1a1a2e;
             font-size: 15px;
-            line-height: 1.7;
+            line-height: 1.75;
             direction: rtl;
-            unicode-bidi: plaintext;
             text-align: right;
+        }
+
+        .improved-text div, .improved-text span {
+            direction: rtl !important;
+            text-align: right !important;
+            font-family: 'Assistant', sans-serif !important;
+            font-size: 15px;
         }
 
         .chat-message-user {
