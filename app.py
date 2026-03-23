@@ -72,6 +72,8 @@ def reset_improve():
         del st.session_state.improve_final_sections
     if "improve_target_position" in st.session_state:
         del st.session_state.improve_target_position
+    if "improve_language" in st.session_state:
+        del st.session_state.improve_language
 
 
 def reset_build():
@@ -140,6 +142,17 @@ def render_improve_upload():
         help="פורמטים נתמכים: PDF, DOCX, TXT"
     )
 
+    st.markdown('<div class="section-header">🌐 שפת הנוסח המשופר</div>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:13px; color:#6b7c93;">בחר באיזו שפה תרצה לקבל את הגרסה המשופרת של קורות החיים</span>', unsafe_allow_html=True)
+    lang_choice = st.radio(
+        "שפת הנוסח המשופר",
+        ["🇮🇱 עברית", "🇺🇸 English"],
+        horizontal=True,
+        key="lang_radio",
+        label_visibility="collapsed"
+    )
+    st.session_state.improve_language = "en" if "English" in lang_choice else "he"
+
     st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
     st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - הבינה המלאכותית תחלץ מילות מפתח ותשלב אותן בקורות החיים כדי לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
     if "improve_target_position" not in st.session_state:
@@ -173,7 +186,8 @@ def render_improve_upload():
                     st.write("🔍 קורא את קורות החיים...")
                     st.write("📊 מזהה סעיפים ומנסח הצעות שיפור...")
 
-                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position)
+                    lang = st.session_state.get("improve_language", "he")
+                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang)
 
                     st.write("✅ הניתוח הושלם!")
                     status.update(label="הניתוח הושלם!", state="complete")
@@ -358,90 +372,125 @@ def render_improve_export():
     st.markdown('<div class="section-header">⬇️ הורדת קורות החיים</div>', unsafe_allow_html=True)
 
     export_sections = [s for s in st.session_state.improve_final_sections if s["final_text"].strip()]
+    is_english_mode = st.session_state.get("improve_language", "he") == "en"
 
-    col1, col2 = st.columns(2)
-
-    with col2:
-        try:
-            from export_utils import export_improved_cv_to_pdf
-            pdf_bytes = export_improved_cv_to_pdf(export_sections)
-            st.download_button(
-                label="📥 הורד כ-PDF",
-                data=pdf_bytes,
-                file_name="cv_improved.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"שגיאה ביצירת PDF: {str(e)}")
-
-    with col1:
-        try:
-            from export_utils import export_improved_cv_to_docx
-            docx_bytes = export_improved_cv_to_docx(export_sections)
-            st.download_button(
-                label="📥 הורד כ-DOCX",
-                data=docx_bytes,
-                file_name="cv_improved.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"שגיאה ביצירת DOCX: {str(e)}")
-
-    st.markdown('<div class="section-header">🌐 הורדה באנגלית (תרגום)</div>', unsafe_allow_html=True)
-
-    if "improve_en_translated" not in st.session_state:
-        st.session_state.improve_en_translated = None
-    if "improve_en_translating" not in st.session_state:
-        st.session_state.improve_en_translating = False
-
-    if st.session_state.improve_en_translated is None:
-        if st.button("🔄 תרגם לאנגלית", use_container_width=True, key="translate_improve_btn"):
-            st.session_state.improve_en_translating = True
-            st.rerun()
-
-        if st.session_state.improve_en_translating:
-            with st.spinner("מתרגם לאנגלית..."):
-                try:
-                    from ai_engine import translate_cv_to_english
-                    full_text = "\n\n".join([
-                        f"=== {s['title']} ===\n{s['final_text']}" for s in export_sections
-                    ])
-                    st.session_state.improve_en_translated = translate_cv_to_english(full_text)
-                    st.session_state.improve_en_translating = False
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"שגיאה בתרגום: {str(e)}")
-                    st.session_state.improve_en_translating = False
-    else:
-        col3, col4 = st.columns(2)
-        with col4:
+    if is_english_mode:
+        # English mode: export directly using English export functions
+        en_text = "\n\n".join([
+            f"=== {s['title']} ===\n{s['final_text']}" for s in export_sections
+        ])
+        col1, col2 = st.columns(2)
+        with col2:
             try:
                 from export_utils import export_improved_cv_to_pdf_en
-                pdf_en = export_improved_cv_to_pdf_en(st.session_state.improve_en_translated)
+                pdf_en = export_improved_cv_to_pdf_en(en_text)
                 st.download_button(
                     label="📥 Download PDF (English)",
                     data=pdf_en,
-                    file_name="cv_english.pdf",
+                    file_name="cv_improved_en.pdf",
                     mime="application/pdf",
                     use_container_width=True
                 )
             except Exception as e:
                 st.error(f"שגיאה ביצירת PDF: {str(e)}")
-        with col3:
+        with col1:
             try:
                 from export_utils import export_improved_cv_to_docx_en
-                docx_en = export_improved_cv_to_docx_en(st.session_state.improve_en_translated)
+                docx_en = export_improved_cv_to_docx_en(en_text)
                 st.download_button(
                     label="📥 Download DOCX (English)",
                     data=docx_en,
-                    file_name="cv_english.docx",
+                    file_name="cv_improved_en.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
             except Exception as e:
                 st.error(f"שגיאה ביצירת DOCX: {str(e)}")
+    else:
+        # Hebrew mode: standard Hebrew exports + optional translate button
+        col1, col2 = st.columns(2)
+
+        with col2:
+            try:
+                from export_utils import export_improved_cv_to_pdf
+                pdf_bytes = export_improved_cv_to_pdf(export_sections)
+                st.download_button(
+                    label="📥 הורד כ-PDF",
+                    data=pdf_bytes,
+                    file_name="cv_improved.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"שגיאה ביצירת PDF: {str(e)}")
+
+        with col1:
+            try:
+                from export_utils import export_improved_cv_to_docx
+                docx_bytes = export_improved_cv_to_docx(export_sections)
+                st.download_button(
+                    label="📥 הורד כ-DOCX",
+                    data=docx_bytes,
+                    file_name="cv_improved.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"שגיאה ביצירת DOCX: {str(e)}")
+
+        st.markdown('<div class="section-header">🌐 הורדה באנגלית (תרגום)</div>', unsafe_allow_html=True)
+
+        if "improve_en_translated" not in st.session_state:
+            st.session_state.improve_en_translated = None
+        if "improve_en_translating" not in st.session_state:
+            st.session_state.improve_en_translating = False
+
+        if st.session_state.improve_en_translated is None:
+            if st.button("🔄 תרגם לאנגלית", use_container_width=True, key="translate_improve_btn"):
+                st.session_state.improve_en_translating = True
+                st.rerun()
+
+            if st.session_state.improve_en_translating:
+                with st.spinner("מתרגם לאנגלית..."):
+                    try:
+                        from ai_engine import translate_cv_to_english
+                        full_text = "\n\n".join([
+                            f"=== {s['title']} ===\n{s['final_text']}" for s in export_sections
+                        ])
+                        st.session_state.improve_en_translated = translate_cv_to_english(full_text)
+                        st.session_state.improve_en_translating = False
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"שגיאה בתרגום: {str(e)}")
+                        st.session_state.improve_en_translating = False
+        else:
+            col3, col4 = st.columns(2)
+            with col4:
+                try:
+                    from export_utils import export_improved_cv_to_pdf_en
+                    pdf_en = export_improved_cv_to_pdf_en(st.session_state.improve_en_translated)
+                    st.download_button(
+                        label="📥 Download PDF (English)",
+                        data=pdf_en,
+                        file_name="cv_english.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"שגיאה ביצירת PDF: {str(e)}")
+            with col3:
+                try:
+                    from export_utils import export_improved_cv_to_docx_en
+                    docx_en = export_improved_cv_to_docx_en(st.session_state.improve_en_translated)
+                    st.download_button(
+                        label="📥 Download DOCX (English)",
+                        data=docx_en,
+                        file_name="cv_english.docx",
+                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
     st.markdown("---")
     if st.button("🏠 חזרה לדף הבית", use_container_width=True):

@@ -20,16 +20,22 @@ FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 
 _EMPTY_PLACEHOLDERS = [
     "לא צוין", "לא צויין", "לא סופק", "לא מולא", "לא קיים",
-    "לא רלוונטי", "לא קיים במקור", "אין", "ללא",
+    "לא רלוונטי", "לא קיים במקור", "אין", "ללא", "—", "-",
     "not specified", "not provided", "n/a", "none", "not available",
-    "no data", "not applicable",
+    "no data", "not applicable", "na", "tbd", "n.a.", "n.a",
 ]
 
 def _is_empty_content(text: str) -> bool:
     if not text or not text.strip():
         return True
     cleaned = text.strip().rstrip(".").strip()
-    return cleaned.lower() in _EMPTY_PLACEHOLDERS
+    cleaned_lower = cleaned.lower()
+    if cleaned_lower in _EMPTY_PLACEHOLDERS:
+        return True
+    for placeholder in _EMPTY_PLACEHOLDERS:
+        if cleaned_lower.startswith(placeholder.lower() + " ") or cleaned_lower.startswith(placeholder.lower() + ":") or cleaned_lower.startswith(placeholder.lower() + "-"):
+            return True
+    return False
 
 def _filter_list(items: list) -> list:
     if not items:
@@ -946,12 +952,12 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
     elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
     summary = cv_data.get("professional_summary", "")
-    if summary:
+    if summary and not _is_empty_content(summary):
         elements.append(Paragraph("Professional Summary", styles["section_header"]))
         elements.append(_make_section_separator())
         elements.append(Paragraph(summary, styles["body"]))
 
-    experience = cv_data.get("experience", [])
+    experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
     if experience:
         elements.append(Paragraph("Professional Experience", styles["section_header"]))
         elements.append(_make_section_separator())
@@ -971,13 +977,13 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
             if header_parts:
                 elements.append(Paragraph(" | ".join(header_parts), styles["job_title"]))
             for ach in exp.get("achievements", []):
-                if ach.strip():
+                if ach.strip() and not _is_empty_content(ach):
                     elements.append(Paragraph(f"• {ach}", styles["bullet"]))
             honors = exp.get("honors", "")
-            if honors and honors.strip():
+            if honors and honors.strip() and not _is_empty_content(honors):
                 elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
 
-    education = cv_data.get("education", [])
+    education = [e for e in cv_data.get("education", []) if _has_real_edu(e)]
     if education:
         elements.append(Paragraph("Education", styles["section_header"]))
         elements.append(_make_section_separator())
@@ -995,12 +1001,12 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
                 parts.append(institution)
             if parts:
                 elements.append(Paragraph(" | ".join(parts), styles["body"]))
-            if honors and honors.strip():
+            if honors and honors.strip() and not _is_empty_content(honors):
                 elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
 
     skills = cv_data.get("skills", {})
-    technical = skills.get("technical", [])
-    soft = skills.get("soft", [])
+    technical = _filter_list(skills.get("technical", []))
+    soft = _filter_list(skills.get("soft", []))
     if technical or soft:
         elements.append(Paragraph("Skills", styles["section_header"]))
         elements.append(_make_section_separator())
@@ -1107,11 +1113,11 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
     _add_docx_hr(doc)
 
     summary = cv_data.get("professional_summary", "")
-    if summary:
+    if summary and not _is_empty_content(summary):
         _add_docx_section_header_en(doc, "Professional Summary")
         _add_docx_body_paragraph(doc, summary, is_rtl=False)
 
-    experience = cv_data.get("experience", [])
+    experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
     if experience:
         _add_docx_section_header_en(doc, "Professional Experience")
         for idx, exp in enumerate(experience):
@@ -1130,13 +1136,13 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
             if header_parts:
                 _add_docx_job_header(doc, " | ".join(header_parts), is_rtl=False)
             for ach in exp.get("achievements", []):
-                if ach.strip():
+                if ach.strip() and not _is_empty_content(ach):
                     _add_docx_bullet_paragraph(doc, f"• {ach}", is_rtl=False)
             honors = exp.get("honors", "")
-            if honors and honors.strip():
+            if honors and honors.strip() and not _is_empty_content(honors):
                 _add_docx_bullet_paragraph(doc, f"★ {honors}", is_rtl=False)
 
-    education = cv_data.get("education", [])
+    education = [e for e in cv_data.get("education", []) if _has_real_edu(e)]
     if education:
         _add_docx_section_header_en(doc, "Education")
         for edu in education:
@@ -1153,12 +1159,12 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
                 parts.append(institution)
             if parts:
                 _add_docx_body_paragraph(doc, " | ".join(parts), is_rtl=False)
-            if honors and honors.strip():
+            if honors and honors.strip() and not _is_empty_content(honors):
                 _add_docx_bullet_paragraph(doc, f"★ {honors}", is_rtl=False)
 
     skills = cv_data.get("skills", {})
-    technical = skills.get("technical", [])
-    soft = skills.get("soft", [])
+    technical = _filter_list(skills.get("technical", []))
+    soft = _filter_list(skills.get("soft", []))
     if technical or soft:
         _add_docx_section_header_en(doc, "Skills")
         if technical:

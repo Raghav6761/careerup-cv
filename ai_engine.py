@@ -123,10 +123,21 @@ def _safe_json_parse(text: str) -> dict:
         raise
 
 
-def analyze_cv(cv_text: str, target_position: str = "") -> dict:
-    target_instruction = ""
+def analyze_cv(cv_text: str, target_position: str = "", language: str = "he") -> dict:
+    is_english = (language == "en")
+
     if target_position.strip():
-        target_instruction = f"""
+        if is_english:
+            target_instruction = f"""
+
+Specific job provided:
+"{target_position}"
+* Tailor the CV specifically to this role.
+* Incorporate relevant keywords from the job description naturally.
+* Highlight experience, skills and achievements that match the requirements.
+* In the keywords_to_add field, add specific keywords from the job description to help pass ATS filters."""
+        else:
+            target_instruction = f"""
 
 משרה ספציפית שסופקה:
 "{target_position}"
@@ -135,20 +146,38 @@ def analyze_cv(cv_text: str, target_position: str = "") -> dict:
 * הדגש ניסיון, מיומנויות והישגים התואמים לדרישות.
 * בשדה keywords_to_add הוסף מילות מפתח ספציפיות מתוך תיאור המשרה שיסייעו בעבירת מסנני ATS."""
     else:
-        target_instruction = """
+        if is_english:
+            target_instruction = """
+
+No specific job provided:
+* Build a broad but focused professional positioning.
+* Highlight core transferable skills.
+* Use language adapted to the global job market."""
+        else:
+            target_instruction = """
 
 לא סופקה משרה ספציפית:
 * בנה מיצוב מקצועי רחב אך ממוקד תחום.
 * הדגש מיומנויות ליבה חוצות תפקידים.
 * שמור על ניסוח מותאם לשוק הישראלי."""
 
-    system_prompt = f"""אתה מומחה לכתיבת קורות חיים ולמיצוב מועמדים לשוק העבודה הישראלי בשנת 2026, עבור כלל המקצועות והתחומים.
+    if is_english:
+        lang_rule = ("* Write ONLY in English. All improved CV content must be in English, including section titles, job descriptions, summaries and skills.\n"
+                     "* CRITICAL: If a section does not exist in the original CV, do NOT create it. Never write 'Not specified', 'N/A', 'None', 'Not provided' or any placeholder. Simply omit that section from the JSON entirely.")
+        expert_intro = "You are an expert CV writer and career positioning specialist for the global job market in 2026, across all professions and industries."
+        work_context = "Based on the provided CV, improve the document while preserving all existing information. Do not omit any positions or time periods. Maintain a complete and continuous career picture, articulated to reflect a clear professional identity, business value, achievements and alignment with the modern work world."
+    else:
+        lang_rule = "* כתוב בעברית בלבד."
+        expert_intro = "אתה מומחה לכתיבת קורות חיים ולמיצוב מועמדים לשוק העבודה הישראלי בשנת 2026, עבור כלל המקצועות והתחומים."
+        work_context = "בהתבסס על קורות החיים שסופקו, שפר את המסמך תוך שמירה מלאה על כלל המידע הקיים. אין להשמיט תפקידים או תקופות. יש לשמר תמונה מלאה ורציפה של הקריירה, ולנסח אותה כך שתשקף זהות מקצועית ברורה, ערך עסקי, הישגים והתאמה לעולם העבודה החדש."
 
-בהתבסס על קורות החיים שסופקו, שפר את המסמך תוך שמירה מלאה על כלל המידע הקיים. אין להשמיט תפקידים או תקופות. יש לשמר תמונה מלאה ורציפה של הקריירה, ולנסח אותה כך שתשקף זהות מקצועית ברורה, ערך עסקי, הישגים והתאמה לעולם העבודה החדש.
+    system_prompt = f"""{expert_intro}
+
+{work_context}
 {target_instruction}
 
 כללי עבודה:
-* כתוב בעברית בלבד.
+{lang_rule}
 * אל תמחק מידע קיים.
 * אל תמציא נתונים שלא הופיעו במקור.
 * שמור על רצף כרונולוגי יורד לפי שנים בלבד.

@@ -25,7 +25,9 @@ fonts/              - Assistant font files for PDF export
 ## Key Features
 1. **Improve Existing CV**: Upload PDF/DOCX/TXT → AI analysis → side-by-side comparison → approve/edit per section → export
 2. **Build from Scratch**: Smart form with structured fields → AI polishes content → preview/edit → export
-3. **English Translation Export**: Both flows support AI-powered translation to English with PDF/DOCX export in LTR format
+3. **Language Selector (Improve flow)**: Radio button on upload page lets user choose Hebrew or English for the improved CV; English mode bypasses the separate translation step and exports directly via English export functions
+4. **English Translation Export**: Both flows support AI-powered translation to English with PDF/DOCX export in LTR format
+5. **Empty section filtering**: All export functions use `_is_empty_content()` and `_filter_list()` to skip placeholder/empty sections universally
 
 ## User Flow Pages
 - `home` - Two path selection cards
