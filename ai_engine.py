@@ -42,7 +42,8 @@ def call_ai(system_prompt: str, user_prompt: str) -> str:
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
-        max_completion_tokens=16384
+        max_completion_tokens=16384,
+        temperature=0
     )
     choice = response.choices[0]
     content = choice.message.content or ""
@@ -333,7 +334,8 @@ def get_interview_question(conversation_history: list, step: int) -> str:
     response = client.chat.completions.create(
         model="gpt-5",
         messages=messages,
-        max_completion_tokens=1024
+        max_completion_tokens=1024,
+        temperature=0
     )
     return response.choices[0].message.content or ""
 
