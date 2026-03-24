@@ -44,11 +44,10 @@ def _filter_list(items: list) -> list:
 
 
 _PDF_COMPRESSION_LEVELS = [
-    {"margin_mm": 18, "sec_before": 8,  "body_lead": 13,   "bul_lead": 12,  "body_size": 9,   "sec_size": 12, "contact_after": 6, "name_lead": 24},
-    {"margin_mm": 16, "sec_before": 6,  "body_lead": 12,   "bul_lead": 11,  "body_size": 9,   "sec_size": 12, "contact_after": 4, "name_lead": 22},
-    {"margin_mm": 14, "sec_before": 4,  "body_lead": 11,   "bul_lead": 10,  "body_size": 9,   "sec_size": 11, "contact_after": 3, "name_lead": 20},
-    {"margin_mm": 13, "sec_before": 3,  "body_lead": 10.5, "bul_lead": 9.5, "body_size": 8.5, "sec_size": 11, "contact_after": 2, "name_lead": 18},
-    {"margin_mm": 12, "sec_before": 2,  "body_lead": 10,   "bul_lead": 9,   "body_size": 8,   "sec_size": 10, "contact_after": 1, "name_lead": 16},
+    {"margin_mm": 18, "top_mm": 12, "bot_mm": 12, "sec_before": 8,   "body_lead": 13,  "bul_lead": 12,  "body_size": 9,   "sec_size": 12, "contact_after": 6, "name_lead": 24},
+    {"margin_mm": 16, "top_mm": 10, "bot_mm": 10, "sec_before": 6,   "body_lead": 12,  "bul_lead": 11,  "body_size": 8.5, "sec_size": 11, "contact_after": 4, "name_lead": 22},
+    {"margin_mm": 14, "top_mm": 8,  "bot_mm": 8,  "sec_before": 4,   "body_lead": 11,  "bul_lead": 10,  "body_size": 8,   "sec_size": 10, "contact_after": 3, "name_lead": 20},
+    {"margin_mm": 12, "top_mm": 7,  "bot_mm": 7,  "sec_before": 2,   "body_lead": 10,  "bul_lead": 9,   "body_size": 7.5, "sec_size": 10, "contact_after": 1, "name_lead": 16},
 ]
 
 
@@ -262,13 +261,15 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
         margin_mm = cparams["margin_mm"]
 
         buffer = io.BytesIO()
+        top_mm = cparams.get("top_mm", 12)
+        bot_mm = cparams.get("bot_mm", 12)
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
             rightMargin=margin_mm * mm,
             leftMargin=margin_mm * mm,
-            topMargin=12 * mm,
-            bottomMargin=12 * mm
+            topMargin=top_mm * mm,
+            bottomMargin=bot_mm * mm
         )
         styles = _get_pdf_styles(font_name, bold_font, cparams)
         elements = []
@@ -429,7 +430,7 @@ def _add_docx_section_header(doc, text):
     run.font.size = Pt(12)
     run.font.bold = True
     run.font.color.rgb = RGBColor(44, 62, 80)
-    p.paragraph_format.space_before = Pt(3)
+    p.paragraph_format.space_before = Pt(5)
     p.paragraph_format.space_after = Pt(1)
 
     pPr = p._p.get_or_add_pPr()
@@ -446,7 +447,7 @@ def _add_docx_section_header(doc, text):
         rPr.insert(0, rFonts)
     rFonts.set(qn('w:cs'), 'Assistant')
 
-    _add_docx_separator_line(doc, '7fb3d8', '8', 0, 2)
+    _add_docx_separator_line(doc, '7fb3d8', '8', 0, 1)
 
 
 def _add_docx_body_paragraph(doc, text, is_rtl=True, bold=False, indent=0):
@@ -748,13 +749,15 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
         margin_mm = cparams["margin_mm"]
 
         buffer = io.BytesIO()
+        top_mm = cparams.get("top_mm", 12)
+        bot_mm = cparams.get("bot_mm", 12)
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
             rightMargin=margin_mm * mm,
             leftMargin=margin_mm * mm,
-            topMargin=12 * mm,
-            bottomMargin=12 * mm
+            topMargin=top_mm * mm,
+            bottomMargin=bot_mm * mm
         )
         styles = _get_pdf_styles(font_name, bold_font, cparams)
         elements = []
@@ -966,13 +969,15 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
         margin_mm = cparams["margin_mm"]
 
         buffer = io.BytesIO()
+        top_mm = cparams.get("top_mm", 12)
+        bot_mm = cparams.get("bot_mm", 12)
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
             rightMargin=margin_mm * mm,
             leftMargin=margin_mm * mm,
-            topMargin=12 * mm,
-            bottomMargin=12 * mm
+            topMargin=top_mm * mm,
+            bottomMargin=bot_mm * mm
         )
         styles = _get_pdf_styles_en(font_name, bold_font, cparams)
         elements = []
@@ -1271,7 +1276,7 @@ def _add_docx_section_header_en(doc, text):
     run.font.size = Pt(12)
     run.font.bold = True
     run.font.color.rgb = RGBColor(44, 62, 80)
-    p.paragraph_format.space_before = Pt(3)
+    p.paragraph_format.space_before = Pt(5)
     p.paragraph_format.space_after = Pt(1)
 
     _add_docx_separator_line(doc, '7fb3d8', '8', 0, 1)
@@ -1316,13 +1321,15 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
         margin_mm = cparams["margin_mm"]
 
         buffer = io.BytesIO()
+        top_mm = cparams.get("top_mm", 12)
+        bot_mm = cparams.get("bot_mm", 12)
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
             rightMargin=margin_mm * mm,
             leftMargin=margin_mm * mm,
-            topMargin=12 * mm,
-            bottomMargin=12 * mm
+            topMargin=top_mm * mm,
+            bottomMargin=bot_mm * mm
         )
         styles = _get_pdf_styles_en(font_name, bold_font, cparams)
         elements = []
