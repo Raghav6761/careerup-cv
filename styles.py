@@ -341,7 +341,7 @@ def inject_custom_css():
         }
 
         .logo-ai {
-            color: #022559 !important;
+            color: #c3e6df !important;
         }
 
         .app-header p {
