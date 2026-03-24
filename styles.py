@@ -211,6 +211,12 @@ def inject_custom_css():
             border-radius: 12px !important;
         }
 
+        .st-key-card_upload,
+        .st-key-card_language,
+        .st-key-card_target {
+            background-color: #f2f1ef !important;
+        }
+
         /* Bare icon delete buttons using tertiary type */
         button[data-testid="stBaseButton-tertiary"] {
             min-height: 0px !important;

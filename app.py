@@ -149,7 +149,7 @@ def render_improve_upload():
     </div>
     """, unsafe_allow_html=True)
 
-    with st.container(border=True):
+    with st.container(border=True, key="card_upload"):
         st.markdown('<div class="section-header">📤 העלאת קובץ קורות חיים</div>', unsafe_allow_html=True)
         st.markdown("העלה את קובץ קורות החיים שלך בפורמט PDF, DOCX או TXT")
 
@@ -159,7 +159,7 @@ def render_improve_upload():
             help="פורמטים נתמכים: PDF, DOCX, TXT"
         )
 
-    with st.container(border=True):
+    with st.container(border=True, key="card_language"):
         st.markdown('<div class="section-header">🌐 באיזו שפה תרצו את הגרסה החדשה?</div>', unsafe_allow_html=True)
         st.markdown('<span style="font-size:16px; color:#6b7c93;">בחר באיזו שפה תרצה לקבל את הגרסה המשופרת של קורות החיים</span>', unsafe_allow_html=True)
         lang_choice = st.radio(
@@ -171,7 +171,7 @@ def render_improve_upload():
         )
         st.session_state.improve_language = "en" if "English" in lang_choice else "he"
 
-    with st.container(border=True):
+    with st.container(border=True, key="card_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
         st.markdown('<span style="font-size:16px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות הסינון ATS בצורה מדויקת יותר</span>', unsafe_allow_html=True)
         if "improve_target_position" not in st.session_state:
