@@ -665,6 +665,28 @@ def render_build_form():
     _init_build_form_data()
     fd = st.session_state.build_form_data
 
+    st.markdown("""
+    <style>
+        [class*="st-key-bfc_"] { background-color: #f2f1ef !important; }
+        div:has(>[class*="st-key-bfc_"]) { background-color: #f2f1ef !important; border-color: #f2f1ef !important; }
+        [class*="st-key-bfc_"] [data-testid="stVerticalBlockBorderWrapper"] {
+            border-color: #022559 !important; border-width: 1.5px !important;
+            border-radius: 14px !important; background-color: #f2f1ef !important;
+        }
+        [class*="st-key-bf_add_exp"] button,
+        [class*="st-key-bf_add_edu"] button,
+        [class*="st-key-bf_add_lang"] button {
+            background: #80d6c5 !important; color: #022559 !important;
+            font-size: 22px !important; font-weight: 700 !important;
+            height: 44px !important; border: none !important;
+            border-radius: 10px !important; box-shadow: none !important;
+        }
+        [class*="st-key-bf_add_exp"] button:hover,
+        [class*="st-key-bf_add_edu"] button:hover,
+        [class*="st-key-bf_add_lang"] button:hover { background: #5ec4b0 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
     with st.container(border=True, key="bfc_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
         st.markdown('<span style="font-size:15px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות הסינון ATS בצורה מדויקת יותר</span>', unsafe_allow_html=True)
@@ -741,7 +763,7 @@ def render_build_form():
                 experience.pop(idx)
             st.rerun()
 
-        if st.button("+", key="bf_add_exp"):
+        if st.button("+", key="bf_add_exp", use_container_width=True):
             experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
             st.rerun()
 
@@ -772,7 +794,7 @@ def render_build_form():
                 education.pop(idx)
             st.rerun()
 
-        if st.button("+", key="bf_add_edu"):
+        if st.button("+", key="bf_add_edu", use_container_width=True):
             education.append({"degree": "", "institution": "", "year": "", "honors": ""})
             st.rerun()
 
@@ -811,7 +833,7 @@ def render_build_form():
                 languages.pop(idx)
             st.rerun()
 
-        if st.button("+", key="bf_add_lang"):
+        if st.button("+", key="bf_add_lang", use_container_width=True):
             languages.append({"language": "", "level": ""})
             st.rerun()
 

@@ -523,33 +523,5 @@ def inject_custom_css():
             display: none !important;
         }
 
-        div:has(>[class*="st-key-bfc_"]) {
-            background-color: #f2f1ef !important;
-            border-color: #022559 !important;
-            border-width: 1.5px !important;
-            border-radius: 14px !important;
-        }
-
-        [class*="st-key-bf_add_exp"] button,
-        [class*="st-key-bf_add_edu"] button,
-        [class*="st-key-bf_add_lang"] button {
-            background: #80d6c5 !important;
-            color: #022559 !important;
-            border: none !important;
-            border-radius: 12px !important;
-            font-size: 24px !important;
-            font-weight: 700 !important;
-            width: 100% !important;
-            height: 48px !important;
-            line-height: 1 !important;
-            cursor: pointer !important;
-            transition: background 0.2s ease !important;
-            box-shadow: none !important;
-        }
-        [class*="st-key-bf_add_exp"] button:hover,
-        [class*="st-key-bf_add_edu"] button:hover,
-        [class*="st-key-bf_add_lang"] button:hover {
-            background: #5ec4b0 !important;
-        }
     </style>
     """, unsafe_allow_html=True)
