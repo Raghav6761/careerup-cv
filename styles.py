@@ -214,10 +214,17 @@ def inject_custom_css():
             border-radius: 12px !important;
         }
 
-        .st-key-card_upload,
-        .st-key-card_language,
-        .st-key-card_target {
+        [class*="st-key-card_upload"],
+        [class*="st-key-card_language"],
+        [class*="st-key-card_target"] {
             background-color: #f2f1ef !important;
+        }
+
+        div:has(> [class*="st-key-card_upload"]),
+        div:has(> [class*="st-key-card_language"]),
+        div:has(> [class*="st-key-card_target"]) {
+            background-color: #f2f1ef !important;
+            border-color: #f2f1ef !important;
         }
 
         /* Bare icon delete buttons using tertiary type */

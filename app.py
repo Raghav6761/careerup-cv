@@ -149,6 +149,13 @@ def render_improve_upload():
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown("""
+    <style>
+        [class*="st-key-card_upload"], [class*="st-key-card_language"], [class*="st-key-card_target"] { background-color: #f2f1ef !important; }
+        div:has(>[class*="st-key-card_upload"]), div:has(>[class*="st-key-card_language"]), div:has(>[class*="st-key-card_target"]) { background-color: #f2f1ef !important; border-color: #f2f1ef !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
     with st.container(border=True, key="card_upload"):
         st.markdown('<div class="section-header">📤 העלאת קובץ קורות חיים</div>', unsafe_allow_html=True)
         st.markdown("העלה את קובץ קורות החיים שלך בפורמט PDF, DOCX או TXT")
