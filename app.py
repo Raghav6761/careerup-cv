@@ -101,10 +101,10 @@ def render_home():
     with col1:
         st.markdown("""
         <div class="home-cta-card home-cta-card-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
-                <path d="M20 3 C22 4 21 8 17 12 C13 16 7 20 3 22 C5 18 8 14 12 10 C16 6 20 4 20 3 Z" fill="white"/>
-                <path d="M3 22 L17 8" stroke="rgba(2,37,89,0.25)" stroke-width="0.8"/>
-                <path d="M3 22 L1.5 23.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
+                <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+                <line x1="16" y1="8" x2="2" y2="22"/>
+                <line x1="17.5" y1="15" x2="9" y2="15"/>
             </svg>
             <div class="home-cta-title">בנה קו"ח חדשים</div>
             <div class="home-cta-desc">תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.</div>
@@ -118,7 +118,12 @@ def render_home():
     with col2:
         st.markdown("""
         <div class="home-cta-card home-cta-card-secondary">
-            <img src="/app/static/search_icon.png" width="34" height="34" style="position:absolute;top:10px;left:12px;mix-blend-mode:multiply;"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="34" height="30" viewBox="0 0 28 24" fill="none" stroke="#022559" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
+                <circle cx="8" cy="13" r="6"/>
+                <line x1="12.5" y1="17.5" x2="16" y2="21"/>
+                <line x1="22" y1="18" x2="22" y2="6"/>
+                <polyline points="19,9 22,6 25,9"/>
+            </svg>
             <div class="home-cta-title">שפר קו"ח קיימים</div>
             <div class="home-cta-desc">קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.</div>
         </div>
