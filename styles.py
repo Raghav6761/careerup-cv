@@ -204,6 +204,7 @@ def inject_custom_css():
 
         .e12zf7d53 {
             border-color: #80d6c5 !important;
+            background-color: #f2f1ef !important;
         }
 
         [data-testid="stVerticalBlockBorderWrapper"] {
