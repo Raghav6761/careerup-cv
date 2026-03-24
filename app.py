@@ -160,7 +160,7 @@ def render_improve_upload():
         )
 
     with st.container(border=True):
-        st.markdown('<div class="section-header">🌐 שפת הנוסח המשופר</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">🌐 באיזו שפה תרצו את הגרסה החדשה?</div>', unsafe_allow_html=True)
         st.markdown('<span style="font-size:13px; color:#6b7c93;">בחר באיזו שפה תרצה לקבל את הגרסה המשופרת של קורות החיים</span>', unsafe_allow_html=True)
         lang_choice = st.radio(
             "שפת הנוסח המשופר",
