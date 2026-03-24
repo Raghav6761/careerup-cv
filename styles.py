@@ -203,7 +203,7 @@ def inject_custom_css():
         }
 
         .e12zf7d53 {
-            border-color: #80d6c5 !important;
+            border: 2px solid #80d6c5 !important;
         }
 
         /* Bare icon delete buttons using tertiary type */
