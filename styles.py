@@ -136,9 +136,9 @@ def inject_custom_css():
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 8px;
-            padding: 18px 24px;
+            padding: 22px 24px;
             border-radius: 14px;
             cursor: pointer;
             transition: all 0.25s ease;
