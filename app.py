@@ -112,7 +112,7 @@ def render_home():
             st.rerun()
 
     with col2:
-        if st.button("העלאת קו״ח קיימים", key="btn_improve", use_container_width=True):
+        if st.button('שפר קו"ח קיימים', key="btn_improve", use_container_width=True):
             reset_improve()
             go_to("improve_upload")
             st.rerun()
