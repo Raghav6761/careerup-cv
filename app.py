@@ -34,6 +34,54 @@ def _format_cv_html(text: str) -> str:
             html_parts.append(f'<div style="font-weight:400;margin:2px 0;">{stripped}</div>')
     return "".join(html_parts)
 
+
+def _format_improved_html(text: str) -> str:
+    """Format improved CV text as a professional CV with bullet points for descriptive lines."""
+    if not text:
+        return ""
+    lines = text.split("\n")
+    html_parts = []
+    year_pattern = re.compile(r"(19|20)\d{2}[\–\-–]")
+    # Patterns that indicate a header line (name, contact, title, institution, dates)
+    # These should NOT become bullets — they are structural/header lines
+    contact_pattern = re.compile(r"[@|]|\d{9,}|linkedin|github", re.IGNORECASE)
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            html_parts.append('<div style="height:5px"></div>')
+            continue
+
+        # Already a bullet marker — render as bullet
+        if stripped.startswith("•") or stripped.startswith("-"):
+            content = stripped.lstrip("•- ").strip()
+            html_parts.append(
+                f'<div style="display:flex;gap:8px;align-items:flex-start;margin:2px 0;">'
+                f'<span style="color:#022559;flex-shrink:0;font-weight:600;">•</span>'
+                f'<span style="font-weight:400;">{content}</span></div>'
+            )
+        # Year-range line → bold job/edu header
+        elif year_pattern.search(stripped):
+            html_parts.append(
+                f'<div style="font-weight:700;color:#1a1a2e;margin:6px 0 1px 0;">{stripped}</div>'
+            )
+        # Contact line (has pipe, @, phone digits) → centered, regular
+        elif contact_pattern.search(stripped):
+            html_parts.append(f'<div style="font-weight:400;margin:2px 0;text-align:center;">{stripped}</div>')
+        # Short line (≤40 chars) — likely a name, title, institution → bold header
+        elif len(stripped) <= 40 and "|" not in stripped:
+            html_parts.append(
+                f'<div style="font-weight:700;color:#1a1a2e;margin:5px 0 1px 0;">{stripped}</div>'
+            )
+        # Long descriptive line → convert to bullet point
+        else:
+            html_parts.append(
+                f'<div style="display:flex;gap:8px;align-items:flex-start;margin:2px 0;">'
+                f'<span style="color:#022559;flex-shrink:0;font-weight:600;">•</span>'
+                f'<span style="font-weight:400;">{stripped}</span></div>'
+            )
+    return "".join(html_parts)
+
 st.set_page_config(
     page_title="Career Up | CV Master AI",
     page_icon="📄",
@@ -289,7 +337,7 @@ def render_improve_review():
 
             with col_left:
                 st.markdown('<div class="suggestion-label">נוסח מחודש / מוצע</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="improved-text">{_format_cv_html(improved)}</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="improved-text">{_format_improved_html(improved)}</div>', unsafe_allow_html=True)
 
             decision_key = f"decision_{i}"
             current_decision = st.session_state.section_decisions.get(decision_key, "improved")
