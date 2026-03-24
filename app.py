@@ -96,34 +96,31 @@ def render_header():
 def render_home():
     render_header()
 
-    action = st.query_params.get("action", "")
-    if action == "build":
-        st.query_params.clear()
-        reset_build()
-        go_to("build_form")
-        st.rerun()
-    elif action == "improve":
-        st.query_params.clear()
-        reset_improve()
-        go_to("improve_upload")
-        st.rerun()
+    col1, col2 = st.columns(2)
 
-    st.markdown("""
-    <div class="home-cta-grid">
-        <a href="?action=build" style="text-decoration:none;flex:1;display:flex;">
-            <div class="home-cta-btn home-cta-primary" style="width:100%;">
-                <span class="home-cta-title">&#x202B;בנה קו&quot;ח חדשים&#x202C;</span>
-                <span class="home-cta-desc">&#x202B;תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.&#x202C;</span>
-            </div>
-        </a>
-        <a href="?action=improve" style="text-decoration:none;flex:1;display:flex;">
-            <div class="home-cta-btn home-cta-secondary" style="width:100%;">
-                <span class="home-cta-title">&#x202B;שפר קו&quot;ח קיימים&#x202C;</span>
-                <span class="home-cta-desc">&#x202B;קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.&#x202C;</span>
-            </div>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+    with col1:
+        st.markdown("""
+        <div class="home-cta-card home-cta-card-primary">
+            <div class="home-cta-title">בנה קו"ח חדשים</div>
+            <div class="home-cta-desc">תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("בחר →", key="btn_build_cta", use_container_width=True, type="primary"):
+            reset_build()
+            go_to("build_form")
+            st.rerun()
+
+    with col2:
+        st.markdown("""
+        <div class="home-cta-card home-cta-card-secondary">
+            <div class="home-cta-title">שפר קו"ח קיימים</div>
+            <div class="home-cta-desc">קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("בחר →", key="btn_improve_cta", use_container_width=True):
+            reset_improve()
+            go_to("improve_upload")
+            st.rerun()
 
 
 def render_improve_upload():

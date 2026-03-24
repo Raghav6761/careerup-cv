@@ -123,64 +123,36 @@ def inject_custom_css():
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
         }
 
-        /* Homepage custom CTA buttons */
-        .home-cta-grid {
-            display: flex;
-            gap: 20px;
-            margin-top: 24px;
-            direction: rtl;
-        }
-
-        .home-cta-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 8px;
-            padding: 22px 24px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.25s ease;
+        /* Homepage CTA cards */
+        .home-cta-card {
+            padding: 22px 24px 14px 24px;
+            border-radius: 14px 14px 0 0;
             text-align: center;
-            min-height: 90px;
-            font-family: 'Assistant', sans-serif;
             direction: rtl;
-            width: 100%;
+            font-family: 'Assistant', sans-serif;
+            margin-top: 24px;
         }
 
-        .home-cta-primary {
+        .home-cta-card-primary {
             background: #022559;
             color: #ffffff;
-            border: none;
             box-shadow: 0 2px 8px rgba(2, 37, 89, 0.2);
         }
 
-        .home-cta-primary:hover {
-            background: #011840;
-            box-shadow: 0 4px 16px rgba(2, 37, 89, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .home-cta-secondary {
+        .home-cta-card-secondary {
             background: #80d6c5;
             color: #022559;
             border: 2px solid #022559;
+            border-bottom: none;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .home-cta-secondary:hover {
-            background: #6acbb8;
-            border-color: #011840;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-            transform: translateY(-1px);
         }
 
         .home-cta-title {
             font-weight: 700;
             font-size: 18px;
-            line-height: 1.2;
+            line-height: 1.3;
             display: block;
+            margin-bottom: 6px;
         }
 
         .home-cta-desc {
@@ -190,12 +162,29 @@ def inject_custom_css():
             display: block;
         }
 
-        .home-cta-primary .home-cta-desc {
+        .home-cta-card-primary .home-cta-desc {
             color: rgba(255, 255, 255, 0.82);
         }
 
-        .home-cta-secondary .home-cta-desc {
+        .home-cta-card-secondary .home-cta-desc {
             color: #022559;
+        }
+
+        /* Style the native CTA buttons to match the cards below them */
+        [data-testid="stColumn"]:first-child [data-testid="stBaseButton-primary"] {
+            border-radius: 0 0 14px 14px !important;
+            background: #011840 !important;
+            border: none !important;
+            margin-top: -4px !important;
+        }
+
+        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"] {
+            border-radius: 0 0 14px 14px !important;
+            background: #6acbb8 !important;
+            border: 2px solid #022559 !important;
+            border-top: none !important;
+            color: #022559 !important;
+            margin-top: -4px !important;
         }
 
         /* Bare icon delete buttons using tertiary type */
