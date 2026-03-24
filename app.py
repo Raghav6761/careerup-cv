@@ -110,24 +110,19 @@ def render_home():
 
     st.markdown("""
     <div class="home-cta-grid">
-        <div class="home-cta-btn home-cta-primary" role="button" tabindex="0"
-             onclick="homeNavigate('build')"
-             onkeydown="if(event.key==='Enter'||event.key===' ')homeNavigate('build')">
-            <span class="home-cta-title">&#x202B;בנה קו&quot;ח חדשים&#x202C;</span>
-            <span class="home-cta-desc">&#x202B;תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.&#x202C;</span>
-        </div>
-        <div class="home-cta-btn home-cta-secondary" role="button" tabindex="0"
-             onclick="homeNavigate('improve')"
-             onkeydown="if(event.key==='Enter'||event.key===' ')homeNavigate('improve')">
-            <span class="home-cta-title">&#x202B;שפר קו&quot;ח קיימים&#x202C;</span>
-            <span class="home-cta-desc">&#x202B;קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.&#x202C;</span>
-        </div>
+        <a href="?action=build" style="text-decoration:none;flex:1;display:flex;">
+            <div class="home-cta-btn home-cta-primary" style="width:100%;">
+                <span class="home-cta-title">&#x202B;בנה קו&quot;ח חדשים&#x202C;</span>
+                <span class="home-cta-desc">&#x202B;תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.&#x202C;</span>
+            </div>
+        </a>
+        <a href="?action=improve" style="text-decoration:none;flex:1;display:flex;">
+            <div class="home-cta-btn home-cta-secondary" style="width:100%;">
+                <span class="home-cta-title">&#x202B;שפר קו&quot;ח קיימים&#x202C;</span>
+                <span class="home-cta-desc">&#x202B;קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.&#x202C;</span>
+            </div>
+        </a>
     </div>
-    <script>
-    function homeNavigate(action) {
-        window.location.search = '?action=' + action;
-    }
-    </script>
     """, unsafe_allow_html=True)
 
 
