@@ -776,9 +776,19 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
                     lines = [l.strip() for l in content.split("\n") if l.strip()]
                     contact_only = [l for l in lines if not _is_military_line(l)]
                     if contact_only:
-                        elements.append(Paragraph(reshape_hebrew(contact_only[0]), styles["name"]))
+                        first_line = contact_only[0]
+                        if "|" in first_line:
+                            pipe_parts = [p.strip() for p in first_line.split("|")]
+                            name = pipe_parts[0]
+                            inline_contact = pipe_parts[1:]
+                            extra_lines = contact_only[1:]
+                        else:
+                            name = first_line
+                            inline_contact = []
+                            extra_lines = contact_only[1:]
+                        elements.append(Paragraph(reshape_hebrew(name), styles["name"]))
                         contact_values = []
-                        for cl in contact_only[1:]:
+                        for cl in inline_contact + extra_lines:
                             val = _extract_contact_value(cl)
                             if val:
                                 contact_values.append(reshape_hebrew(val))
@@ -838,8 +848,18 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
                 lines = [l.strip() for l in content.split("\n") if l.strip()]
                 contact_only = [l for l in lines if not _is_military_line(l)]
                 if contact_only:
+                    first_line = contact_only[0]
+                    if "|" in first_line:
+                        pipe_parts = [p.strip() for p in first_line.split("|")]
+                        name_str = pipe_parts[0]
+                        inline_contact = pipe_parts[1:]
+                        extra_lines = contact_only[1:]
+                    else:
+                        name_str = first_line
+                        inline_contact = []
+                        extra_lines = contact_only[1:]
                     p = doc.add_paragraph()
-                    run = p.add_run(contact_only[0])
+                    run = p.add_run(name_str)
                     run.font.bold = True
                     run.font.size = Pt(20)
                     run.font.color.rgb = RGBColor(44, 62, 80)
@@ -848,7 +868,7 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
                     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     _set_docx_rtl(p)
                     contact_values = []
-                    for cl in contact_only[1:]:
+                    for cl in inline_contact + extra_lines:
                         val = _extract_contact_value(cl)
                         if val:
                             contact_values.append(val)
