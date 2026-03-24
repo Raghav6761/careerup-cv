@@ -195,7 +195,7 @@ def inject_custom_css():
         }
 
         .home-cta-secondary .home-cta-desc {
-            color: #777777;
+            color: #022559;
         }
 
         /* Bare icon delete buttons using tertiary type */
