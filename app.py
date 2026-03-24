@@ -151,7 +151,7 @@ def render_improve_upload():
     st.markdown("""
     <style>
         [class*="st-key-card_upload"], [class*="st-key-card_language"], [class*="st-key-card_target"] { background-color: #f2f1ef !important; }
-        div:has(>[class*="st-key-card_upload"]), div:has(>[class*="st-key-card_language"]), div:has(>[class*="st-key-card_target"]) { background-color: #f2f1ef !important; border-color: #f2f1ef !important; }
+        div:has(>[class*="st-key-card_upload"]), div:has(>[class*="st-key-card_language"]), div:has(>[class*="st-key-card_target"]) { background-color: #f2f1ef !important; border-color: #f2f1ef !important; border-width: 2px !important; border-radius: 12px !important; }
     </style>
     """, unsafe_allow_html=True)
 

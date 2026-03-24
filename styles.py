@@ -212,6 +212,7 @@ def inject_custom_css():
             background-color: #f2f1ef !important;
             border-color: #f2f1ef !important;
             border-radius: 12px !important;
+            border-width: 2px !important;
         }
 
         [class*="st-key-card_upload"],
