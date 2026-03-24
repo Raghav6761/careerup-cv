@@ -408,7 +408,7 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
     return buffer.getvalue()
 
 
-def _add_docx_separator_line(doc, color='7fb3d8', size='8', space_before=6, space_after=2):
+def _add_docx_separator_line(doc, color='7fb3d8', size='8', space_before=3, space_after=1):
     sep = doc.add_paragraph()
     sep.paragraph_format.space_before = Pt(space_before)
     sep.paragraph_format.space_after = Pt(space_after)
@@ -429,7 +429,7 @@ def _add_docx_section_header(doc, text):
     run.font.size = Pt(12)
     run.font.bold = True
     run.font.color.rgb = RGBColor(44, 62, 80)
-    p.paragraph_format.space_before = Pt(5)
+    p.paragraph_format.space_before = Pt(3)
     p.paragraph_format.space_after = Pt(1)
 
     pPr = p._p.get_or_add_pPr()
@@ -457,7 +457,7 @@ def _add_docx_body_paragraph(doc, text, is_rtl=True, bold=False, indent=0):
     if bold:
         run.font.bold = True
         run.font.color.rgb = RGBColor(44, 62, 80)
-    p.paragraph_format.space_after = Pt(2)
+    p.paragraph_format.space_after = Pt(1)
     p.paragraph_format.line_spacing = Pt(13)
     if indent:
         if is_rtl:
@@ -491,7 +491,7 @@ def _add_docx_job_header(doc, text, is_rtl=True):
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor(51, 51, 51)
     p.paragraph_format.space_after = Pt(1)
-    p.paragraph_format.space_before = Pt(4)
+    p.paragraph_format.space_before = Pt(2)
     p.paragraph_format.line_spacing = Pt(13)
     if is_rtl:
         _set_docx_rtl(p)
@@ -1271,10 +1271,10 @@ def _add_docx_section_header_en(doc, text):
     run.font.size = Pt(12)
     run.font.bold = True
     run.font.color.rgb = RGBColor(44, 62, 80)
-    p.paragraph_format.space_before = Pt(5)
+    p.paragraph_format.space_before = Pt(3)
     p.paragraph_format.space_after = Pt(1)
 
-    _add_docx_separator_line(doc, '7fb3d8', '8', 0, 2)
+    _add_docx_separator_line(doc, '7fb3d8', '8', 0, 1)
 
 
 def _is_section_header_en(line: str) -> bool:
