@@ -106,7 +106,7 @@ def render_home():
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("כתיבת קורות חיים", key="btn_build", use_container_width=True, type="primary"):
+        if st.button('בנה קו"ח חדשים', key="btn_build", use_container_width=True, type="primary"):
             reset_build()
             go_to("build_form")
             st.rerun()
