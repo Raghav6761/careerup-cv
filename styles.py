@@ -320,6 +320,15 @@ def inject_custom_css():
             padding-bottom: 6px;
         }
 
+        .btn-caption {
+            text-align: center;
+            font-size: 13px;
+            color: #888888;
+            margin-top: 6px;
+            margin-bottom: 0;
+            direction: rtl;
+        }
+
         .back-btn {
             margin-bottom: 20px;
         }

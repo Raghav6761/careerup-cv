@@ -116,6 +116,7 @@ def render_home():
             reset_improve()
             go_to("improve_upload")
             st.rerun()
+        st.markdown('<p class="btn-caption">קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.</p>', unsafe_allow_html=True)
 
 
 def render_improve_upload():
