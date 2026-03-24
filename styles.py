@@ -202,6 +202,10 @@ def inject_custom_css():
             background-color: #80d6c5 !important;
         }
 
+        .e12zf7d53 {
+            border-color: #80d6c5 !important;
+        }
+
         /* Bare icon delete buttons using tertiary type */
         button[data-testid="stBaseButton-tertiary"] {
             min-height: 0px !important;
