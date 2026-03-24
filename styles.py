@@ -132,6 +132,7 @@ def inject_custom_css():
             font-family: 'Assistant', sans-serif;
             margin-top: 24px;
             min-height: 110px;
+            position: relative;
         }
 
         .home-cta-card-primary {
