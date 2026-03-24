@@ -236,9 +236,8 @@ def inject_custom_css():
 
         .section-header {
             background: #f0f6ff;
-            border-right: 4px solid #022559;
             padding: 8px 16px;
-            border-radius: 0 10px 10px 0;
+            border-radius: 10px;
             margin: 8px 0 8px 0;
             font-size: 17px;
             font-weight: 700;
