@@ -142,10 +142,9 @@ def render_improve_upload():
         st.rerun()
 
     st.markdown("""
-    <div class="step-indicator">
-        <div class="step-dot active"></div>
-        <div class="step-dot"></div>
-        <div class="step-dot"></div>
+    <div class="progress-container">
+        <div class="progress-label">שלב 1 מתוך 3</div>
+        <div class="progress-track"><div class="progress-fill" style="width:33%"></div></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -235,10 +234,9 @@ def render_improve_review():
         st.rerun()
 
     st.markdown("""
-    <div class="step-indicator">
-        <div class="step-dot"></div>
-        <div class="step-dot active"></div>
-        <div class="step-dot"></div>
+    <div class="progress-container">
+        <div class="progress-label">שלב 2 מתוך 3</div>
+        <div class="progress-track"><div class="progress-fill" style="width:66%"></div></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -335,10 +333,9 @@ def render_improve_export():
         st.rerun()
 
     st.markdown("""
-    <div class="step-indicator">
-        <div class="step-dot"></div>
-        <div class="step-dot"></div>
-        <div class="step-dot active"></div>
+    <div class="progress-container">
+        <div class="progress-label">שלב 3 מתוך 3</div>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
     </div>
     """, unsafe_allow_html=True)
 

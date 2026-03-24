@@ -380,25 +380,32 @@ def inject_custom_css():
             font-weight: 400;
         }
 
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin: 8px 0;
-            direction: ltr !important;
+        .progress-container {
+            margin: 10px 0 20px 0;
+            width: 100%;
         }
 
-        .step-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #e0e4ea;
+        .progress-label {
+            font-size: 13px;
+            color: #6b7c93;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
         }
 
-        .step-dot.active {
+        .progress-track {
+            width: 100%;
+            height: 5px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
             background: #022559;
-            width: 28px;
-            border-radius: 5px;
+            border-radius: 999px;
+            transition: width 0.3s ease;
         }
 
         .cv-preview {
