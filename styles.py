@@ -189,6 +189,15 @@ def inject_custom_css():
             margin-top: -4px !important;
         }
 
+        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:hover,
+        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:active,
+        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:focus {
+            background: #80d6c5 !important;
+            border: 2px solid #022559 !important;
+            border-top: none !important;
+            color: #022559 !important;
+        }
+
         .e1mwqyj92 {
             background-color: #80d6c5 !important;
         }
