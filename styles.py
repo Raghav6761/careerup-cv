@@ -523,10 +523,13 @@ def inject_custom_css():
             display: none !important;
         }
 
-        div:has(>[class*="st-key-bfc_"]) {
+        [class*="st-key-bfc_"] [data-testid="stVerticalBlockBorderWrapper"] {
             background-color: #f2f1ef !important;
-            border-color: #022559 !important;
-            border-width: 1.5px !important;
+            border: 1.5px solid #022559 !important;
+            border-radius: 14px !important;
+        }
+        [class*="st-key-bfc_"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+            background-color: #f2f1ef !important;
             border-radius: 14px !important;
         }
 
