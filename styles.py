@@ -123,6 +123,81 @@ def inject_custom_css():
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
         }
 
+        /* Homepage custom CTA buttons */
+        .home-cta-grid {
+            display: flex;
+            gap: 20px;
+            margin-top: 24px;
+            direction: rtl;
+        }
+
+        .home-cta-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 18px 24px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: center;
+            min-height: 90px;
+            font-family: 'Assistant', sans-serif;
+            direction: rtl;
+            width: 100%;
+        }
+
+        .home-cta-primary {
+            background: #0066FF;
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2);
+        }
+
+        .home-cta-primary:hover {
+            background: #0055DD;
+            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .home-cta-secondary {
+            background: #ffffff;
+            color: #0066FF;
+            border: 2px solid #0066FF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .home-cta-secondary:hover {
+            background: #f0f6ff;
+            border-color: #0055DD;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .home-cta-title {
+            font-weight: 700;
+            font-size: 18px;
+            line-height: 1.2;
+            display: block;
+        }
+
+        .home-cta-desc {
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 1.4;
+            display: block;
+        }
+
+        .home-cta-primary .home-cta-desc {
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .home-cta-secondary .home-cta-desc {
+            color: #777777;
+        }
+
         /* Bare icon delete buttons using tertiary type */
         button[data-testid="stBaseButton-tertiary"] {
             min-height: 0px !important;

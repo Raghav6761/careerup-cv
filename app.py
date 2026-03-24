@@ -96,28 +96,37 @@ def render_header():
 def render_home():
     render_header()
 
+    action = st.query_params.get("action", "")
+    if action == "build":
+        st.query_params.clear()
+        reset_build()
+        go_to("build_form")
+        st.rerun()
+    elif action == "improve":
+        st.query_params.clear()
+        reset_improve()
+        go_to("improve_upload")
+        st.rerun()
+
     st.markdown("""
-    <div class="home-buttons-row">
-        <div class="home-btn-wrap" id="btn-build-wrap"></div>
-        <div class="home-btn-wrap" id="btn-improve-wrap"></div>
+    <div class="home-cta-grid">
+        <button class="home-cta-btn home-cta-primary" onclick="homeNavigate('build')">
+            <span class="home-cta-title">&#x202B;בנה קו&quot;ח חדשים&#x202C;</span>
+            <span class="home-cta-desc">&#x202B;תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.&#x202C;</span>
+        </button>
+        <button class="home-cta-btn home-cta-secondary" onclick="homeNavigate('improve')">
+            <span class="home-cta-title">&#x202B;שפר קו&quot;ח קיימים&#x202C;</span>
+            <span class="home-cta-desc">&#x202B;קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.&#x202C;</span>
+        </button>
     </div>
+    <script>
+    function homeNavigate(action) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('action', action);
+        window.location.href = url.toString();
+    }
+    </script>
     """, unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button('בנה קו"ח חדשים', key="btn_build", use_container_width=True, type="primary"):
-            reset_build()
-            go_to("build_form")
-            st.rerun()
-        st.markdown('<p class="btn-caption">תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.</p>', unsafe_allow_html=True)
-
-    with col2:
-        if st.button('שפר קו"ח קיימים', key="btn_improve", use_container_width=True):
-            reset_improve()
-            go_to("improve_upload")
-            st.rerun()
-        st.markdown('<p class="btn-caption">קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.</p>', unsafe_allow_html=True)
 
 
 def render_improve_upload():
