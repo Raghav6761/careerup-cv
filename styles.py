@@ -523,6 +523,13 @@ def inject_custom_css():
             display: none !important;
         }
 
+        div:has(>[class*="st-key-bfc_"]) {
+            background-color: #f2f1ef !important;
+            border-color: #022559 !important;
+            border-width: 1.5px !important;
+            border-radius: 14px !important;
+        }
+
         [class*="st-key-bf_add_exp"] button,
         [class*="st-key-bf_add_edu"] button,
         [class*="st-key-bf_add_lang"] button {

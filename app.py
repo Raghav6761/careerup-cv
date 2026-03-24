@@ -665,188 +665,199 @@ def render_build_form():
     _init_build_form_data()
     fd = st.session_state.build_form_data
 
-    st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:16px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות הסינון ATS בצורה מדויקת יותר</span>', unsafe_allow_html=True)
-    if "build_target_position" not in st.session_state:
-        st.session_state.build_target_position = ""
-    st.session_state.build_target_position = st.text_area(
-        "תפקיד יעד",
-        value=st.session_state.build_target_position,
-        key="build_target_input",
-        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
-        label_visibility="collapsed",
-        height=68
-    )
-
-    st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
-    fd["full_name"] = st.text_input("שם מלא", value=fd["full_name"], key="bf_name", placeholder="ישראל ישראלי")
-    c1, c2, c3 = st.columns(3)
-    with c3:
-        fd["phone"] = st.text_input("טלפון", value=fd["phone"], key="bf_phone", placeholder="050-1234567")
-    with c2:
-        fd["email"] = st.text_input("אימייל", value=fd["email"], key="bf_email", placeholder="email@example.com")
-    with c1:
-        fd["city"] = st.text_input("עיר", value=fd["city"], key="bf_city", placeholder="תל אביב")
-    fd["linkedin"] = st.text_input("פרופיל לינקדאין (אופציונלי)", value=fd.get("linkedin", ""), key="bf_linkedin", placeholder="https://linkedin.com/in/your-profile")
-
-    st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:13px; color:#6b7c93;">כתוב בקצרה על הרקע המקצועי שלך, או השאר ריק והבינה המלאכותית תכתוב עבורך</span>', unsafe_allow_html=True)
-    fd["professional_summary"] = st.text_area(
-        "תקציר",
-        value=fd["professional_summary"],
-        key="bf_summary",
-        height=80,
-        label_visibility="collapsed",
-        placeholder="למשל: מפתח תוכנה עם 5 שנות ניסיון בפיתוח אפליקציות ווב..."
-    )
-
-    st.markdown('<div class="section-header">💼 ניסיון תעסוקתי</div>', unsafe_allow_html=True)
-    experience = fd["experience"]
-    exp_to_delete = []
-    for i, exp in enumerate(experience):
-        if i > 0:
-            st.markdown("---")
-        col_header, col_del = st.columns([5, 1])
-        with col_header:
-            st.markdown(f'<span style="font-size:14px; font-weight:600; color:#6b7c93;">תפקיד {i+1}</span>', unsafe_allow_html=True)
-        with col_del:
-            if len(experience) > 1:
-                if st.button("🗑️", key=f"bf_del_exp_{i}", help="מחק", type="tertiary"):
-                    exp_to_delete.append(i)
-
-        ec1, ec2, ec3 = st.columns(3)
-        with ec3:
-            exp["title"] = st.text_input("תפקיד", value=exp.get("title", ""), key=f"bf_exp_title_{i}", placeholder="מנהל פרויקטים")
-        with ec2:
-            exp["company"] = st.text_input("חברה", value=exp.get("company", ""), key=f"bf_exp_company_{i}", placeholder="שם החברה")
-        with ec1:
-            exp["period"] = st.text_input("תקופה", value=exp.get("period", ""), key=f"bf_exp_period_{i}", placeholder="2020-2024")
-
-        exp["achievements"] = st.text_area(
-            "תיאור ההישגים",
-            value=exp.get("achievements", ""),
-            key=f"bf_exp_ach_{i}",
-            height=70,
+    with st.container(border=True, key="bfc_target"):
+        st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:15px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות הסינון ATS בצורה מדויקת יותר</span>', unsafe_allow_html=True)
+        if "build_target_position" not in st.session_state:
+            st.session_state.build_target_position = ""
+        st.session_state.build_target_position = st.text_area(
+            "תפקיד יעד",
+            value=st.session_state.build_target_position,
+            key="build_target_input",
+            placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
             label_visibility="collapsed",
-            placeholder="הישגים ו/או כישורים שהבאת לידי ביטוי במסגרת התפקיד"
+            height=68
         )
-        exp["honors"] = st.text_input("הצטיינות (אופציונלי)", value=exp.get("honors", ""), key=f"bf_exp_hon_{i}", placeholder="למשל: עובד מצטיין, פרס חדשנות...")
 
-    if exp_to_delete:
-        for idx in sorted(exp_to_delete, reverse=True):
-            experience.pop(idx)
-        st.rerun()
+    with st.container(border=True, key="bfc_personal"):
+        st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
+        fd["full_name"] = st.text_input("שם מלא", value=fd["full_name"], key="bf_name", placeholder="ישראל ישראלי")
+        c1, c2, c3 = st.columns(3)
+        with c3:
+            fd["phone"] = st.text_input("טלפון", value=fd["phone"], key="bf_phone", placeholder="050-1234567")
+        with c2:
+            fd["email"] = st.text_input("אימייל", value=fd["email"], key="bf_email", placeholder="email@example.com")
+        with c1:
+            fd["city"] = st.text_input("עיר", value=fd["city"], key="bf_city", placeholder="תל אביב")
+        fd["linkedin"] = st.text_input("פרופיל לינקדאין (אופציונלי)", value=fd.get("linkedin", ""), key="bf_linkedin", placeholder="https://linkedin.com/in/your-profile")
 
-    if st.button("+", key="bf_add_exp"):
-        experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
-        st.rerun()
+    with st.container(border=True, key="bfc_summary"):
+        st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:13px; color:#6b7c93;">כתוב בקצרה על הרקע המקצועי שלך, או השאר ריק והבינה המלאכותית תכתוב עבורך</span>', unsafe_allow_html=True)
+        fd["professional_summary"] = st.text_area(
+            "תקציר",
+            value=fd["professional_summary"],
+            key="bf_summary",
+            height=80,
+            label_visibility="collapsed",
+            placeholder="למשל: מפתח תוכנה עם 5 שנות ניסיון בפיתוח אפליקציות ווב..."
+        )
 
-    st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
-    education = fd["education"]
-    edu_to_delete = []
-    for i, edu in enumerate(education):
-        if i > 0:
-            st.markdown("---")
-        col_header, col_del = st.columns([5, 1])
-        with col_del:
-            if len(education) > 1:
-                if st.button("🗑️", key=f"bf_del_edu_{i}", help="מחק", type="tertiary"):
-                    edu_to_delete.append(i)
+    with st.container(border=True, key="bfc_experience"):
+        st.markdown('<div class="section-header">💼 ניסיון תעסוקתי</div>', unsafe_allow_html=True)
+        experience = fd["experience"]
+        exp_to_delete = []
+        for i, exp in enumerate(experience):
+            if i > 0:
+                st.markdown("---")
+            col_header, col_del = st.columns([5, 1])
+            with col_header:
+                st.markdown(f'<span style="font-size:14px; font-weight:600; color:#6b7c93;">תפקיד {i+1}</span>', unsafe_allow_html=True)
+            with col_del:
+                if len(experience) > 1:
+                    if st.button("🗑️", key=f"bf_del_exp_{i}", help="מחק", type="tertiary"):
+                        exp_to_delete.append(i)
 
-        ec1, ec2, ec3 = st.columns(3)
-        with ec3:
-            edu["degree"] = st.text_input("תואר / תעודה", value=edu.get("degree", ""), key=f"bf_edu_deg_{i}", placeholder="תואר ראשון הנדסת תוכנה")
-        with ec2:
-            edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"bf_edu_inst_{i}", placeholder="אוניברסיטת תל אביב")
-        with ec1:
-            edu["year"] = st.text_input("תקופה", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2018-2022 או 2022-היום")
-        edu["honors"] = st.text_input("הצטיינות (אופציונלי)", value=edu.get("honors", ""), key=f"bf_edu_hon_{i}", placeholder="למשל: בוגר הצטיינות, דין של הדיקן...")
+            ec1, ec2, ec3 = st.columns(3)
+            with ec3:
+                exp["title"] = st.text_input("תפקיד", value=exp.get("title", ""), key=f"bf_exp_title_{i}", placeholder="מנהל פרויקטים")
+            with ec2:
+                exp["company"] = st.text_input("חברה", value=exp.get("company", ""), key=f"bf_exp_company_{i}", placeholder="שם החברה")
+            with ec1:
+                exp["period"] = st.text_input("תקופה", value=exp.get("period", ""), key=f"bf_exp_period_{i}", placeholder="2020-2024")
 
-    if edu_to_delete:
-        for idx in sorted(edu_to_delete, reverse=True):
-            education.pop(idx)
-        st.rerun()
+            exp["achievements"] = st.text_area(
+                "תיאור ההישגים",
+                value=exp.get("achievements", ""),
+                key=f"bf_exp_ach_{i}",
+                height=70,
+                label_visibility="collapsed",
+                placeholder="הישגים ו/או כישורים שהבאת לידי ביטוי במסגרת התפקיד"
+            )
+            exp["honors"] = st.text_input("הצטיינות (אופציונלי)", value=exp.get("honors", ""), key=f"bf_exp_hon_{i}", placeholder="למשל: עובד מצטיין, פרס חדשנות...")
 
-    if st.button("+", key="bf_add_edu"):
-        education.append({"degree": "", "institution": "", "year": "", "honors": ""})
-        st.rerun()
+        if exp_to_delete:
+            for idx in sorted(exp_to_delete, reverse=True):
+                experience.pop(idx)
+            st.rerun()
 
-    st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
-    fd["technical_skills"] = st.text_input(
-        "מיומנויות טכניות",
-        value=fd["technical_skills"],
-        key="bf_tech",
-        placeholder="Python, JavaScript, Excel, ניהול פרויקטים..."
-    )
-    fd["soft_skills"] = st.text_input(
-        "מיומנויות רכות",
-        value=fd["soft_skills"],
-        key="bf_soft",
-        placeholder="עבודת צוות, מנהיגות, תקשורת בינאישית..."
-    )
+        if st.button("+", key="bf_add_exp"):
+            experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
+            st.rerun()
 
-    st.markdown('<div class="section-header">🌍 שפות</div>', unsafe_allow_html=True)
-    languages = fd["languages"]
-    lang_to_delete = []
-    for i, lang in enumerate(languages):
-        lc1, lc2, lc_del = st.columns([3, 3, 1])
-        with lc1:
-            lang["language"] = st.text_input("שפה", value=lang.get("language", ""), key=f"bf_lang_{i}", placeholder="עברית")
-        with lc2:
-            lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"bf_lang_lvl_{i}", placeholder="שפת אם / גבוהה / בסיסית")
-        with lc_del:
-            if len(languages) > 1:
-                if st.button("🗑️", key=f"bf_del_lang_{i}", help="מחק", type="tertiary"):
-                    lang_to_delete.append(i)
+    with st.container(border=True, key="bfc_education"):
+        st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
+        education = fd["education"]
+        edu_to_delete = []
+        for i, edu in enumerate(education):
+            if i > 0:
+                st.markdown("---")
+            col_header, col_del = st.columns([5, 1])
+            with col_del:
+                if len(education) > 1:
+                    if st.button("🗑️", key=f"bf_del_edu_{i}", help="מחק", type="tertiary"):
+                        edu_to_delete.append(i)
 
-    if lang_to_delete:
-        for idx in sorted(lang_to_delete, reverse=True):
-            languages.pop(idx)
-        st.rerun()
+            ec1, ec2, ec3 = st.columns(3)
+            with ec3:
+                edu["degree"] = st.text_input("תואר / תעודה", value=edu.get("degree", ""), key=f"bf_edu_deg_{i}", placeholder="תואר ראשון הנדסת תוכנה")
+            with ec2:
+                edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"bf_edu_inst_{i}", placeholder="אוניברסיטת תל אביב")
+            with ec1:
+                edu["year"] = st.text_input("תקופה", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2018-2022 או 2022-היום")
+            edu["honors"] = st.text_input("הצטיינות (אופציונלי)", value=edu.get("honors", ""), key=f"bf_edu_hon_{i}", placeholder="למשל: בוגר הצטיינות, דין של הדיקן...")
 
-    if st.button("+", key="bf_add_lang"):
-        languages.append({"language": "", "level": ""})
-        st.rerun()
+        if edu_to_delete:
+            for idx in sorted(edu_to_delete, reverse=True):
+                education.pop(idx)
+            st.rerun()
 
-    st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי (אופציונלי)</div>', unsafe_allow_html=True)
-    fd["military"] = st.text_area(
-        "שירות צבאי",
-        value=fd.get("military", ""),
-        key="bf_military",
-        height=60,
-        label_visibility="collapsed",
-        placeholder="למשל: חיל המודיעין - קצינת מחקר, שירות מלא 2018-2020"
-    )
+        if st.button("+", key="bf_add_edu"):
+            education.append({"degree": "", "institution": "", "year": "", "honors": ""})
+            st.rerun()
 
-    st.markdown('<div class="section-header">🤝 התנדבות בקהילה (אופציונלי)</div>', unsafe_allow_html=True)
-    fd["volunteering"] = st.text_area(
-        "התנדבות",
-        value=fd.get("volunteering", ""),
-        key="bf_volunteering",
-        height=60,
-        label_visibility="collapsed",
-        placeholder="למשל: מנטור בעמותת יוניסטרים, מתנדב בלמ״ן..."
-    )
+    with st.container(border=True, key="bfc_skills"):
+        st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
+        fd["technical_skills"] = st.text_input(
+            "מיומנויות טכניות",
+            value=fd["technical_skills"],
+            key="bf_tech",
+            placeholder="Python, JavaScript, Excel, ניהול פרויקטים..."
+        )
+        fd["soft_skills"] = st.text_input(
+            "מיומנויות רכות",
+            value=fd["soft_skills"],
+            key="bf_soft",
+            placeholder="עבודת צוות, מנהיגות, תקשורת בינאישית..."
+        )
 
-    st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים (אופציונלי)</div>', unsafe_allow_html=True)
-    fd["projects"] = st.text_area(
-        "פרויקטים",
-        value=fd.get("projects", ""),
-        key="bf_projects",
-        height=60,
-        label_visibility="collapsed",
-        placeholder="למשל: פיתוח אפליקציה לניהול משימות בReact, בניית אתר אישי..."
-    )
+    with st.container(border=True, key="bfc_languages"):
+        st.markdown('<div class="section-header">🌍 שפות</div>', unsafe_allow_html=True)
+        languages = fd["languages"]
+        lang_to_delete = []
+        for i, lang in enumerate(languages):
+            lc1, lc2, lc_del = st.columns([3, 3, 1])
+            with lc1:
+                lang["language"] = st.text_input("שפה", value=lang.get("language", ""), key=f"bf_lang_{i}", placeholder="עברית")
+            with lc2:
+                lang["level"] = st.text_input("רמה", value=lang.get("level", ""), key=f"bf_lang_lvl_{i}", placeholder="שפת אם / גבוהה / בסיסית")
+            with lc_del:
+                if len(languages) > 1:
+                    if st.button("🗑️", key=f"bf_del_lang_{i}", help="מחק", type="tertiary"):
+                        lang_to_delete.append(i)
 
-    st.markdown('<div class="section-header">📌 מידע נוסף (אופציונלי)</div>', unsafe_allow_html=True)
-    fd["additional"] = st.text_area(
-        "מידע נוסף",
-        value=fd["additional"],
-        key="bf_additional",
-        height=60,
-        label_visibility="collapsed",
-        placeholder="קורסים, הסמכות, פרסומים..."
-    )
+        if lang_to_delete:
+            for idx in sorted(lang_to_delete, reverse=True):
+                languages.pop(idx)
+            st.rerun()
+
+        if st.button("+", key="bf_add_lang"):
+            languages.append({"language": "", "level": ""})
+            st.rerun()
+
+    with st.container(border=True, key="bfc_military"):
+        st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי (אופציונלי)</div>', unsafe_allow_html=True)
+        fd["military"] = st.text_area(
+            "שירות צבאי",
+            value=fd.get("military", ""),
+            key="bf_military",
+            height=60,
+            label_visibility="collapsed",
+            placeholder="למשל: חיל המודיעין - קצינת מחקר, שירות מלא 2018-2020"
+        )
+
+    with st.container(border=True, key="bfc_volunteering"):
+        st.markdown('<div class="section-header">🤝 התנדבות בקהילה (אופציונלי)</div>', unsafe_allow_html=True)
+        fd["volunteering"] = st.text_area(
+            "התנדבות",
+            value=fd.get("volunteering", ""),
+            key="bf_volunteering",
+            height=60,
+            label_visibility="collapsed",
+            placeholder="למשל: מנטור בעמותת יוניסטרים, מתנדב בלמ״ן..."
+        )
+
+    with st.container(border=True, key="bfc_projects"):
+        st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים (אופציונלי)</div>', unsafe_allow_html=True)
+        fd["projects"] = st.text_area(
+            "פרויקטים",
+            value=fd.get("projects", ""),
+            key="bf_projects",
+            height=60,
+            label_visibility="collapsed",
+            placeholder="למשל: פיתוח אפליקציה לניהול משימות בReact, בניית אתר אישי..."
+        )
+
+    with st.container(border=True, key="bfc_additional"):
+        st.markdown('<div class="section-header">📌 מידע נוסף (אופציונלי)</div>', unsafe_allow_html=True)
+        fd["additional"] = st.text_area(
+            "מידע נוסף",
+            value=fd["additional"],
+            key="bf_additional",
+            height=60,
+            label_visibility="collapsed",
+            placeholder="קורסים, הסמכות, פרסומים..."
+        )
 
     st.session_state.build_form_data = fd
 
