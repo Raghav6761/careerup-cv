@@ -118,11 +118,13 @@ def render_home():
     with col2:
         st.markdown("""
         <div class="home-cta-card home-cta-card-secondary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#022559" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
-                <circle cx="9" cy="12" r="6"/>
-                <line x1="13.2" y1="16.2" x2="16" y2="19"/>
-                <line x1="20" y1="17" x2="20" y2="6"/>
-                <polyline points="18,8 20,6 22,8"/>
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#022559" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
+                <circle cx="10" cy="10" r="7.5"/>
+                <line x1="15.8" y1="15.8" x2="20" y2="20"/>
+                <line x1="7" y1="14" x2="7" y2="5"/>
+                <polyline points="5,7.5 7,5 9,7.5"/>
+                <line x1="12" y1="14" x2="12" y2="5"/>
+                <polyline points="10,7.5 12,5 14,7.5"/>
             </svg>
             <div class="home-cta-title">שפר קו"ח קיימים</div>
             <div class="home-cta-desc">קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.</div>
