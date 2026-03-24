@@ -21,7 +21,7 @@ def _format_cv_html(text: str) -> str:
             content = stripped.lstrip("•- ").strip()
             html_parts.append(
                 f'<div style="display:flex;gap:8px;align-items:flex-start;margin:2px 0;font-weight:400;">'
-                f'<span style="color:#0066FF;flex-shrink:0;">•</span>'
+                f'<span style="color:#022559;flex-shrink:0;">•</span>'
                 f'<span>{content}</span></div>'
             )
         # Job/education header line — contains year range → bold only

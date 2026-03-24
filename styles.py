@@ -72,8 +72,8 @@ def inject_custom_css():
 
         .stTextInput > div > div > input:focus,
         .stTextArea > div > div > textarea:focus {
-            border-color: #0066FF !important;
-            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1) !important;
+            border-color: #022559 !important;
+            box-shadow: 0 0 0 3px rgba(2, 37, 89, 0.1) !important;
         }
 
         /* Primary buttons - filled blue */
@@ -85,17 +85,17 @@ def inject_custom_css():
             border-radius: 14px !important;
             padding: 14px 32px !important;
             min-height: 56px !important;
-            background: #0066FF !important;
+            background: #022559 !important;
             color: #ffffff !important;
             border: none !important;
             transition: all 0.25s ease !important;
-            box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(2, 37, 89, 0.2) !important;
         }
 
         .stButton > button[kind="primary"]:hover,
         .stButton > button[data-testid="stBaseButton-primary"]:hover {
-            background: #0055DD !important;
-            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3) !important;
+            background: #011840 !important;
+            box-shadow: 0 4px 16px rgba(2, 37, 89, 0.3) !important;
             transform: translateY(-1px) !important;
         }
 
@@ -109,16 +109,16 @@ def inject_custom_css():
             padding: 14px 32px !important;
             min-height: 56px !important;
             background: #ffffff !important;
-            color: #0066FF !important;
-            border: 2px solid #0066FF !important;
+            color: #022559 !important;
+            border: 2px solid #022559 !important;
             transition: all 0.25s ease !important;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
         }
 
         .stButton > button[kind="secondary"]:hover,
         .stButton > button[data-testid="stBaseButton-secondary"]:hover {
-            background: #f0f6ff !important;
-            border-color: #0055DD !important;
+            background: #eef1f6 !important;
+            border-color: #011840 !important;
             transform: translateY(-1px) !important;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
         }
@@ -150,28 +150,28 @@ def inject_custom_css():
         }
 
         .home-cta-primary {
-            background: #0066FF;
+            background: #022559;
             color: #ffffff;
             border: none;
-            box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2);
+            box-shadow: 0 2px 8px rgba(2, 37, 89, 0.2);
         }
 
         .home-cta-primary:hover {
-            background: #0055DD;
-            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3);
+            background: #011840;
+            box-shadow: 0 4px 16px rgba(2, 37, 89, 0.3);
             transform: translateY(-1px);
         }
 
         .home-cta-secondary {
             background: #ffffff;
-            color: #0066FF;
-            border: 2px solid #0066FF;
+            color: #022559;
+            border: 2px solid #022559;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .home-cta-secondary:hover {
-            background: #f0f6ff;
-            border-color: #0055DD;
+            background: #eef1f6;
+            border-color: #011840;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
             transform: translateY(-1px);
         }
@@ -232,7 +232,7 @@ def inject_custom_css():
 
         .section-header {
             background: #f0f6ff;
-            border-right: 4px solid #0066FF;
+            border-right: 4px solid #022559;
             padding: 8px 16px;
             border-radius: 0 10px 10px 0;
             margin: 8px 0 8px 0;
@@ -252,7 +252,7 @@ def inject_custom_css():
         .suggestion-label {
             font-size: 13px;
             font-weight: 600;
-            color: #0066FF;
+            color: #022559;
             margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -281,7 +281,7 @@ def inject_custom_css():
 
         .improved-text {
             background: #f0faf0;
-            border-right: 3px solid #0066FF;
+            border-right: 3px solid #022559;
             padding: 12px 16px;
             border-radius: 0 8px 8px 0;
             margin: 8px 0;
@@ -300,7 +300,7 @@ def inject_custom_css():
         }
 
         .chat-message-user {
-            background: #0066FF;
+            background: #022559;
             color: white;
             padding: 14px 20px;
             border-radius: 16px 16px 4px 16px;
@@ -341,7 +341,7 @@ def inject_custom_css():
         }
 
         .logo-ai {
-            color: #0066FF !important;
+            color: #022559 !important;
         }
 
         .app-header p {
@@ -368,7 +368,7 @@ def inject_custom_css():
         }
 
         .step-dot.active {
-            background: #0066FF;
+            background: #022559;
             width: 28px;
             border-radius: 5px;
         }
@@ -389,7 +389,7 @@ def inject_custom_css():
         }
 
         .cv-preview h3 {
-            color: #0066FF !important;
+            color: #022559 !important;
             font-size: 18px !important;
             border-bottom: 2px solid #e0e4ea;
             padding-bottom: 6px;
@@ -409,7 +409,7 @@ def inject_custom_css():
         }
 
         .stDownloadButton > button {
-            background-color: #0066FF !important;
+            background-color: #022559 !important;
             color: white !important;
             border: none !important;
             font-family: 'Assistant', sans-serif !important;
@@ -419,13 +419,13 @@ def inject_custom_css():
             padding: 14px 28px !important;
             min-height: 52px !important;
             width: 100% !important;
-            box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(2, 37, 89, 0.2) !important;
             transition: all 0.25s ease !important;
         }
 
         .stDownloadButton > button:hover {
-            background-color: #0055DD !important;
-            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3) !important;
+            background-color: #011840 !important;
+            box-shadow: 0 4px 16px rgba(2, 37, 89, 0.3) !important;
         }
 
         div[data-testid="stExpander"] {
