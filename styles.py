@@ -518,5 +518,9 @@ def inject_custom_css():
             direction: rtl !important;
             background: #fafbfc !important;
         }
+
+        [data-testid="InputInstructions"] {
+            display: none !important;
+        }
     </style>
     """, unsafe_allow_html=True)
