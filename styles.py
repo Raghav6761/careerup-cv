@@ -112,6 +112,7 @@ def inject_custom_css():
             color: #0066FF !important;
             border: 2px solid #0066FF !important;
             transition: all 0.25s ease !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
         }
 
         .stButton > button[kind="secondary"]:hover,
@@ -119,6 +120,7 @@ def inject_custom_css():
             background: #f0f6ff !important;
             border-color: #0055DD !important;
             transform: translateY(-1px) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
         }
 
         /* Bare icon delete buttons using tertiary type */
