@@ -110,6 +110,7 @@ def render_home():
             reset_build()
             go_to("build_form")
             st.rerun()
+        st.markdown('<p class="btn-caption">תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.</p>', unsafe_allow_html=True)
 
     with col2:
         if st.button('שפר קו"ח קיימים', key="btn_improve", use_container_width=True):
