@@ -132,6 +132,7 @@ def analyze_cv(cv_text: str, target_position: str = "", language: str = "he") ->
 
 Specific job provided:
 "{target_position}"
+* If the target position or job description is written in Hebrew — translate it to English and use the English version.
 * Tailor the CV specifically to this role.
 * Incorporate relevant keywords from the job description naturally.
 * Highlight experience, skills and achievements that match the requirements.
@@ -141,6 +142,7 @@ Specific job provided:
 
 משרה ספציפית שסופקה:
 "{target_position}"
+* אם שם התפקיד או תיאור המשרה כתובים באנגלית — תרגם אותם לעברית ועבוד על פי הגרסה העברית.
 * התאם את המסמך אליה באופן ממוקד.
 * שלב מילות מפתח רלוונטיות מתוך תיאור המשרה.
 * הדגש ניסיון, מיומנויות והישגים התואמים לדרישות.
