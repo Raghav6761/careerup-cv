@@ -424,7 +424,7 @@ def render_improve_export():
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">📄 תצוגה מקדימה</div>', unsafe_allow_html=True)
-    st.markdown("ניתן לערוך, לשנות או למחוק כל סעיף לפני ההורדה")
+    st.markdown("זה הזמן לליטושים אחרונים. ניתן לערוך כל חלק או לשנות את סדר הסעיפים")
 
     result = st.session_state.analysis_result
     sections = result.get("sections", [])
