@@ -737,7 +737,7 @@ def render_build_form():
             experience.pop(idx)
         st.rerun()
 
-    if st.button("➕ הוסף תפקיד נוסף", key="bf_add_exp"):
+    if st.button("+", key="bf_add_exp"):
         experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
         st.rerun()
 
@@ -767,7 +767,7 @@ def render_build_form():
             education.pop(idx)
         st.rerun()
 
-    if st.button("➕ הוסף השכלה נוספת", key="bf_add_edu"):
+    if st.button("+", key="bf_add_edu"):
         education.append({"degree": "", "institution": "", "year": "", "honors": ""})
         st.rerun()
 
@@ -804,7 +804,7 @@ def render_build_form():
             languages.pop(idx)
         st.rerun()
 
-    if st.button("➕ הוסף שפה", key="bf_add_lang"):
+    if st.button("+", key="bf_add_lang"):
         languages.append({"language": "", "level": ""})
         st.rerun()
 
