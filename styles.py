@@ -206,6 +206,11 @@ def inject_custom_css():
             border-color: #80d6c5 !important;
         }
 
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            background-color: #f2f1ef !important;
+            border-radius: 12px !important;
+        }
+
         /* Bare icon delete buttons using tertiary type */
         button[data-testid="stBaseButton-tertiary"] {
             min-height: 0px !important;
