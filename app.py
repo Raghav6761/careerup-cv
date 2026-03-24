@@ -149,38 +149,41 @@ def render_improve_upload():
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header">📤 העלאת קובץ קורות חיים</div>', unsafe_allow_html=True)
-    st.markdown("העלה את קובץ קורות החיים שלך בפורמט PDF, DOCX או TXT")
+    with st.container(border=True):
+        st.markdown('<div class="section-header">📤 העלאת קובץ קורות חיים</div>', unsafe_allow_html=True)
+        st.markdown("העלה את קובץ קורות החיים שלך בפורמט PDF, DOCX או TXT")
 
-    uploaded_file = st.file_uploader(
-        "בחר קובץ",
-        type=["pdf", "docx", "txt"],
-        help="פורמטים נתמכים: PDF, DOCX, TXT"
-    )
+        uploaded_file = st.file_uploader(
+            "בחר קובץ",
+            type=["pdf", "docx", "txt"],
+            help="פורמטים נתמכים: PDF, DOCX, TXT"
+        )
 
-    st.markdown('<div class="section-header">🌐 שפת הנוסח המשופר</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:13px; color:#6b7c93;">בחר באיזו שפה תרצה לקבל את הגרסה המשופרת של קורות החיים</span>', unsafe_allow_html=True)
-    lang_choice = st.radio(
-        "שפת הנוסח המשופר",
-        ["🇮🇱 עברית", "🇺🇸 English"],
-        horizontal=True,
-        key="lang_radio",
-        label_visibility="collapsed"
-    )
-    st.session_state.improve_language = "en" if "English" in lang_choice else "he"
+    with st.container(border=True):
+        st.markdown('<div class="section-header">🌐 שפת הנוסח המשופר</div>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:13px; color:#6b7c93;">בחר באיזו שפה תרצה לקבל את הגרסה המשופרת של קורות החיים</span>', unsafe_allow_html=True)
+        lang_choice = st.radio(
+            "שפת הנוסח המשופר",
+            ["🇮🇱 עברית", "🇺🇸 English"],
+            horizontal=True,
+            key="lang_radio",
+            label_visibility="collapsed"
+        )
+        st.session_state.improve_language = "en" if "English" in lang_choice else "he"
 
-    st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - הבינה המלאכותית תחלץ מילות מפתח ותשלב אותן בקורות החיים כדי לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
-    if "improve_target_position" not in st.session_state:
-        st.session_state.improve_target_position = ""
-    st.session_state.improve_target_position = st.text_area(
-        "תפקיד יעד",
-        value=st.session_state.improve_target_position,
-        key="improve_target_input",
-        placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
-        label_visibility="collapsed",
-        height=68
-    )
+    with st.container(border=True):
+        st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:13px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - הבינה המלאכותית תחלץ מילות מפתח ותשלב אותן בקורות החיים כדי לעבור מערכות סינון ATS</span>', unsafe_allow_html=True)
+        if "improve_target_position" not in st.session_state:
+            st.session_state.improve_target_position = ""
+        st.session_state.improve_target_position = st.text_area(
+            "תפקיד יעד",
+            value=st.session_state.improve_target_position,
+            key="improve_target_input",
+            placeholder="למשל: מנהל משאבי אנוש, מפתח Full Stack...\nאו הדבק כאן את תיאור המשרה המלא מהמודעה - ככל שתספק יותר פרטים, קורות החיים יותאמו טוב יותר",
+            label_visibility="collapsed",
+            height=68
+        )
 
     if uploaded_file is not None:
         if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary"):
