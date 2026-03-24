@@ -440,11 +440,24 @@ def render_improve_export():
     if "imp_pending_delete" not in st.session_state:
         st.session_state.imp_pending_delete = None
 
+    def _swap_imp_sections(a, b):
+        secs = st.session_state.improve_final_sections
+        for idx in [a, b]:
+            tk, xk = f"imp_title_{idx}", f"imp_text_{idx}"
+            if tk in st.session_state:
+                secs[idx]["title"] = st.session_state[tk]
+                del st.session_state[tk]
+            if xk in st.session_state:
+                secs[idx]["final_text"] = st.session_state[xk]
+                del st.session_state[xk]
+        secs[a], secs[b] = secs[b], secs[a]
+
     sections_to_delete = []
+    n_secs = len(st.session_state.improve_final_sections)
 
     for i, sec in enumerate(st.session_state.improve_final_sections):
         with st.container(border=True, key=f"exp_sec_{i}"):
-            col_num, col_title, col_del = st.columns([0.5, 7, 1])
+            col_num, col_title, col_up, col_down, col_del = st.columns([0.5, 6, 0.6, 0.6, 0.8])
             with col_num:
                 st.markdown(
                     f'<div style="background:#022559;color:#fff;border-radius:50%;width:26px;height:26px;'
@@ -461,6 +474,16 @@ def render_improve_export():
                     placeholder="כותרת סעיף"
                 )
                 st.session_state.improve_final_sections[i]["title"] = new_title
+            with col_up:
+                if i > 0:
+                    if st.button("↑", key=f"imp_up_{i}", help="הזז למעלה", type="tertiary"):
+                        _swap_imp_sections(i, i - 1)
+                        st.rerun()
+            with col_down:
+                if i < n_secs - 1:
+                    if st.button("↓", key=f"imp_down_{i}", help="הזז למטה", type="tertiary"):
+                        _swap_imp_sections(i, i + 1)
+                        st.rerun()
             with col_del:
                 if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף", type="tertiary"):
                     st.session_state.imp_pending_delete = i
