@@ -347,15 +347,7 @@ def render_improve_review():
                     'border-radius:50%;width:24px;height:24px;display:flex;align-items:center;'
                     'justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);">✓</div>'
                 ) if orig_sel else ""
-                st.markdown(f"""
-                <div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;
-                            background:{card_bg};position:relative;margin-bottom:8px;">
-                    {checkmark}
-                    <div style="font-size:12px;font-weight:700;color:#1a1a2e;
-                                margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div>
-                    <div class="original-text">{_format_cv_html(original)}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.html(f'<div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;background:{card_bg};position:relative;margin-bottom:8px;">{checkmark}<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div><div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_cv_html(original)}</div></div>')
                 if st.button(
                     "✓ נבחר" if orig_sel else "בחר נוסח זה",
                     key=f"sel_orig_{i}",
@@ -379,15 +371,7 @@ def render_improve_review():
                     'border-radius:50%;width:24px;height:24px;display:flex;align-items:center;'
                     'justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);">✓</div>'
                 ) if impr_sel else ""
-                st.markdown(f"""
-                <div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;
-                            background:{card_bg};position:relative;margin-bottom:8px;">
-                    {checkmark}
-                    <div style="font-size:12px;font-weight:700;color:#1a1a2e;
-                                margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div>
-                    <div class="improved-text">{_format_improved_html(improved)}</div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.html(f'<div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;background:{card_bg};position:relative;margin-bottom:8px;">{checkmark}<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div><div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_improved_html(improved)}</div></div>')
                 if st.button(
                     "✓ נבחר" if impr_sel else "בחר נוסח זה",
                     key=f"sel_impr_{i}",
