@@ -446,10 +446,11 @@ def render_improve_export():
         with st.container(border=True, key=f"exp_sec_{i}"):
             col_num, col_title, col_del = st.columns([0.5, 7, 1])
             with col_num:
-                st.html(
+                st.markdown(
                     f'<div style="background:#022559;color:#fff;border-radius:50%;width:26px;height:26px;'
                     f'display:flex;align-items:center;justify-content:center;font-size:11px;'
-                    f'font-weight:700;margin-top:4px;">{i + 1}</div>'
+                    f'font-weight:700;margin-top:4px;">{i + 1}</div>',
+                    unsafe_allow_html=True
                 )
             with col_title:
                 new_title = st.text_input(
@@ -499,14 +500,14 @@ def render_improve_export():
     export_sections = [s for s in st.session_state.improve_final_sections if s["final_text"].strip()]
     is_english_mode = st.session_state.get("improve_language", "he") == "en"
 
-    st.html("""
+    st.markdown("""
     <div style="background:linear-gradient(135deg,#022559 0%,#03367a 100%);border-radius:16px;
-                padding:24px 24px 12px;margin:28px 0 0;text-align:center;color:#fff;">
+                padding:24px 24px 12px;margin:28px 0 12px;text-align:center;color:#fff;">
         <div style="font-size:22px;margin-bottom:6px;">🎉</div>
         <div style="font-size:18px;font-weight:700;margin-bottom:4px;">קורות החיים שלך מוכנים!</div>
         <div style="font-size:13px;opacity:.75;">בחר פורמט להורדה</div>
     </div>
-    """)
+    """, unsafe_allow_html=True)
 
     if is_english_mode:
         en_text = "\n\n".join([
@@ -568,12 +569,12 @@ def render_improve_export():
             except Exception as e:
                 st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
-        st.html("""
+        st.markdown("""
         <div style="border-top:1px solid #e0e4ea;margin:20px 0 12px;padding-top:16px;
                     text-align:center;color:#6b7c93;font-size:13px;font-weight:600;">
             🌐 רוצה גרסה באנגלית? נתרגם עבורך
         </div>
-        """)
+        """, unsafe_allow_html=True)
 
         if "improve_en_translated" not in st.session_state:
             st.session_state.improve_en_translated = None
