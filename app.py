@@ -423,7 +423,7 @@ def render_improve_export():
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header">📄 תצוגה מקדימה</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">✏️ עריכה סופית</div>', unsafe_allow_html=True)
     st.markdown("זה הזמן לליטושים אחרונים. ניתן לערוך כל חלק או לשנות את סדר הסעיפים")
 
     result = st.session_state.analysis_result
@@ -437,11 +437,20 @@ def render_improve_export():
             final_sections.append({"title": title, "final_text": final_text})
         st.session_state.improve_final_sections = final_sections
 
+    if "imp_pending_delete" not in st.session_state:
+        st.session_state.imp_pending_delete = None
+
     sections_to_delete = []
 
     for i, sec in enumerate(st.session_state.improve_final_sections):
-        with st.container():
-            col_title, col_delete = st.columns([5, 1])
+        with st.container(border=True, key=f"exp_sec_{i}"):
+            col_num, col_title, col_del = st.columns([0.5, 7, 1])
+            with col_num:
+                st.html(
+                    f'<div style="background:#022559;color:#fff;border-radius:50%;width:26px;height:26px;'
+                    f'display:flex;align-items:center;justify-content:center;font-size:11px;'
+                    f'font-weight:700;margin-top:4px;">{i + 1}</div>'
+                )
             with col_title:
                 new_title = st.text_input(
                     "כותרת סעיף",
@@ -451,9 +460,10 @@ def render_improve_export():
                     placeholder="כותרת סעיף"
                 )
                 st.session_state.improve_final_sections[i]["title"] = new_title
-            with col_delete:
+            with col_del:
                 if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף", type="tertiary"):
-                    sections_to_delete.append(i)
+                    st.session_state.imp_pending_delete = i
+                    st.rerun()
 
             new_text = st.text_area(
                 "תוכן",
@@ -464,7 +474,18 @@ def render_improve_export():
                 placeholder="תוכן הסעיף"
             )
             st.session_state.improve_final_sections[i]["final_text"] = new_text
-            st.markdown("---")
+
+            if st.session_state.imp_pending_delete == i:
+                st.warning("האם למחוק סעיף זה? לא ניתן לשחזר.")
+                col_yes, col_no, _ = st.columns([1, 1, 4])
+                with col_yes:
+                    if st.button("✓ מחק", key=f"confirm_del_{i}", type="primary"):
+                        sections_to_delete.append(i)
+                        st.session_state.imp_pending_delete = None
+                with col_no:
+                    if st.button("ביטול", key=f"cancel_del_{i}"):
+                        st.session_state.imp_pending_delete = None
+                        st.rerun()
 
     if sections_to_delete:
         for idx in sorted(sections_to_delete, reverse=True):
@@ -475,14 +496,19 @@ def render_improve_export():
         st.session_state.improve_final_sections.append({"title": "סעיף חדש", "final_text": ""})
         st.rerun()
 
-    st.markdown("---")
-    st.markdown('<div class="section-header">⬇️ הורדת קורות החיים</div>', unsafe_allow_html=True)
-
     export_sections = [s for s in st.session_state.improve_final_sections if s["final_text"].strip()]
     is_english_mode = st.session_state.get("improve_language", "he") == "en"
 
+    st.html("""
+    <div style="background:linear-gradient(135deg,#022559 0%,#03367a 100%);border-radius:16px;
+                padding:24px 24px 12px;margin:28px 0 0;text-align:center;color:#fff;">
+        <div style="font-size:22px;margin-bottom:6px;">🎉</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:4px;">קורות החיים שלך מוכנים!</div>
+        <div style="font-size:13px;opacity:.75;">בחר פורמט להורדה</div>
+    </div>
+    """)
+
     if is_english_mode:
-        # English mode: export directly using English export functions
         en_text = "\n\n".join([
             f"=== {s['title']} ===\n{s['final_text']}" for s in export_sections
         ])
@@ -514,9 +540,7 @@ def render_improve_export():
             except Exception as e:
                 st.error(f"שגיאה ביצירת DOCX: {str(e)}")
     else:
-        # Hebrew mode: standard Hebrew exports + optional translate button
         col1, col2 = st.columns(2)
-
         with col2:
             try:
                 from export_utils import export_improved_cv_to_pdf
@@ -530,7 +554,6 @@ def render_improve_export():
                 )
             except Exception as e:
                 st.error(f"שגיאה ביצירת PDF: {str(e)}")
-
         with col1:
             try:
                 from export_utils import export_improved_cv_to_docx
@@ -545,7 +568,12 @@ def render_improve_export():
             except Exception as e:
                 st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
-        st.markdown('<div class="section-header">🌐 הורדה באנגלית (תרגום)</div>', unsafe_allow_html=True)
+        st.html("""
+        <div style="border-top:1px solid #e0e4ea;margin:20px 0 12px;padding-top:16px;
+                    text-align:center;color:#6b7c93;font-size:13px;font-weight:600;">
+            🌐 רוצה גרסה באנגלית? נתרגם עבורך
+        </div>
+        """)
 
         if "improve_en_translated" not in st.session_state:
             st.session_state.improve_en_translated = None
