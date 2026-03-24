@@ -131,6 +131,7 @@ def inject_custom_css():
             direction: rtl;
             font-family: 'Assistant', sans-serif;
             margin-top: 24px;
+            min-height: 110px;
         }
 
         .home-cta-card-primary {
