@@ -1,4 +1,5 @@
 import re
+import html as html_lib
 import streamlit as st
 from styles import inject_custom_css
 
@@ -16,9 +17,10 @@ def _format_cv_html(text: str) -> str:
         if not stripped:
             html_parts.append('<div style="height:5px"></div>')
             continue
+        safe = html_lib.escape(stripped)
         # Bullet point — regular weight, blue bullet
         if stripped.startswith("•") or stripped.startswith("-"):
-            content = stripped.lstrip("•- ").strip()
+            content = html_lib.escape(stripped.lstrip("•- ").strip())
             html_parts.append(
                 f'<div style="display:flex;gap:8px;align-items:flex-start;margin:2px 0;font-weight:400;">'
                 f'<span style="color:#022559;flex-shrink:0;">•</span>'
@@ -27,11 +29,11 @@ def _format_cv_html(text: str) -> str:
         # Job/education header line — contains year range → bold only
         elif year_pattern.search(stripped):
             html_parts.append(
-                f'<div style="font-weight:700;color:#1a1a2e;margin:5px 0 1px 0;">{stripped}</div>'
+                f'<div style="font-weight:700;color:#1a1a2e;margin:5px 0 1px 0;">{safe}</div>'
             )
         # Everything else — regular weight
         else:
-            html_parts.append(f'<div style="font-weight:400;margin:2px 0;">{stripped}</div>')
+            html_parts.append(f'<div style="font-weight:400;margin:2px 0;">{safe}</div>')
     return "".join(html_parts)
 
 
@@ -52,9 +54,10 @@ def _format_improved_html(text: str) -> str:
             html_parts.append('<div style="height:5px"></div>')
             continue
 
+        safe = html_lib.escape(stripped)
         # Already a bullet marker — render as bullet
         if stripped.startswith("•") or stripped.startswith("-"):
-            content = stripped.lstrip("•- ").strip()
+            content = html_lib.escape(stripped.lstrip("•- ").strip())
             html_parts.append(
                 f'<div style="display:flex;gap:8px;align-items:flex-start;margin:2px 0;">'
                 f'<span style="color:#022559;flex-shrink:0;font-weight:600;">•</span>'
@@ -63,22 +66,22 @@ def _format_improved_html(text: str) -> str:
         # Year-range line → bold job/edu header
         elif year_pattern.search(stripped):
             html_parts.append(
-                f'<div style="font-weight:700;color:#1a1a2e;margin:6px 0 1px 0;">{stripped}</div>'
+                f'<div style="font-weight:700;color:#1a1a2e;margin:6px 0 1px 0;">{safe}</div>'
             )
         # Contact line (has pipe, @, phone digits) → centered, regular
         elif contact_pattern.search(stripped):
-            html_parts.append(f'<div style="font-weight:400;margin:2px 0;text-align:center;">{stripped}</div>')
+            html_parts.append(f'<div style="font-weight:400;margin:2px 0;text-align:center;">{safe}</div>')
         # Short line (≤40 chars) — likely a name, title, institution → bold header
         elif len(stripped) <= 40 and "|" not in stripped:
             html_parts.append(
-                f'<div style="font-weight:700;color:#1a1a2e;margin:5px 0 1px 0;">{stripped}</div>'
+                f'<div style="font-weight:700;color:#1a1a2e;margin:5px 0 1px 0;">{safe}</div>'
             )
         # Long descriptive line → convert to bullet point
         else:
             html_parts.append(
                 f'<div style="display:flex;gap:8px;align-items:flex-start;margin:2px 0;">'
                 f'<span style="color:#022559;flex-shrink:0;font-weight:600;">•</span>'
-                f'<span style="font-weight:400;">{stripped}</span></div>'
+                f'<span style="font-weight:400;">{safe}</span></div>'
             )
     return "".join(html_parts)
 
