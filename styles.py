@@ -206,8 +206,11 @@ def inject_custom_css():
             border-color: #80d6c5 !important;
         }
 
-        [data-testid="stVerticalBlockBorderWrapper"] {
+        [data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-card_upload),
+        [data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-card_language),
+        [data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-card_target) {
             background-color: #f2f1ef !important;
+            border-color: #f2f1ef !important;
             border-radius: 12px !important;
         }
 
