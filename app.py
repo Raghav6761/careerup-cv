@@ -329,42 +329,93 @@ def render_improve_review():
             if explanation:
                 st.info(f"💡 {explanation}")
 
-            col_right, col_left = st.columns(2)
-
-            with col_right:
-                st.markdown('<div class="suggestion-label">נוסח מקור</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="original-text">{_format_cv_html(original)}</div>', unsafe_allow_html=True)
-
-            with col_left:
-                st.markdown('<div class="suggestion-label">נוסח מחודש / מוצע</div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="improved-text">{_format_improved_html(improved)}</div>', unsafe_allow_html=True)
-
             decision_key = f"decision_{i}"
             current_decision = st.session_state.section_decisions.get(decision_key, "improved")
 
-            choice = st.radio(
-                "בחר גרסה:",
-                ["השתמש בגרסה המשופרת", "השאר מקור", "ערוך ידנית"],
-                key=f"radio_{i}",
-                index=0 if current_decision == "improved" else (1 if current_decision == "original" else 2),
-                horizontal=True
-            )
+            col_right, col_left = st.columns(2)
 
-            if choice == "השתמש בגרסה המשופרת":
-                st.session_state.section_decisions[decision_key] = "improved"
-                st.session_state.section_decisions[f"text_{i}"] = improved
-            elif choice == "השאר מקור":
-                st.session_state.section_decisions[decision_key] = "original"
-                st.session_state.section_decisions[f"text_{i}"] = original
-            else:
-                st.session_state.section_decisions[decision_key] = "custom"
+            # ── Original card ──
+            with col_right:
+                orig_sel = current_decision == "original"
+                card_border = "2px solid #022559" if orig_sel else "1.5px solid #e0e4ea"
+                card_bg = "#f0f4ff" if orig_sel else "#fafafa"
+                checkmark = (
+                    '<div style="position:absolute;top:-11px;right:-11px;background:#022559;color:#fff;'
+                    'border-radius:50%;width:24px;height:24px;display:flex;align-items:center;'
+                    'justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);">✓</div>'
+                ) if orig_sel else ""
+                label_color = "#022559" if orig_sel else "#6b7c93"
+                st.markdown(f"""
+                <div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;
+                            background:{card_bg};position:relative;margin-bottom:8px;">
+                    {checkmark}
+                    <div style="font-size:12px;font-weight:700;color:{label_color};
+                                margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div>
+                    <div class="original-text">{_format_cv_html(original)}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(
+                    "✓ נבחר" if orig_sel else "בחר נוסח זה",
+                    key=f"sel_orig_{i}",
+                    use_container_width=True,
+                    type="primary" if orig_sel else "secondary",
+                    disabled=orig_sel,
+                ):
+                    st.session_state.section_decisions[decision_key] = "original"
+                    st.session_state.section_decisions[f"text_{i}"] = original
+                    if current_decision == "custom":
+                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                    st.rerun()
+
+            # ── Improved card ──
+            with col_left:
+                impr_sel = current_decision == "improved"
+                card_border = "2px solid #022559" if impr_sel else "1.5px solid #e0e4ea"
+                card_bg = "#f0f4ff" if impr_sel else "#fafafa"
+                checkmark = (
+                    '<div style="position:absolute;top:-11px;right:-11px;background:#022559;color:#fff;'
+                    'border-radius:50%;width:24px;height:24px;display:flex;align-items:center;'
+                    'justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);">✓</div>'
+                ) if impr_sel else ""
+                label_color = "#022559" if impr_sel else "#6b7c93"
+                st.markdown(f"""
+                <div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;
+                            background:{card_bg};position:relative;margin-bottom:8px;">
+                    {checkmark}
+                    <div style="font-size:12px;font-weight:700;color:{label_color};
+                                margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div>
+                    <div class="improved-text">{_format_improved_html(improved)}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(
+                    "✓ נבחר" if impr_sel else "בחר נוסח זה",
+                    key=f"sel_impr_{i}",
+                    use_container_width=True,
+                    type="primary" if impr_sel else "secondary",
+                    disabled=impr_sel,
+                ):
+                    st.session_state.section_decisions[decision_key] = "improved"
+                    st.session_state.section_decisions[f"text_{i}"] = improved
+                    if current_decision == "custom":
+                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                    st.rerun()
+
+            # ── Edit manually ──
+            if current_decision == "custom":
                 custom_text = st.text_area(
-                    "ערוך את הטקסט:",
+                    "ערוך ידנית:",
                     value=st.session_state.section_decisions.get(f"text_{i}", improved),
                     key=f"custom_text_{i}",
-                    height=120
+                    height=120,
                 )
                 st.session_state.section_decisions[f"text_{i}"] = custom_text
+            else:
+                if st.button("✏️ ערוך ידנית", key=f"edit_manual_{i}"):
+                    st.session_state.section_decisions[decision_key] = "custom"
+                    st.session_state.section_decisions[f"text_{i}"] = (
+                        improved if current_decision == "improved" else original
+                    )
+                    st.rerun()
 
     st.markdown("---")
 
