@@ -244,7 +244,7 @@ def inject_custom_css():
         }
 
         .section-header {
-            background: #f0f6ff;
+            background: #ffffff;
             padding: 8px 16px;
             border-radius: 10px;
             margin: 8px 0 8px 0;
