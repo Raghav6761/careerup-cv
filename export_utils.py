@@ -42,6 +42,24 @@ def _filter_list(items: list) -> list:
         return []
     return [item for item in items if item and not _is_empty_content(str(item))]
 
+
+_PDF_COMPRESSION_LEVELS = [
+    {"margin_mm": 18, "sec_before": 8,  "body_lead": 13,   "bul_lead": 12,  "body_size": 9,   "sec_size": 12, "contact_after": 6, "name_lead": 24},
+    {"margin_mm": 16, "sec_before": 6,  "body_lead": 12,   "bul_lead": 11,  "body_size": 9,   "sec_size": 12, "contact_after": 4, "name_lead": 22},
+    {"margin_mm": 14, "sec_before": 4,  "body_lead": 11,   "bul_lead": 10,  "body_size": 9,   "sec_size": 11, "contact_after": 3, "name_lead": 20},
+    {"margin_mm": 13, "sec_before": 3,  "body_lead": 10.5, "bul_lead": 9.5, "body_size": 8.5, "sec_size": 11, "contact_after": 2, "name_lead": 18},
+    {"margin_mm": 12, "sec_before": 2,  "body_lead": 10,   "bul_lead": 9,   "body_size": 8,   "sec_size": 10, "contact_after": 1, "name_lead": 16},
+]
+
+
+def _count_pdf_pages(pdf_bytes: bytes) -> int:
+    try:
+        import pdfplumber
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            return len(pdf.pages)
+    except Exception:
+        return 1
+
 def _has_real_exp(exp: dict) -> bool:
     if exp.get("title", "").strip() or exp.get("company", "").strip() or exp.get("period", "").strip():
         return True
@@ -146,13 +164,22 @@ def _make_job_separator(width_mm=170):
     )
 
 
-def _get_pdf_styles(font_name, bold_font):
+def _get_pdf_styles(font_name, bold_font, cparams=None):
+    if cparams is None:
+        cparams = _PDF_COMPRESSION_LEVELS[0]
+    bs = cparams["body_size"]
+    ss = cparams["sec_size"]
+    bl = cparams["body_lead"]
+    ul = cparams["bul_lead"]
+    sb = cparams["sec_before"]
+    ca = cparams["contact_after"]
+    nl = cparams["name_lead"]
     return {
         "name": ParagraphStyle(
             "Name",
             fontName=bold_font,
             fontSize=20,
-            leading=24,
+            leading=nl,
             alignment=TA_CENTER,
             textColor=HexColor("#2c3e50"),
             spaceAfter=2
@@ -160,37 +187,37 @@ def _get_pdf_styles(font_name, bold_font):
         "contact": ParagraphStyle(
             "Contact",
             fontName=font_name,
-            fontSize=9,
-            leading=12,
+            fontSize=bs,
+            leading=ul,
             alignment=TA_CENTER,
             textColor=HexColor("#555555"),
-            spaceAfter=6
+            spaceAfter=ca
         ),
         "section_header": ParagraphStyle(
             "SectionHeader",
             fontName=bold_font,
-            fontSize=12,
-            leading=16,
+            fontSize=ss,
+            leading=ss + 4,
             alignment=TA_RIGHT,
             textColor=HexColor("#2c3e50"),
             spaceAfter=2,
-            spaceBefore=8
+            spaceBefore=sb
         ),
         "job_title": ParagraphStyle(
             "JobTitle",
             fontName=bold_font,
-            fontSize=9,
-            leading=13,
+            fontSize=bs,
+            leading=bl,
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
             spaceAfter=1,
-            spaceBefore=4
+            spaceBefore=max(int(sb / 2), 2)
         ),
         "job_period": ParagraphStyle(
             "JobPeriod",
             fontName=font_name,
-            fontSize=9,
-            leading=12,
+            fontSize=bs,
+            leading=ul,
             alignment=TA_RIGHT,
             textColor=HexColor("#6b7c93"),
             spaceAfter=1
@@ -198,8 +225,8 @@ def _get_pdf_styles(font_name, bold_font):
         "body": ParagraphStyle(
             "Body",
             fontName=font_name,
-            fontSize=9,
-            leading=13,
+            fontSize=bs,
+            leading=bl,
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
             spaceAfter=2
@@ -207,8 +234,8 @@ def _get_pdf_styles(font_name, bold_font):
         "body_bold": ParagraphStyle(
             "BodyBold",
             fontName=bold_font,
-            fontSize=9,
-            leading=13,
+            fontSize=bs,
+            leading=bl,
             alignment=TA_RIGHT,
             textColor=HexColor("#2c3e50"),
             spaceAfter=1
@@ -216,8 +243,8 @@ def _get_pdf_styles(font_name, bold_font):
         "bullet": ParagraphStyle(
             "Bullet",
             fontName=font_name,
-            fontSize=9,
-            leading=12,
+            fontSize=bs,
+            leading=ul,
             alignment=TA_RIGHT,
             textColor=HexColor("#333333"),
             spaceAfter=1,
@@ -227,156 +254,157 @@ def _get_pdf_styles(font_name, bold_font):
 
 
 def export_cv_to_pdf(cv_data: dict) -> bytes:
-    buffer = io.BytesIO()
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=18 * mm,
-        leftMargin=18 * mm,
-        topMargin=12 * mm,
-        bottomMargin=12 * mm
-    )
+    for level in range(len(_PDF_COMPRESSION_LEVELS)):
+        cparams = _PDF_COMPRESSION_LEVELS[level]
+        margin_mm = cparams["margin_mm"]
 
-    styles = _get_pdf_styles(font_name, bold_font)
-    elements = []
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=margin_mm * mm,
+            leftMargin=margin_mm * mm,
+            topMargin=12 * mm,
+            bottomMargin=12 * mm
+        )
+        styles = _get_pdf_styles(font_name, bold_font, cparams)
+        elements = []
 
-    name = cv_data.get("full_name", "")
-    if name:
-        elements.append(Paragraph(reshape_hebrew(name), styles["name"]))
+        name = cv_data.get("full_name", "")
+        if name:
+            elements.append(Paragraph(reshape_hebrew(name), styles["name"]))
 
-    contact = cv_data.get("contact", {})
-    contact_parts = []
-    if contact.get("phone"):
-        contact_parts.append(contact["phone"])
-    if contact.get("email"):
-        contact_parts.append(contact["email"])
-    if contact.get("city"):
-        contact_parts.append(reshape_hebrew(contact["city"]))
-    if contact.get("linkedin"):
-        contact_parts.append(contact["linkedin"])
-    if contact_parts:
-        elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
+        contact = cv_data.get("contact", {})
+        contact_parts = []
+        if contact.get("phone"):
+            contact_parts.append(contact["phone"])
+        if contact.get("email"):
+            contact_parts.append(contact["email"])
+        if contact.get("city"):
+            contact_parts.append(reshape_hebrew(contact["city"]))
+        if contact.get("linkedin"):
+            contact_parts.append(contact["linkedin"])
+        if contact_parts:
+            elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
 
-    elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+        elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
-    summary = cv_data.get("professional_summary", "")
-    if summary and not _is_empty_content(summary):
-        elements.append(Paragraph(reshape_hebrew("תקציר מקצועי"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        elements.append(Paragraph(reshape_hebrew_paragraph(summary), styles["body"]))
+        summary = cv_data.get("professional_summary", "")
+        if summary and not _is_empty_content(summary):
+            elements.append(Paragraph(reshape_hebrew("תקציר מקצועי"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            elements.append(Paragraph(reshape_hebrew_paragraph(summary), styles["body"]))
 
-    experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
-    if experience:
-        elements.append(Paragraph(reshape_hebrew("ניסיון תעסוקתי"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        for idx, exp in enumerate(experience):
-            title = exp.get("title", "")
-            company = exp.get("company", "")
-            period = exp.get("period", "")
+        experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
+        if experience:
+            elements.append(Paragraph(reshape_hebrew("ניסיון תעסוקתי"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            for idx, exp in enumerate(experience):
+                title = exp.get("title", "")
+                company = exp.get("company", "")
+                period = exp.get("period", "")
+                if idx > 0:
+                    elements.append(_make_job_separator())
+                header_parts = []
+                if period:
+                    header_parts.append(period)
+                if title:
+                    header_parts.append(title)
+                if company:
+                    header_parts.append(company)
+                if header_parts:
+                    elements.append(Paragraph(reshape_hebrew(" | ".join(header_parts)), styles["job_title"]))
+                for ach in exp.get("achievements", []):
+                    if ach.strip() and not _is_empty_content(ach):
+                        elements.append(Paragraph(reshape_hebrew(f"• {ach}"), styles["bullet"]))
+                honors = exp.get("honors", "")
+                if honors and honors.strip() and not _is_empty_content(honors):
+                    elements.append(Paragraph(reshape_hebrew(f"★ {honors}"), styles["bullet"]))
 
-            if idx > 0:
-                elements.append(_make_job_separator())
+        education = [e for e in cv_data.get("education", []) if _has_real_edu(e)]
+        if education:
+            elements.append(Paragraph(reshape_hebrew("השכלה"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            for edu in education:
+                degree = edu.get("degree", "")
+                institution = edu.get("institution", "")
+                year = edu.get("year", "")
+                honors = edu.get("honors", "")
+                parts = []
+                if year:
+                    parts.append(year)
+                if degree:
+                    parts.append(degree)
+                if institution:
+                    parts.append(institution)
+                if parts:
+                    elements.append(Paragraph(reshape_hebrew(" | ".join(parts)), styles["body"]))
+                if honors and honors.strip() and not _is_empty_content(honors):
+                    elements.append(Paragraph(reshape_hebrew(f"★ {honors}"), styles["bullet"]))
 
-            header_parts = []
-            if period:
-                header_parts.append(period)
-            if title:
-                header_parts.append(title)
-            if company:
-                header_parts.append(company)
-            if header_parts:
-                elements.append(Paragraph(reshape_hebrew(" | ".join(header_parts)), styles["job_title"]))
+        skills = cv_data.get("skills", {})
+        technical = _filter_list(skills.get("technical", []))
+        soft = _filter_list(skills.get("soft", []))
+        if technical or soft:
+            elements.append(Paragraph(reshape_hebrew("מיומנויות"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            if technical:
+                elements.append(Paragraph(reshape_hebrew(", ".join(technical)), styles["body"]))
+            if soft:
+                elements.append(Paragraph(reshape_hebrew(", ".join(soft)), styles["body"]))
 
-            for ach in exp.get("achievements", []):
-                if ach.strip() and not _is_empty_content(ach):
-                    elements.append(Paragraph(reshape_hebrew(f"• {ach}"), styles["bullet"]))
+        languages = cv_data.get("languages", [])
+        if languages:
+            elements.append(Paragraph(reshape_hebrew("שפות"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            lang_parts = []
+            for lang in languages:
+                lang_name = lang.get("language", "")
+                lang_level = lang.get("level", "")
+                if lang_name:
+                    part = lang_name
+                    if lang_level:
+                        part += f" – {lang_level}"
+                    lang_parts.append(part)
+            if lang_parts:
+                elements.append(Paragraph(reshape_hebrew(" | ".join(lang_parts)), styles["body"]))
 
-            honors = exp.get("honors", "")
-            if honors and honors.strip() and not _is_empty_content(honors):
-                elements.append(Paragraph(reshape_hebrew(f"★ {honors}"), styles["bullet"]))
+        military = _filter_list(cv_data.get("military", []))
+        if military:
+            elements.append(Paragraph(reshape_hebrew("שירות צבאי / לאומי"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in military:
+                elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
 
-    education = [e for e in cv_data.get("education", []) if _has_real_edu(e)]
-    if education:
-        elements.append(Paragraph(reshape_hebrew("השכלה"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        for edu in education:
-            degree = edu.get("degree", "")
-            institution = edu.get("institution", "")
-            year = edu.get("year", "")
-            honors = edu.get("honors", "")
-            parts = []
-            if year:
-                parts.append(year)
-            if degree:
-                parts.append(degree)
-            if institution:
-                parts.append(institution)
-            if parts:
-                elements.append(Paragraph(reshape_hebrew(" | ".join(parts)), styles["body"]))
-            if honors and honors.strip() and not _is_empty_content(honors):
-                elements.append(Paragraph(reshape_hebrew(f"★ {honors}"), styles["bullet"]))
+        volunteering = _filter_list(cv_data.get("volunteering", []))
+        if volunteering:
+            elements.append(Paragraph(reshape_hebrew("התנדבות"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in volunteering:
+                elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
 
-    skills = cv_data.get("skills", {})
-    technical = _filter_list(skills.get("technical", []))
-    soft = _filter_list(skills.get("soft", []))
-    if technical or soft:
-        elements.append(Paragraph(reshape_hebrew("מיומנויות"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        if technical:
-            tech_text = reshape_hebrew(", ".join(technical))
-            elements.append(Paragraph(tech_text, styles["body"]))
-        if soft:
-            soft_text = reshape_hebrew(", ".join(soft))
-            elements.append(Paragraph(soft_text, styles["body"]))
+        projects = _filter_list(cv_data.get("projects", []))
+        if projects:
+            elements.append(Paragraph(reshape_hebrew("פרויקטים עצמאיים"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in projects:
+                elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
 
-    languages = cv_data.get("languages", [])
-    if languages:
-        elements.append(Paragraph(reshape_hebrew("שפות"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        lang_parts = []
-        for lang in languages:
-            lang_name = lang.get("language", "")
-            level = lang.get("level", "")
-            if lang_name:
-                part = lang_name
-                if level:
-                    part += f" – {level}"
-                lang_parts.append(part)
-        if lang_parts:
-            elements.append(Paragraph(reshape_hebrew(" | ".join(lang_parts)), styles["body"]))
+        additional = _filter_list(cv_data.get("additional", []))
+        if additional:
+            elements.append(Paragraph(reshape_hebrew("מידע נוסף"), styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in additional:
+                elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
 
-    military = _filter_list(cv_data.get("military", []))
-    if military:
-        elements.append(Paragraph(reshape_hebrew("שירות צבאי / לאומי"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in military:
-            elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
+        doc.build(elements)
+        pdf_bytes = buffer.getvalue()
+        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+            return pdf_bytes
 
-    volunteering = _filter_list(cv_data.get("volunteering", []))
-    if volunteering:
-        elements.append(Paragraph(reshape_hebrew("התנדבות"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in volunteering:
-            elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
-
-    projects = _filter_list(cv_data.get("projects", []))
-    if projects:
-        elements.append(Paragraph(reshape_hebrew("פרויקטים עצמאיים"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in projects:
-            elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
-
-    additional = _filter_list(cv_data.get("additional", []))
-    if additional:
-        elements.append(Paragraph(reshape_hebrew("מידע נוסף"), styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in additional:
-            elements.append(Paragraph(reshape_hebrew(f"• {item}"), styles["bullet"]))
-
-    doc.build(elements)
     return buffer.getvalue()
 
 
@@ -401,8 +429,8 @@ def _add_docx_section_header(doc, text):
     run.font.size = Pt(12)
     run.font.bold = True
     run.font.color.rgb = RGBColor(44, 62, 80)
-    p.paragraph_format.space_before = Pt(8)
-    p.paragraph_format.space_after = Pt(2)
+    p.paragraph_format.space_before = Pt(5)
+    p.paragraph_format.space_after = Pt(1)
 
     pPr = p._p.get_or_add_pPr()
     bidi = OxmlElement('w:bidi')
@@ -487,13 +515,13 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
     font.size = Pt(9)
     font.color.rgb = RGBColor(51, 51, 51)
     paragraph_format = style.paragraph_format
-    paragraph_format.space_after = Pt(2)
+    paragraph_format.space_after = Pt(1)
 
     for section in doc.sections:
-        section.right_margin = Cm(1.8)
-        section.left_margin = Cm(1.8)
-        section.top_margin = Cm(1.2)
-        section.bottom_margin = Cm(1.2)
+        section.right_margin = Cm(1.5)
+        section.left_margin = Cm(1.5)
+        section.top_margin = Cm(1.0)
+        section.bottom_margin = Cm(1.0)
 
     name = cv_data.get("full_name", "")
     if name:
@@ -712,60 +740,65 @@ def _set_docx_rtl(paragraph, font_name="Assistant"):
 
 
 def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
-    buffer = io.BytesIO()
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=18 * mm,
-        leftMargin=18 * mm,
-        topMargin=12 * mm,
-        bottomMargin=12 * mm
-    )
+    for level in range(len(_PDF_COMPRESSION_LEVELS)):
+        cparams = _PDF_COMPRESSION_LEVELS[level]
+        margin_mm = cparams["margin_mm"]
 
-    styles = _get_pdf_styles(font_name, bold_font)
-    elements = []
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=margin_mm * mm,
+            leftMargin=margin_mm * mm,
+            topMargin=12 * mm,
+            bottomMargin=12 * mm
+        )
+        styles = _get_pdf_styles(font_name, bold_font, cparams)
+        elements = []
 
-    is_first_section = True
-    for section in sections:
-        title = section.get("title", "")
-        content = section.get("final_text", section.get("improved", ""))
-        is_personal = title and any(k in title for k in ["פרטים", "אישיים", "personal", "Personal"])
-        if not is_personal and _is_empty_content(content):
-            continue
-        if title and not is_personal:
-            elements.append(Paragraph(reshape_hebrew(title), styles["section_header"]))
-            elements.append(_make_section_separator())
-        if content:
-            if is_personal:
-                lines = [l.strip() for l in content.split("\n") if l.strip()]
-                contact_only = [l for l in lines if not _is_military_line(l)]
-                if contact_only:
-                    elements.append(Paragraph(reshape_hebrew(contact_only[0]), styles["name"]))
-                    contact_values = []
-                    for cl in contact_only[1:]:
-                        val = _extract_contact_value(cl)
-                        if val:
-                            contact_values.append(reshape_hebrew(val))
-                    if contact_values:
-                        elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
-                    elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
-            else:
-                for line in content.split("\n"):
-                    stripped = line.strip()
-                    if not stripped:
-                        continue
-                    if _is_job_header_line(stripped):
-                        elements.append(Paragraph(reshape_hebrew(stripped), styles["job_title"]))
-                    elif stripped.startswith("-") or stripped.startswith("•"):
-                        elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
-                    else:
-                        elements.append(Paragraph(reshape_hebrew_paragraph(stripped), styles["body"]))
-        is_first_section = False
+        for section in sections:
+            title = section.get("title", "")
+            content = section.get("final_text", section.get("improved", ""))
+            is_personal = title and any(k in title for k in ["פרטים", "אישיים", "personal", "Personal"])
+            if not is_personal and _is_empty_content(content):
+                continue
+            if title and not is_personal:
+                elements.append(Paragraph(reshape_hebrew(title), styles["section_header"]))
+                elements.append(_make_section_separator())
+            if content:
+                if is_personal:
+                    lines = [l.strip() for l in content.split("\n") if l.strip()]
+                    contact_only = [l for l in lines if not _is_military_line(l)]
+                    if contact_only:
+                        elements.append(Paragraph(reshape_hebrew(contact_only[0]), styles["name"]))
+                        contact_values = []
+                        for cl in contact_only[1:]:
+                            val = _extract_contact_value(cl)
+                            if val:
+                                contact_values.append(reshape_hebrew(val))
+                        if contact_values:
+                            elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+                        elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+                else:
+                    for line in content.split("\n"):
+                        stripped = line.strip()
+                        if not stripped:
+                            continue
+                        if _is_job_header_line(stripped):
+                            elements.append(Paragraph(reshape_hebrew(stripped), styles["job_title"]))
+                        elif stripped.startswith("-") or stripped.startswith("•"):
+                            elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
+                        else:
+                            elements.append(Paragraph(reshape_hebrew_paragraph(stripped), styles["body"]))
 
-    doc.build(elements)
+        doc.build(elements)
+        pdf_bytes = buffer.getvalue()
+        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+            return pdf_bytes
+
     return buffer.getvalue()
 
 
@@ -778,13 +811,13 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
     font.size = Pt(9)
     font.color.rgb = RGBColor(51, 51, 51)
     paragraph_format = style.paragraph_format
-    paragraph_format.space_after = Pt(2)
+    paragraph_format.space_after = Pt(1)
 
     for s in doc.sections:
-        s.right_margin = Cm(1.8)
-        s.left_margin = Cm(1.8)
-        s.top_margin = Cm(1.2)
-        s.bottom_margin = Cm(1.2)
+        s.right_margin = Cm(1.5)
+        s.left_margin = Cm(1.5)
+        s.top_margin = Cm(1.0)
+        s.bottom_margin = Cm(1.0)
 
     for section in sections:
         title = section.get("title", "")
@@ -843,14 +876,23 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
     return buffer.getvalue()
 
 
-def _get_pdf_styles_en(font_name, bold_font):
+def _get_pdf_styles_en(font_name, bold_font, cparams=None):
     from reportlab.lib.enums import TA_LEFT
+    if cparams is None:
+        cparams = _PDF_COMPRESSION_LEVELS[0]
+    bs = cparams["body_size"]
+    ss = cparams["sec_size"]
+    bl = cparams["body_lead"]
+    ul = cparams["bul_lead"]
+    sb = cparams["sec_before"]
+    ca = cparams["contact_after"]
+    nl = cparams["name_lead"]
     return {
         "name": ParagraphStyle(
             "NameEN",
             fontName=bold_font,
             fontSize=20,
-            leading=24,
+            leading=nl,
             alignment=TA_CENTER,
             textColor=HexColor("#2c3e50"),
             spaceAfter=2
@@ -858,37 +900,37 @@ def _get_pdf_styles_en(font_name, bold_font):
         "contact": ParagraphStyle(
             "ContactEN",
             fontName=font_name,
-            fontSize=9,
-            leading=12,
+            fontSize=bs,
+            leading=ul,
             alignment=TA_CENTER,
             textColor=HexColor("#555555"),
-            spaceAfter=6
+            spaceAfter=ca
         ),
         "section_header": ParagraphStyle(
             "SectionHeaderEN",
             fontName=bold_font,
-            fontSize=12,
-            leading=16,
+            fontSize=ss,
+            leading=ss + 4,
             alignment=TA_LEFT,
             textColor=HexColor("#2c3e50"),
             spaceAfter=2,
-            spaceBefore=8
+            spaceBefore=sb
         ),
         "job_title": ParagraphStyle(
             "JobTitleEN",
             fontName=bold_font,
-            fontSize=9,
-            leading=13,
+            fontSize=bs,
+            leading=bl,
             alignment=TA_LEFT,
             textColor=HexColor("#333333"),
             spaceAfter=1,
-            spaceBefore=4
+            spaceBefore=max(int(sb / 2), 2)
         ),
         "body": ParagraphStyle(
             "BodyEN",
             fontName=font_name,
-            fontSize=9,
-            leading=13,
+            fontSize=bs,
+            leading=bl,
             alignment=TA_LEFT,
             textColor=HexColor("#333333"),
             spaceAfter=2
@@ -896,8 +938,8 @@ def _get_pdf_styles_en(font_name, bold_font):
         "body_bold": ParagraphStyle(
             "BodyBoldEN",
             fontName=bold_font,
-            fontSize=9,
-            leading=13,
+            fontSize=bs,
+            leading=bl,
             alignment=TA_LEFT,
             textColor=HexColor("#2c3e50"),
             spaceAfter=1
@@ -905,8 +947,8 @@ def _get_pdf_styles_en(font_name, bold_font):
         "bullet": ParagraphStyle(
             "BulletEN",
             fontName=font_name,
-            fontSize=9,
-            leading=12,
+            fontSize=bs,
+            leading=ul,
             alignment=TA_LEFT,
             textColor=HexColor("#333333"),
             spaceAfter=1,
@@ -916,150 +958,157 @@ def _get_pdf_styles_en(font_name, bold_font):
 
 
 def export_cv_to_pdf_en(cv_data: dict) -> bytes:
-    buffer = io.BytesIO()
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=18 * mm,
-        leftMargin=18 * mm,
-        topMargin=12 * mm,
-        bottomMargin=12 * mm
-    )
+    for level in range(len(_PDF_COMPRESSION_LEVELS)):
+        cparams = _PDF_COMPRESSION_LEVELS[level]
+        margin_mm = cparams["margin_mm"]
 
-    styles = _get_pdf_styles_en(font_name, bold_font)
-    elements = []
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=margin_mm * mm,
+            leftMargin=margin_mm * mm,
+            topMargin=12 * mm,
+            bottomMargin=12 * mm
+        )
+        styles = _get_pdf_styles_en(font_name, bold_font, cparams)
+        elements = []
 
-    name = cv_data.get("full_name", "")
-    if name:
-        elements.append(Paragraph(name, styles["name"]))
+        name = cv_data.get("full_name", "")
+        if name:
+            elements.append(Paragraph(name, styles["name"]))
 
-    contact = cv_data.get("contact", {})
-    contact_parts = []
-    if contact.get("phone"):
-        contact_parts.append(contact["phone"])
-    if contact.get("email"):
-        contact_parts.append(contact["email"])
-    if contact.get("city"):
-        contact_parts.append(contact["city"])
-    if contact.get("linkedin"):
-        contact_parts.append(contact["linkedin"])
-    if contact_parts:
-        elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
+        contact = cv_data.get("contact", {})
+        contact_parts = []
+        if contact.get("phone"):
+            contact_parts.append(contact["phone"])
+        if contact.get("email"):
+            contact_parts.append(contact["email"])
+        if contact.get("city"):
+            contact_parts.append(contact["city"])
+        if contact.get("linkedin"):
+            contact_parts.append(contact["linkedin"])
+        if contact_parts:
+            elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
 
-    elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+        elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
-    summary = cv_data.get("professional_summary", "")
-    if summary and not _is_empty_content(summary):
-        elements.append(Paragraph("Professional Summary", styles["section_header"]))
-        elements.append(_make_section_separator())
-        elements.append(Paragraph(summary, styles["body"]))
+        summary = cv_data.get("professional_summary", "")
+        if summary and not _is_empty_content(summary):
+            elements.append(Paragraph("Professional Summary", styles["section_header"]))
+            elements.append(_make_section_separator())
+            elements.append(Paragraph(summary, styles["body"]))
 
-    experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
-    if experience:
-        elements.append(Paragraph("Professional Experience", styles["section_header"]))
-        elements.append(_make_section_separator())
-        for idx, exp in enumerate(experience):
-            title = exp.get("title", "")
-            company = exp.get("company", "")
-            period = exp.get("period", "")
-            if idx > 0:
-                elements.append(_make_job_separator())
-            header_parts = []
-            if period:
-                header_parts.append(period)
-            if title:
-                header_parts.append(title)
-            if company:
-                header_parts.append(company)
-            if header_parts:
-                elements.append(Paragraph(" | ".join(header_parts), styles["job_title"]))
-            for ach in exp.get("achievements", []):
-                if ach.strip() and not _is_empty_content(ach):
-                    elements.append(Paragraph(f"• {ach}", styles["bullet"]))
-            honors = exp.get("honors", "")
-            if honors and honors.strip() and not _is_empty_content(honors):
-                elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
+        experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
+        if experience:
+            elements.append(Paragraph("Professional Experience", styles["section_header"]))
+            elements.append(_make_section_separator())
+            for idx, exp in enumerate(experience):
+                title = exp.get("title", "")
+                company = exp.get("company", "")
+                period = exp.get("period", "")
+                if idx > 0:
+                    elements.append(_make_job_separator())
+                header_parts = []
+                if period:
+                    header_parts.append(period)
+                if title:
+                    header_parts.append(title)
+                if company:
+                    header_parts.append(company)
+                if header_parts:
+                    elements.append(Paragraph(" | ".join(header_parts), styles["job_title"]))
+                for ach in exp.get("achievements", []):
+                    if ach.strip() and not _is_empty_content(ach):
+                        elements.append(Paragraph(f"• {ach}", styles["bullet"]))
+                honors = exp.get("honors", "")
+                if honors and honors.strip() and not _is_empty_content(honors):
+                    elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
 
-    education = [e for e in cv_data.get("education", []) if _has_real_edu(e)]
-    if education:
-        elements.append(Paragraph("Education", styles["section_header"]))
-        elements.append(_make_section_separator())
-        for edu in education:
-            degree = edu.get("degree", "")
-            institution = edu.get("institution", "")
-            year = edu.get("year", "")
-            honors = edu.get("honors", "")
-            parts = []
-            if year:
-                parts.append(year)
-            if degree:
-                parts.append(degree)
-            if institution:
-                parts.append(institution)
-            if parts:
-                elements.append(Paragraph(" | ".join(parts), styles["body"]))
-            if honors and honors.strip() and not _is_empty_content(honors):
-                elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
+        education = [e for e in cv_data.get("education", []) if _has_real_edu(e)]
+        if education:
+            elements.append(Paragraph("Education", styles["section_header"]))
+            elements.append(_make_section_separator())
+            for edu in education:
+                degree = edu.get("degree", "")
+                institution = edu.get("institution", "")
+                year = edu.get("year", "")
+                honors = edu.get("honors", "")
+                parts = []
+                if year:
+                    parts.append(year)
+                if degree:
+                    parts.append(degree)
+                if institution:
+                    parts.append(institution)
+                if parts:
+                    elements.append(Paragraph(" | ".join(parts), styles["body"]))
+                if honors and honors.strip() and not _is_empty_content(honors):
+                    elements.append(Paragraph(f"★ {honors}", styles["bullet"]))
 
-    skills = cv_data.get("skills", {})
-    technical = _filter_list(skills.get("technical", []))
-    soft = _filter_list(skills.get("soft", []))
-    if technical or soft:
-        elements.append(Paragraph("Skills", styles["section_header"]))
-        elements.append(_make_section_separator())
-        if technical:
-            elements.append(Paragraph(", ".join(technical), styles["body"]))
-        if soft:
-            elements.append(Paragraph(", ".join(soft), styles["body"]))
+        skills = cv_data.get("skills", {})
+        technical = _filter_list(skills.get("technical", []))
+        soft = _filter_list(skills.get("soft", []))
+        if technical or soft:
+            elements.append(Paragraph("Skills", styles["section_header"]))
+            elements.append(_make_section_separator())
+            if technical:
+                elements.append(Paragraph(", ".join(technical), styles["body"]))
+            if soft:
+                elements.append(Paragraph(", ".join(soft), styles["body"]))
 
-    languages = cv_data.get("languages", [])
-    if languages:
-        elements.append(Paragraph("Languages", styles["section_header"]))
-        elements.append(_make_section_separator())
-        lang_parts = []
-        for lang in languages:
-            lang_name = lang.get("language", "")
-            level = lang.get("level", "")
-            if lang_name:
-                part = lang_name
-                if level:
-                    part += f" – {level}"
-                lang_parts.append(part)
-        if lang_parts:
-            elements.append(Paragraph(" | ".join(lang_parts), styles["body"]))
+        languages = cv_data.get("languages", [])
+        if languages:
+            elements.append(Paragraph("Languages", styles["section_header"]))
+            elements.append(_make_section_separator())
+            lang_parts = []
+            for lang in languages:
+                lang_name = lang.get("language", "")
+                lang_level = lang.get("level", "")
+                if lang_name:
+                    part = lang_name
+                    if lang_level:
+                        part += f" – {lang_level}"
+                    lang_parts.append(part)
+            if lang_parts:
+                elements.append(Paragraph(" | ".join(lang_parts), styles["body"]))
 
-    military = _filter_list(cv_data.get("military", []))
-    if military:
-        elements.append(Paragraph("Military / National Service", styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in military:
-            elements.append(Paragraph(f"• {item}", styles["bullet"]))
+        military = _filter_list(cv_data.get("military", []))
+        if military:
+            elements.append(Paragraph("Military / National Service", styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in military:
+                elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
-    volunteering = _filter_list(cv_data.get("volunteering", []))
-    if volunteering:
-        elements.append(Paragraph("Volunteering", styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in volunteering:
-            elements.append(Paragraph(f"• {item}", styles["bullet"]))
+        volunteering = _filter_list(cv_data.get("volunteering", []))
+        if volunteering:
+            elements.append(Paragraph("Volunteering", styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in volunteering:
+                elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
-    projects = _filter_list(cv_data.get("projects", []))
-    if projects:
-        elements.append(Paragraph("Personal Projects", styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in projects:
-            elements.append(Paragraph(f"• {item}", styles["bullet"]))
+        projects = _filter_list(cv_data.get("projects", []))
+        if projects:
+            elements.append(Paragraph("Personal Projects", styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in projects:
+                elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
-    additional = _filter_list(cv_data.get("additional", []))
-    if additional:
-        elements.append(Paragraph("Additional Information", styles["section_header"]))
-        elements.append(_make_section_separator())
-        for item in additional:
-            elements.append(Paragraph(f"• {item}", styles["bullet"]))
+        additional = _filter_list(cv_data.get("additional", []))
+        if additional:
+            elements.append(Paragraph("Additional Information", styles["section_header"]))
+            elements.append(_make_section_separator())
+            for item in additional:
+                elements.append(Paragraph(f"• {item}", styles["bullet"]))
 
-    doc.build(elements)
+        doc.build(elements)
+        pdf_bytes = buffer.getvalue()
+        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+            return pdf_bytes
+
     return buffer.getvalue()
 
 
@@ -1072,13 +1121,13 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
     font.size = Pt(9)
     font.color.rgb = RGBColor(51, 51, 51)
     paragraph_format = style.paragraph_format
-    paragraph_format.space_after = Pt(2)
+    paragraph_format.space_after = Pt(1)
 
     for section in doc.sections:
-        section.right_margin = Cm(1.8)
-        section.left_margin = Cm(1.8)
-        section.top_margin = Cm(1.2)
-        section.bottom_margin = Cm(1.2)
+        section.right_margin = Cm(1.5)
+        section.left_margin = Cm(1.5)
+        section.top_margin = Cm(1.0)
+        section.bottom_margin = Cm(1.0)
 
     name = cv_data.get("full_name", "")
     if name:
@@ -1222,8 +1271,8 @@ def _add_docx_section_header_en(doc, text):
     run.font.size = Pt(12)
     run.font.bold = True
     run.font.color.rgb = RGBColor(44, 62, 80)
-    p.paragraph_format.space_before = Pt(8)
-    p.paragraph_format.space_after = Pt(2)
+    p.paragraph_format.space_before = Pt(5)
+    p.paragraph_format.space_after = Pt(1)
 
     _add_docx_separator_line(doc, '7fb3d8', '8', 0, 2)
 
@@ -1259,83 +1308,90 @@ def _clean_section_title(line: str) -> str:
 
 
 def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
-    buffer = io.BytesIO()
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=18 * mm,
-        leftMargin=18 * mm,
-        topMargin=12 * mm,
-        bottomMargin=12 * mm
-    )
+    for level in range(len(_PDF_COMPRESSION_LEVELS)):
+        cparams = _PDF_COMPRESSION_LEVELS[level]
+        margin_mm = cparams["margin_mm"]
 
-    styles = _get_pdf_styles_en(font_name, bold_font)
-    elements = []
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=margin_mm * mm,
+            leftMargin=margin_mm * mm,
+            topMargin=12 * mm,
+            bottomMargin=12 * mm
+        )
+        styles = _get_pdf_styles_en(font_name, bold_font, cparams)
+        elements = []
 
-    last_header = None
-    in_personal = False
-    personal_lines = []
-    deferred_military_lines = []
-    for line in translated_text.split("\n"):
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if _is_section_header_en(stripped):
-            if in_personal and personal_lines:
-                contact_only = [l for l in personal_lines if not _is_military_line(l)]
-                military_only = [l for l in personal_lines if _is_military_line(l)]
-                deferred_military_lines.extend(military_only)
-                if contact_only:
-                    elements.append(Paragraph(contact_only[0], styles["name"]))
-                    contact_values = []
-                    for cl in contact_only[1:]:
-                        val = _extract_contact_value(cl)
-                        if val:
-                            contact_values.append(val)
-                    if contact_values:
-                        elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
-                elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
-                personal_lines = []
-            header_text = _clean_section_title(stripped)
-            if header_text == last_header:
+        last_header = None
+        in_personal = False
+        personal_lines = []
+        deferred_military_lines = []
+        for line in translated_text.split("\n"):
+            stripped = line.strip()
+            if not stripped:
                 continue
-            lower_header = header_text.lower()
-            if any(k in lower_header for k in ["personal", "contact"]):
-                in_personal = True
+            if _is_section_header_en(stripped):
+                if in_personal and personal_lines:
+                    contact_only = [l for l in personal_lines if not _is_military_line(l)]
+                    military_only = [l for l in personal_lines if _is_military_line(l)]
+                    deferred_military_lines.extend(military_only)
+                    if contact_only:
+                        elements.append(Paragraph(contact_only[0], styles["name"]))
+                        contact_values = []
+                        for cl in contact_only[1:]:
+                            val = _extract_contact_value(cl)
+                            if val:
+                                contact_values.append(val)
+                        if contact_values:
+                            elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+                    elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+                    personal_lines = []
+                header_text = _clean_section_title(stripped)
+                if header_text == last_header:
+                    continue
+                lower_header = header_text.lower()
+                if any(k in lower_header for k in ["personal", "contact"]):
+                    in_personal = True
+                    last_header = header_text
+                    continue
+                in_personal = False
                 last_header = header_text
-                continue
-            in_personal = False
-            last_header = header_text
-            elements.append(Paragraph(header_text, styles["section_header"]))
-            elements.append(_make_section_separator())
-        elif in_personal:
-            personal_lines.append(stripped)
-        elif _is_job_header_line(stripped):
-            elements.append(Paragraph(stripped, styles["job_title"]))
-        elif stripped.startswith("-") or stripped.startswith("•"):
-            elements.append(Paragraph(stripped, styles["bullet"]))
-        else:
-            elements.append(Paragraph(stripped, styles["body"]))
+                elements.append(Paragraph(header_text, styles["section_header"]))
+                elements.append(_make_section_separator())
+            elif in_personal:
+                personal_lines.append(stripped)
+            elif _is_job_header_line(stripped):
+                elements.append(Paragraph(stripped, styles["job_title"]))
+            elif stripped.startswith("-") or stripped.startswith("•"):
+                elements.append(Paragraph(stripped, styles["bullet"]))
+            else:
+                elements.append(Paragraph(stripped, styles["body"]))
 
-    if in_personal and personal_lines:
-        contact_only = [l for l in personal_lines if not _is_military_line(l)]
-        military_only = [l for l in personal_lines if _is_military_line(l)]
-        deferred_military_lines.extend(military_only)
-        if contact_only:
-            elements.append(Paragraph(contact_only[0], styles["name"]))
-            contact_values = []
-            for cl in contact_only[1:]:
-                val = _extract_contact_value(cl)
-                if val:
-                    contact_values.append(val)
-            if contact_values:
-                elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
-        elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
+        if in_personal and personal_lines:
+            contact_only = [l for l in personal_lines if not _is_military_line(l)]
+            military_only = [l for l in personal_lines if _is_military_line(l)]
+            deferred_military_lines.extend(military_only)
+            if contact_only:
+                elements.append(Paragraph(contact_only[0], styles["name"]))
+                contact_values = []
+                for cl in contact_only[1:]:
+                    val = _extract_contact_value(cl)
+                    if val:
+                        contact_values.append(val)
+                if contact_values:
+                    elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+            elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
-    doc.build(elements)
+        doc.build(elements)
+        pdf_bytes = buffer.getvalue()
+        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+            return pdf_bytes
+
     return buffer.getvalue()
 
 
@@ -1381,13 +1437,13 @@ def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
     font.size = Pt(9)
     font.color.rgb = RGBColor(51, 51, 51)
     paragraph_format = style.paragraph_format
-    paragraph_format.space_after = Pt(2)
+    paragraph_format.space_after = Pt(1)
 
     for s in doc.sections:
-        s.right_margin = Cm(1.8)
-        s.left_margin = Cm(1.8)
-        s.top_margin = Cm(1.2)
-        s.bottom_margin = Cm(1.2)
+        s.right_margin = Cm(1.5)
+        s.left_margin = Cm(1.5)
+        s.top_margin = Cm(1.0)
+        s.bottom_margin = Cm(1.0)
 
     last_header = None
     in_personal = False

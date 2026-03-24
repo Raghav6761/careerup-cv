@@ -55,6 +55,20 @@ streamlit run app.py --server.port 5000
 - Military lines filtered from personal/contact section in improve exports via `_is_military_line()` helper
 - Optional sections (military, volunteering, projects, additional) only appear if user provided content
 
+## One-Page PDF Enforcement
+- All 4 PDF export functions use a 5-level compression retry loop (`_PDF_COMPRESSION_LEVELS`)
+- After building each PDF, `_count_pdf_pages()` checks page count via pdfplumber
+- If >1 page, the next compression level is applied and the PDF is rebuilt
+- Compression levels reduce: side margins (18mm→12mm), section spacing, leading, font size (9→8pt at level 3+)
+- Font-only reduction happens at levels 3 and 4 to preserve readability as long as possible
+- DOCX exports use tighter margins (1.5cm sides, 1.0cm top/bottom) and tighter spacing (space_after=1pt, section header space_before=5pt)
+
+## AI Content Limits
+- Summary: max 2-3 sentences
+- Experience: max 4 most recent jobs, max 2-3 bullet points per job
+- Skills: max 8 technical + 4 soft skills
+- Optional sections (courses, projects): max 3 items each
+
 ## Design
 - Hebrew RTL interface
 - White background (#ffffff), vibrant blue (#0066FF) accent, dark text (#1a1a2e)
