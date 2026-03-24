@@ -163,14 +163,14 @@ def inject_custom_css():
         }
 
         .home-cta-secondary {
-            background: #ffffff;
+            background: #80d6c5;
             color: #022559;
             border: 2px solid #022559;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .home-cta-secondary:hover {
-            background: #eef1f6;
+            background: #6acbb8;
             border-color: #011840;
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
             transform: translateY(-1px);
