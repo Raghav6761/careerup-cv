@@ -201,7 +201,7 @@ def reset_improve():
     st.session_state.analysis_result = None
     st.session_state.section_decisions = {}
     for _k in ["improve_final_sections", "improve_target_position", "improve_language",
-                "improve_cv_filename", "cv_filename_input",
+                "improve_cv_title", "cv_title_input",
                 "improve_en_translated", "improve_en_translating",
                 "_improve_export_cache_key", "_improve_pdf", "_improve_docx",
                 "_improve_pdf_err", "_improve_docx_err",
@@ -738,32 +738,34 @@ def render_improve_reorder():
 
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
-    export_sections = [s for s in st.session_state.improve_final_sections if s["final_text"].strip()]
+    from export_utils import _is_empty_content as _exp_is_empty
+    export_sections = [
+        s for s in st.session_state.improve_final_sections
+        if s["final_text"].strip() and (
+            any(k in s.get("title", "") for k in ["פרטים", "אישיים", "personal", "Personal"])
+            or not _exp_is_empty(s["final_text"])
+        )
+    ]
     is_english_mode = st.session_state.get("improve_language", "he") == "en"
 
-    # ── Editable filename ──
-    if "improve_cv_filename" not in st.session_state:
-        st.session_state.improve_cv_filename = "קורות חיים"
+    # ── CV document title (optional) ──
+    if "improve_cv_title" not in st.session_state:
+        st.session_state.improve_cv_title = ""
 
-    st.markdown('<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:4px;">שם הקובץ להורדה</div>', unsafe_allow_html=True)
-    cv_filename_raw = st.text_input(
-        "שם הקובץ",
-        value=st.session_state.improve_cv_filename,
-        key="cv_filename_input",
-        placeholder="קורות חיים - דיסקרטי",
+    st.markdown('<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:4px;">כותרת קורות החיים (אופציונלי)</div>', unsafe_allow_html=True)
+    cv_title = st.text_input(
+        "כותרת",
+        value=st.session_state.improve_cv_title,
+        key="cv_title_input",
+        placeholder="לדוגמה: קורות חיים - דיסקרטי",
         label_visibility="collapsed",
     )
-    st.session_state.improve_cv_filename = cv_filename_raw
-    st.markdown('<div style="font-size:12px;color:#6b7c93;margin-bottom:16px;">ניתן להוסיף סיומת כמו: - דיסקרטי, - מנהל, - גוגל</div>', unsafe_allow_html=True)
+    st.session_state.improve_cv_title = cv_title
+    st.markdown('<div style="font-size:12px;color:#6b7c93;margin-bottom:16px;">הכותרת תופיע בראש קורות החיים המיוצאים</div>', unsafe_allow_html=True)
 
-    # Sanitize: strip, keep Hebrew/English/digits/spaces/hyphens, replace spaces with underscore
-    _raw = cv_filename_raw.strip() or "קורות חיים"
-    _slug = re.sub(r'[^\w\u0590-\u05FF\s\-]', '', _raw).strip()
-    _slug = re.sub(r'\s+', '_', _slug) or "קורות_חיים"
-
-    # ── Cache export bytes so filename-field reruns don't break download URLs ──
-    # Key is based on sections content + language mode; only regenerate when content changes.
-    _cache_key = (is_english_mode, tuple((s["title"], s["final_text"]) for s in export_sections))
+    # ── Cache export bytes so cv_title-field reruns don't break download URLs ──
+    # Key is based on sections content + cv_title + language mode; regenerate only on change.
+    _cache_key = (is_english_mode, cv_title.strip(), tuple((s["title"], s["final_text"]) for s in export_sections))
     if st.session_state.get("_improve_export_cache_key") != _cache_key:
         st.session_state._improve_export_cache_key = _cache_key
         st.session_state._improve_pdf = None
@@ -774,23 +776,23 @@ def render_improve_reorder():
             en_src = "\n\n".join([f"=== {s['title']} ===\n{s['final_text']}" for s in export_sections])
             try:
                 from export_utils import export_improved_cv_to_pdf_en
-                st.session_state._improve_pdf = export_improved_cv_to_pdf_en(en_src)
+                st.session_state._improve_pdf = export_improved_cv_to_pdf_en(en_src, cv_title=cv_title.strip())
             except Exception as e:
                 st.session_state._improve_pdf_err = str(e)
             try:
                 from export_utils import export_improved_cv_to_docx_en
-                st.session_state._improve_docx = export_improved_cv_to_docx_en(en_src)
+                st.session_state._improve_docx = export_improved_cv_to_docx_en(en_src, cv_title=cv_title.strip())
             except Exception as e:
                 st.session_state._improve_docx_err = str(e)
         else:
             try:
                 from export_utils import export_improved_cv_to_pdf
-                st.session_state._improve_pdf = export_improved_cv_to_pdf(export_sections)
+                st.session_state._improve_pdf = export_improved_cv_to_pdf(export_sections, cv_title=cv_title.strip())
             except Exception as e:
                 st.session_state._improve_pdf_err = str(e)
             try:
                 from export_utils import export_improved_cv_to_docx
-                st.session_state._improve_docx = export_improved_cv_to_docx(export_sections)
+                st.session_state._improve_docx = export_improved_cv_to_docx(export_sections, cv_title=cv_title.strip())
             except Exception as e:
                 st.session_state._improve_docx_err = str(e)
 
@@ -810,8 +812,8 @@ def render_improve_reorder():
 
     _pdf_label  = "📥 Download PDF (English)"  if is_english_mode else "📥 הורד כ-PDF"
     _docx_label = "📥 Download DOCX (English)" if is_english_mode else "📥 הורד כ-DOCX"
-    _pdf_name   = f"{_slug}_en.pdf"  if is_english_mode else f"{_slug}.pdf"
-    _docx_name  = f"{_slug}_en.docx" if is_english_mode else f"{_slug}.docx"
+    _pdf_name   = "cv_improved_en.pdf"  if is_english_mode else "cv_improved.pdf"
+    _docx_name  = "cv_improved_en.docx" if is_english_mode else "cv_improved.docx"
 
     col1, col2 = st.columns(2)
     with col2:
@@ -870,14 +872,16 @@ def render_improve_reorder():
                         try:
                             from export_utils import export_improved_cv_to_pdf_en
                             st.session_state._improve_en_pdf = export_improved_cv_to_pdf_en(
-                                st.session_state.improve_en_translated
+                                st.session_state.improve_en_translated,
+                                cv_title=st.session_state.get("improve_cv_title", "").strip(),
                             )
                         except Exception:
                             pass
                         try:
                             from export_utils import export_improved_cv_to_docx_en
                             st.session_state._improve_en_docx = export_improved_cv_to_docx_en(
-                                st.session_state.improve_en_translated
+                                st.session_state.improve_en_translated,
+                                cv_title=st.session_state.get("improve_cv_title", "").strip(),
                             )
                         except Exception:
                             pass
@@ -892,7 +896,7 @@ def render_improve_reorder():
                     st.download_button(
                         label="📥 Download PDF (English)",
                         data=st.session_state._improve_en_pdf,
-                        file_name=f"{_slug}_en.pdf",
+                        file_name="cv_improved_en.pdf",
                         mime="application/pdf",
                         use_container_width=True,
                         key="dl_pdf_translated",
@@ -902,7 +906,7 @@ def render_improve_reorder():
                     st.download_button(
                         label="📥 Download DOCX (English)",
                         data=st.session_state._improve_en_docx,
-                        file_name=f"{_slug}_en.docx",
+                        file_name="cv_improved_en.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         use_container_width=True,
                         key="dl_docx_translated",

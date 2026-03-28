@@ -28,7 +28,8 @@ fonts/              - Assistant font files for PDF export
 2. **Build from Scratch**: Smart form with structured fields → AI polishes content → preview/edit → export
 3. **Language Selector (Improve flow)**: Radio button on upload page lets user choose Hebrew or English for the improved CV; English mode bypasses the separate translation step and exports directly via English export functions
 4. **English Translation Export**: Both flows support AI-powered translation to English with PDF/DOCX export in LTR format
-5. **Empty section filtering**: All export functions use `_is_empty_content()` and `_filter_list()` to skip placeholder/empty sections universally
+5. **Empty section filtering**: All export functions use `_is_empty_content()` and `_filter_list()` to skip placeholder/empty sections universally; `_EMPTY_PLACEHOLDERS` includes plural "לא צויינו" in addition to "לא צויין"; `render_improve_reorder` pre-filters export_sections using `_is_empty_content` before building the cache key
+6. **CV document title**: Optional "כותרת קורות החיים" field in the reorder/export step; appears as a centered bold 14pt heading at the top of all exported PDF/DOCX files; all 4 improve-flow export functions accept `cv_title: str = ""` parameter
 
 ## User Flow Pages
 - `home` - Two path selection cards

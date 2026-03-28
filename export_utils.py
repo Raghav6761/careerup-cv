@@ -19,7 +19,7 @@ import os
 FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 
 _EMPTY_PLACEHOLDERS = [
-    "לא צוין", "לא צויין", "לא סופק", "לא מולא", "לא קיים",
+    "לא צוין", "לא צויין", "לא צויינו", "לא סופק", "לא מולא", "לא קיים",
     "לא רלוונטי", "לא קיים במקור", "אין", "ללא", "—", "-",
     "not specified", "not provided", "n/a", "none", "not available",
     "no data", "not applicable", "na", "tbd", "n.a.", "n.a",
@@ -740,7 +740,7 @@ def _set_docx_rtl(paragraph, font_name="Assistant"):
             rPr.append(bCs)
 
 
-def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
+def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str = "") -> bytes:
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
@@ -761,6 +761,13 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
         )
         styles = _get_pdf_styles(font_name, bold_font, cparams)
         elements = []
+
+        if cv_title and cv_title.strip():
+            _title_style = ParagraphStyle(
+                "CVTitle", fontName=bold_font, fontSize=14, leading=18,
+                alignment=TA_CENTER, textColor=HexColor("#022559"), spaceAfter=4
+            )
+            elements.append(Paragraph(reshape_hebrew(cv_title.strip()), _title_style))
 
         for section in sections:
             title = section.get("title", "")
@@ -815,7 +822,7 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "") -> bytes:
     return buffer.getvalue()
 
 
-def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
+def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str = "") -> bytes:
     doc = Document()
 
     style = doc.styles["Normal"]
@@ -831,6 +838,16 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "") -> bytes:
         s.left_margin = Cm(1.5)
         s.top_margin = Cm(1.0)
         s.bottom_margin = Cm(1.0)
+
+    if cv_title and cv_title.strip():
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run(cv_title.strip())
+        run.bold = True
+        run.font.name = "Assistant"
+        run.font.size = Pt(14)
+        run.font.color.rgb = RGBColor(2, 37, 89)
+        p.paragraph_format.space_after = Pt(4)
 
     for section in sections:
         title = section.get("title", "")
@@ -1332,7 +1349,7 @@ def _clean_section_title(line: str) -> str:
     return stripped.rstrip(":")
 
 
-def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
+def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "") -> bytes:
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
@@ -1353,6 +1370,14 @@ def export_improved_cv_to_pdf_en(translated_text: str) -> bytes:
         )
         styles = _get_pdf_styles_en(font_name, bold_font, cparams)
         elements = []
+
+        if cv_title and cv_title.strip():
+            from reportlab.lib.enums import TA_CENTER as _TA_CENTER
+            _title_style = ParagraphStyle(
+                "CVTitleEn", fontName=bold_font, fontSize=14, leading=18,
+                alignment=_TA_CENTER, textColor=HexColor("#2c3e50"), spaceAfter=4
+            )
+            elements.append(Paragraph(cv_title.strip(), _title_style))
 
         last_header = None
         in_personal = False
@@ -1455,7 +1480,7 @@ def _add_docx_personal_block_en(doc, personal_lines):
     return military_only
 
 
-def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
+def export_improved_cv_to_docx_en(translated_text: str, cv_title: str = "") -> bytes:
     doc = Document()
 
     style = doc.styles["Normal"]
@@ -1471,6 +1496,16 @@ def export_improved_cv_to_docx_en(translated_text: str) -> bytes:
         s.left_margin = Cm(1.5)
         s.top_margin = Cm(1.0)
         s.bottom_margin = Cm(1.0)
+
+    if cv_title and cv_title.strip():
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run(cv_title.strip())
+        run.bold = True
+        run.font.name = "Assistant"
+        run.font.size = Pt(14)
+        run.font.color.rgb = RGBColor(44, 62, 80)
+        p.paragraph_format.space_after = Pt(4)
 
     last_header = None
     in_personal = False
