@@ -123,6 +123,22 @@ def inject_custom_css():
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
         }
 
+        /* Radio buttons — ensure Assistant font on labels */
+        [data-testid="stRadio"] label,
+        [data-testid="stRadio"] span,
+        [data-testid="stRadio"] p {
+            font-family: 'Assistant', sans-serif !important;
+            font-size: 16px !important;
+        }
+
+        /* Selectbox / multiselect */
+        [data-testid="stSelectbox"] label,
+        [data-testid="stMultiSelect"] label,
+        .stSelectbox div,
+        [data-baseweb="select"] span {
+            font-family: 'Assistant', sans-serif !important;
+        }
+
         /* Homepage CTA cards */
         .home-cta-card {
             padding: 22px 24px 14px 24px;

@@ -304,12 +304,12 @@ def render_improve_upload():
         st.markdown('<span style="font-size:16px; color:#6b7c93;">בחר באיזו שפה תרצה לקבל את הגרסה המשופרת של קורות החיים</span>', unsafe_allow_html=True)
         lang_choice = st.radio(
             "שפת הנוסח המשופר",
-            ["🇮🇱 עברית", "🇺🇸 English"],
+            ["עברית", "English"],
             horizontal=True,
             key="lang_radio",
             label_visibility="collapsed"
         )
-        st.session_state.improve_language = "en" if "English" in lang_choice else "he"
+        st.session_state.improve_language = "en" if lang_choice == "English" else "he"
 
     with st.container(border=True, key="card_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
