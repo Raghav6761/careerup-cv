@@ -343,15 +343,8 @@ def render_improve_review():
             decision_key = f"decision_{i}"
             current_decision = st.session_state.section_decisions.get(decision_key, "improved")
 
-            col_right, col_left = st.columns(2)
-
-            # ── Equal height calculation ──
-            def _est_card_height(text: str) -> int:
-                lines = text.count('\n') + 1
-                extra = sum(max(0, len(ln) - 55) // 55 for ln in text.split('\n'))
-                return max(80, (lines + extra) * 22 + 64)
-
-            card_min_h = max(_est_card_height(original), _est_card_height(improved))
+            orig_sel = current_decision == "original"
+            impr_sel = current_decision == "improved"
 
             _ck = (
                 '<div style="position:absolute;top:-11px;right:-11px;background:#022559;color:#fff;'
@@ -359,49 +352,35 @@ def render_improve_review():
                 'justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);">✓</div>'
             )
 
-            # ── Original card ──
-            with col_right:
-                orig_sel = current_decision == "original"
-                card_border = "2px solid #022559" if orig_sel else "1.5px solid #e0e4ea"
-                card_bg = "#f0f4ff" if orig_sel else "#fafafa"
-                checkmark = _ck if orig_sel else "<!-- -->"
-                st.markdown(
-                    f'<div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;background:{card_bg};'
-                    f'position:relative;margin-bottom:8px;min-height:{card_min_h}px;">'
-                    f'{checkmark}'
-                    f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div>'
-                    f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_cv_html(original)}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-                if st.button(
-                    "✓ נבחר" if orig_sel else "בחר נוסח זה",
-                    key=f"sel_orig_{i}",
-                    use_container_width=True,
-                    type="primary" if orig_sel else "secondary",
-                    disabled=orig_sel,
-                ):
-                    st.session_state.section_decisions[decision_key] = "original"
-                    st.session_state.section_decisions[f"text_{i}"] = original
-                    if current_decision == "custom":
-                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
-                    st.rerun()
+            orig_border = "2px solid #022559" if orig_sel else "1.5px solid #e0e4ea"
+            orig_bg     = "#f0f4ff" if orig_sel else "#fafafa"
+            impr_border = "2px solid #022559" if impr_sel else "1.5px solid #e0e4ea"
+            impr_bg     = "#f0f4ff" if impr_sel else "#fafafa"
+            orig_ck     = _ck if orig_sel else "<!-- -->"
+            impr_ck     = _ck if impr_sel else "<!-- -->"
 
-            # ── Improved card ──
-            with col_left:
-                impr_sel = current_decision == "improved"
-                card_border = "2px solid #022559" if impr_sel else "1.5px solid #e0e4ea"
-                card_bg = "#f0f4ff" if impr_sel else "#fafafa"
-                checkmark = _ck if impr_sel else "<!-- -->"
-                st.markdown(
-                    f'<div style="border:{card_border};border-radius:12px;padding:14px 14px 10px;background:{card_bg};'
-                    f'position:relative;margin-bottom:8px;min-height:{card_min_h}px;">'
-                    f'{checkmark}'
-                    f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div>'
-                    f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_improved_html(improved)}</div>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
+            # ── Both cards in one flex row — CSS equalises heights automatically ──
+            st.markdown(
+                f'<div style="display:flex;gap:16px;align-items:stretch;margin-bottom:8px;">'
+                f'<div style="flex:1;border:{impr_border};border-radius:12px;padding:14px 14px 10px;'
+                f'background:{impr_bg};position:relative;">'
+                f'{impr_ck}'
+                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div>'
+                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_improved_html(improved)}</div>'
+                f'</div>'
+                f'<div style="flex:1;border:{orig_border};border-radius:12px;padding:14px 14px 10px;'
+                f'background:{orig_bg};position:relative;">'
+                f'{orig_ck}'
+                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div>'
+                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_cv_html(original)}</div>'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+            # ── Buttons below (separate columns, matching card order) ──
+            col_impr, col_orig = st.columns(2)
+            with col_impr:
                 if st.button(
                     "✓ נבחר" if impr_sel else "בחר נוסח זה",
                     key=f"sel_impr_{i}",
@@ -411,6 +390,19 @@ def render_improve_review():
                 ):
                     st.session_state.section_decisions[decision_key] = "improved"
                     st.session_state.section_decisions[f"text_{i}"] = improved
+                    if current_decision == "custom":
+                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                    st.rerun()
+            with col_orig:
+                if st.button(
+                    "✓ נבחר" if orig_sel else "בחר נוסח זה",
+                    key=f"sel_orig_{i}",
+                    use_container_width=True,
+                    type="primary" if orig_sel else "secondary",
+                    disabled=orig_sel,
+                ):
+                    st.session_state.section_decisions[decision_key] = "original"
+                    st.session_state.section_decisions[f"text_{i}"] = original
                     if current_decision == "custom":
                         st.session_state.section_decisions.pop(f"custom_text_{i}", None)
                     st.rerun()
