@@ -177,6 +177,7 @@
   let _sections = [];
   let _sortable = null;
   let _pendingDeleteIdx = null;
+  let _readyInterval = null;
 
   /* ── Streamlit messaging ── */
   function sendUpdate() {
@@ -322,6 +323,7 @@
     if (!msg || typeof msg !== "object") return;
 
     if (msg.type === "streamlit:render") {
+      clearInterval(_readyInterval);
       const incoming = msg.args && msg.args.sections;
       if (!incoming) return;
 
@@ -335,8 +337,10 @@
     }
   });
 
-  /* Signal ready */
-  window.parent.postMessage({ type: "streamlit:componentReady", apiVersion: 1 }, "*");
+  /* Signal ready — keep retrying until Streamlit's listener is up */
+  _readyInterval = setInterval(function () {
+    window.parent.postMessage({ type: "streamlit:componentReady", apiVersion: 1 }, "*");
+  }, 50);
 </script>
 </body>
 </html>
