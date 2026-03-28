@@ -104,14 +104,17 @@ def _word_diff_html(original: str, improved: str, mode: str) -> str:
     def _tok(text: str):
         return re.findall(r"\n|[^\S\n]+|[^\s]+", text)
 
+    if mode not in ("original", "improved"):
+        raise ValueError(f"_word_diff_html: mode must be 'original' or 'improved', got {mode!r}")
+
     orig_tok = _tok(original)
     impr_tok = _tok(improved)
 
     sm = difflib.SequenceMatcher(None, orig_tok, impr_tok, autojunk=False)
     parts = []
 
-    DEL_STYLE = "background:#fde68a;border-radius:3px;padding:0 2px;display:inline;"
-    ADD_STYLE = "background:#bbf7d0;border-radius:3px;padding:0 2px;display:inline;"
+    DEL_STYLE = "background:#fde68a;border-radius:3px;padding:0 2px;display:inline;direction:rtl;unicode-bidi:isolate;"
+    ADD_STYLE = "background:#bbf7d0;border-radius:3px;padding:0 2px;display:inline;direction:rtl;unicode-bidi:isolate;"
 
     for tag, i1, i2, j1, j2 in sm.get_opcodes():
         if tag == "equal":
