@@ -421,7 +421,8 @@ def render_improve_review():
             impr_sel = current_decision == "improved"
 
             _ck = (
-                '<div style="position:absolute;top:-11px;right:-11px;background:#022559;color:#fff;'
+                '<div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);'
+                'background:#022559;color:#fff;'
                 'border-radius:50%;width:24px;height:24px;display:flex;align-items:center;'
                 'justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);">✓</div>'
             )
