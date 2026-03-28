@@ -1,4 +1,5 @@
 import io
+import re
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
@@ -19,11 +20,14 @@ import os
 FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
 
 _EMPTY_PLACEHOLDERS = [
-    "לא צוין", "לא צויין", "לא צויינו", "לא סופק", "לא מולא", "לא קיים",
+    "לא צוין", "לא צויין", "לא צויינו", "לא צוינו", "לא סופק", "לא מולא", "לא קיים",
     "לא רלוונטי", "לא קיים במקור", "אין", "ללא", "—", "-",
     "not specified", "not provided", "n/a", "none", "not available",
     "no data", "not applicable", "na", "tbd", "n.a.", "n.a",
 ]
+
+# Matches any Hebrew "לא + word" phrase (covers all verb-form variants the AI may produce)
+_HEBREW_NEGATION_RE = re.compile(r"^לא\s+\S", re.UNICODE)
 
 def _is_empty_content(text: str) -> bool:
     if not text or not text.strip():
@@ -32,8 +36,13 @@ def _is_empty_content(text: str) -> bool:
     cleaned_lower = cleaned.lower()
     if cleaned_lower in _EMPTY_PLACEHOLDERS:
         return True
+    # Fast regex catch: any line that starts with "לא <word>" in Hebrew is a placeholder
+    if _HEBREW_NEGATION_RE.match(cleaned):
+        return True
     for placeholder in _EMPTY_PLACEHOLDERS:
-        if cleaned_lower.startswith(placeholder.lower() + " ") or cleaned_lower.startswith(placeholder.lower() + ":") or cleaned_lower.startswith(placeholder.lower() + "-"):
+        if (cleaned_lower.startswith(placeholder.lower() + " ")
+                or cleaned_lower.startswith(placeholder.lower() + ":")
+                or cleaned_lower.startswith(placeholder.lower() + "-")):
             return True
     return False
 
