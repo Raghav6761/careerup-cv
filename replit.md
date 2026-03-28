@@ -34,7 +34,8 @@ fonts/              - Assistant font files for PDF export
 - `home` - Two path selection cards
 - `improve_upload` - File upload page
 - `improve_review` - Side-by-side comparison with approve/edit
-- `improve_export` - Final preview and download
+- `improve_export` - Step 3: content editing only (title, text, add/delete sections)
+- `improve_reorder` - Step 4: drag-and-drop section reorder (navy blue ⠿ handles) + export/download
 - `build_form` - Smart form for filling CV fields (personal details, experience, education, skills, languages, military service, volunteering, projects, additional info)
 - `build_preview` - Generated CV preview and download
 

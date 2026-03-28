@@ -552,13 +552,13 @@ def render_improve_export():
 
     st.markdown("""
     <div class="progress-container">
-        <div class="progress-label">שלב 3 מתוך 3</div>
-        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        <div class="progress-label">שלב 3 מתוך 4</div>
+        <div class="progress-track"><div class="progress-fill" style="width:75%"></div></div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">✏️ עריכה סופית</div>', unsafe_allow_html=True)
-    st.markdown("זה הזמן לליטושים אחרונים. ניתן לערוך כל חלק או לשנות את סדר הסעיפים")
+    st.markdown("זה הזמן לליטושים אחרונים. ניתן לערוך את תוכן כל סעיף, לשנות כותרות, להוסיף או למחוק סעיפים")
 
     result = st.session_state.analysis_result
     sections = result.get("sections", [])
@@ -573,45 +573,6 @@ def render_improve_export():
 
     if "imp_pending_delete" not in st.session_state:
         st.session_state.imp_pending_delete = None
-
-    def _swap_imp_sections(a, b):
-        secs = st.session_state.improve_final_sections
-        for idx in [a, b]:
-            tk, xk = f"imp_title_{idx}", f"imp_text_{idx}"
-            if tk in st.session_state:
-                secs[idx]["title"] = st.session_state[tk]
-                del st.session_state[tk]
-            if xk in st.session_state:
-                secs[idx]["final_text"] = st.session_state[xk]
-                del st.session_state[xk]
-        secs[a], secs[b] = secs[b], secs[a]
-
-    n_secs = len(st.session_state.improve_final_sections)
-
-    # ── Drag-and-drop reorder ──
-    sorted_labels = sort_items(
-        [sec["title"] for sec in st.session_state.improve_final_sections],
-        direction="vertical",
-        key="imp_section_order",
-    )
-    # Map displayed titles back to original indices (handles duplicate titles gracefully)
-    _seen: dict = {}
-    new_order = []
-    for lbl in sorted_labels:
-        count = _seen.get(lbl, 0)
-        candidates = [j for j, s in enumerate(st.session_state.improve_final_sections) if s["title"] == lbl]
-        new_order.append(candidates[count] if count < len(candidates) else candidates[-1])
-        _seen[lbl] = count + 1
-
-    if new_order != list(range(n_secs)):
-        # Flush widget state before reordering
-        for j in range(n_secs):
-            if f"imp_title_{j}" in st.session_state:
-                st.session_state.improve_final_sections[j]["title"] = st.session_state.pop(f"imp_title_{j}")
-            if f"imp_text_{j}" in st.session_state:
-                st.session_state.improve_final_sections[j]["final_text"] = st.session_state.pop(f"imp_text_{j}")
-        st.session_state.improve_final_sections = [st.session_state.improve_final_sections[j] for j in new_order]
-        st.rerun()
 
     sections_to_delete = []
 
@@ -669,6 +630,90 @@ def render_improve_export():
     if st.button("➕ הוסף סעיף חדש", key="imp_add_section"):
         st.session_state.improve_final_sections.append({"title": "סעיף חדש", "final_text": ""})
         st.rerun()
+
+    st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+    if st.button("המשך לסידור סעיפים ←", key="go_to_reorder", type="primary", use_container_width=True):
+        go_to("improve_reorder")
+        st.rerun()
+
+
+def render_improve_reorder():
+    render_header()
+
+    if st.button("→ חזרה לעריכה", key="back_to_export"):
+        go_to("improve_export")
+        st.rerun()
+
+    st.markdown("""
+    <div class="progress-container">
+        <div class="progress-label">שלב 4 מתוך 4</div>
+        <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-header">🔀 סידור סעיפים</div>', unsafe_allow_html=True)
+    st.markdown("גרור את הסעיפים לסדר הרצוי. השינוי ישמר אוטומטית.")
+
+    if "improve_final_sections" not in st.session_state or not st.session_state.improve_final_sections:
+        st.warning("לא נמצאו סעיפים לסידור. חזור לשלב העריכה.")
+        return
+
+    secs = st.session_state.improve_final_sections
+    n_secs = len(secs)
+
+    _REORDER_STYLE = """
+        .sortable-item {
+            background: #022559 !important;
+            color: #ffffff !important;
+            border-radius: 10px !important;
+            padding: 14px 20px !important;
+            font-family: 'Assistant', sans-serif !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            cursor: grab !important;
+            direction: rtl !important;
+            text-align: right !important;
+            margin-bottom: 6px !important;
+            box-shadow: 0 2px 8px rgba(2,37,89,0.18) !important;
+            border: 1.5px solid #03367a !important;
+            transition: background 0.15s, box-shadow 0.15s !important;
+            user-select: none !important;
+        }
+        .sortable-item:hover {
+            background: #03367a !important;
+            box-shadow: 0 4px 14px rgba(2,37,89,0.28) !important;
+        }
+        .sortable-component {
+            direction: rtl !important;
+            padding: 8px !important;
+        }
+    """
+
+    handle = "⠿  "
+    display_labels = [f"{handle}{sec['title']}" for sec in secs]
+
+    sorted_labels = sort_items(
+        display_labels,
+        direction="vertical",
+        custom_style=_REORDER_STYLE,
+        key="imp_reorder_sort",
+    )
+
+    stripped_labels = [lbl[len(handle):] for lbl in sorted_labels]
+
+    _seen: dict = {}
+    new_order = []
+    for lbl in stripped_labels:
+        count = _seen.get(lbl, 0)
+        candidates = [j for j, s in enumerate(secs) if s["title"] == lbl]
+        new_order.append(candidates[count] if count < len(candidates) else candidates[-1])
+        _seen[lbl] = count + 1
+
+    if new_order != list(range(n_secs)):
+        st.session_state.improve_final_sections = [secs[j] for j in new_order]
+        st.rerun()
+
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
     export_sections = [s for s in st.session_state.improve_final_sections if s["final_text"].strip()]
     is_english_mode = st.session_state.get("improve_language", "he") == "en"
@@ -802,7 +847,7 @@ def render_improve_export():
                     st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
     st.markdown("---")
-    if st.button("🏠 חזרה לדף הבית", use_container_width=True):
+    if st.button("🏠 חזרה לדף הבית", use_container_width=True, key="reorder_home_btn"):
         go_to("home")
         st.rerun()
 
@@ -1414,6 +1459,7 @@ pages = {
     "improve_upload": render_improve_upload,
     "improve_review": render_improve_review,
     "improve_export": render_improve_export,
+    "improve_reorder": render_improve_reorder,
     "build_form": render_build_form,
     "build_preview": render_build_preview,
 }
