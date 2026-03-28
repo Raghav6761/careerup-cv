@@ -1,5 +1,6 @@
 import re
 import base64
+import difflib
 import html as html_lib
 import streamlit as st
 from PIL import Image
@@ -90,6 +91,75 @@ def _format_improved_html(text: str) -> str:
                 f'<span style="font-weight:400;">{safe}</span></div>'
             )
     return "".join(html_parts)
+
+
+def _word_diff_html(original: str, improved: str, mode: str) -> str:
+    """
+    Return HTML of text with word-level diff highlights.
+    mode='original': removed words (in orig, not in improved) → orange #fde68a
+    mode='improved': added words (in improved, not in orig)   → green  #bbf7d0
+    Preserves newlines as <br> tags.
+    """
+    # Tokenize into words, whitespace runs, and newlines (kept as separate tokens)
+    def _tok(text: str):
+        return re.findall(r"\n|[^\S\n]+|[^\s]+", text)
+
+    orig_tok = _tok(original)
+    impr_tok = _tok(improved)
+
+    sm = difflib.SequenceMatcher(None, orig_tok, impr_tok, autojunk=False)
+    parts = []
+
+    DEL_STYLE = "background:#fde68a;border-radius:3px;padding:0 2px;display:inline;"
+    ADD_STYLE = "background:#bbf7d0;border-radius:3px;padding:0 2px;display:inline;"
+
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == "equal":
+            for t in orig_tok[i1:i2]:
+                parts.append("<br>" if t == "\n" else html_lib.escape(t))
+
+        elif tag == "delete":
+            if mode == "original":
+                for t in orig_tok[i1:i2]:
+                    if t == "\n":
+                        parts.append("<br>")
+                    elif t.strip():
+                        parts.append(f'<span style="{DEL_STYLE}">{html_lib.escape(t)}</span>')
+                    else:
+                        parts.append(html_lib.escape(t))
+            # mode='improved' — deleted tokens don't appear in the improved text, skip
+
+        elif tag == "insert":
+            if mode == "improved":
+                for t in impr_tok[j1:j2]:
+                    if t == "\n":
+                        parts.append("<br>")
+                    elif t.strip():
+                        parts.append(f'<span style="{ADD_STYLE}">{html_lib.escape(t)}</span>')
+                    else:
+                        parts.append(html_lib.escape(t))
+            # mode='original' — inserted tokens don't appear in the original text, skip
+
+        elif tag == "replace":
+            if mode == "original":
+                for t in orig_tok[i1:i2]:
+                    if t == "\n":
+                        parts.append("<br>")
+                    elif t.strip():
+                        parts.append(f'<span style="{DEL_STYLE}">{html_lib.escape(t)}</span>')
+                    else:
+                        parts.append(html_lib.escape(t))
+            else:  # mode='improved'
+                for t in impr_tok[j1:j2]:
+                    if t == "\n":
+                        parts.append("<br>")
+                    elif t.strip():
+                        parts.append(f'<span style="{ADD_STYLE}">{html_lib.escape(t)}</span>')
+                    else:
+                        parts.append(html_lib.escape(t))
+
+    return "".join(parts)
+
 
 st.set_page_config(
     page_title="CareerUp | CV Master AI",
@@ -360,7 +430,19 @@ def render_improve_review():
             orig_ck     = _ck if orig_sel else "<!-- -->"
             impr_ck     = _ck if impr_sel else "<!-- -->"
 
+            # ── Compute word-level diff HTML for both cards ──
+            orig_diff = _word_diff_html(original, improved, mode="original")
+            impr_diff = _word_diff_html(original, improved, mode="improved")
+
             # ── Cards as HTML table — cells in same row are always equal height ──
+            legend = (
+                '<div style="font-size:11px;color:#666;direction:rtl;text-align:right;'
+                'margin-bottom:6px;display:flex;gap:12px;justify-content:flex-end;">'
+                '<span><span style="background:#bbf7d0;border-radius:3px;padding:0 4px;">מילים שנוספו</span></span>'
+                '<span><span style="background:#fde68a;border-radius:3px;padding:0 4px;">מילים שהוסרו</span></span>'
+                '</div>'
+            )
+            st.markdown(legend, unsafe_allow_html=True)
             st.markdown(
                 f'<table style="width:100%;border-collapse:separate;border-spacing:16px 0;'
                 f'table-layout:fixed;direction:ltr;margin-bottom:4px;">'
@@ -370,16 +452,16 @@ def render_improve_review():
                 f'{impr_ck}'
                 f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;'
                 f'letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מחודש / מוצע</div>'
-                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">'
-                f'{_format_improved_html(improved)}</div>'
+                f'<div style="font-size:13px;line-height:1.8;direction:rtl;text-align:right;">'
+                f'{impr_diff}</div>'
                 f'</td>'
                 f'<td style="vertical-align:top;border:{orig_border};border-radius:12px;'
                 f'padding:14px 14px 10px;background:{orig_bg};position:relative;width:50%;">'
                 f'{orig_ck}'
                 f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;'
                 f'letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מקור</div>'
-                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">'
-                f'{_format_cv_html(original)}</div>'
+                f'<div style="font-size:13px;line-height:1.8;direction:rtl;text-align:right;">'
+                f'{orig_diff}</div>'
                 f'</td>'
                 f'</tr>'
                 f'</table>',
