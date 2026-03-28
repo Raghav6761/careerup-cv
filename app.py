@@ -313,7 +313,7 @@ def render_improve_upload():
 
     with st.container(border=True, key="card_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-        st.markdown('<span style="font-size:16px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות הסינון ATS בצורה מדויקת יותר</span>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:16px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות סינון אוטומטיות (ATS) בצורה מדויקת יותר</span>', unsafe_allow_html=True)
         if "improve_target_position" not in st.session_state:
             st.session_state.improve_target_position = ""
         st.session_state.improve_target_position = st.text_area(
@@ -862,7 +862,7 @@ def render_build_form():
 
     with st.container(border=True, key="bfc_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-        st.markdown('<span style="font-size:15px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות הסינון ATS בצורה מדויקת יותר</span>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:15px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות סינון אוטומטיות (ATS) בצורה מדויקת יותר</span>', unsafe_allow_html=True)
         if "build_target_position" not in st.session_state:
             st.session_state.build_target_position = ""
         st.session_state.build_target_position = st.text_area(
