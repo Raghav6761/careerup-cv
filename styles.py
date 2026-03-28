@@ -136,17 +136,17 @@ def inject_custom_css():
         }
 
         .home-cta-card-primary {
-            background: #022559;
+            background: #2b56e0;
             color: #ffffff;
-            box-shadow: 0 2px 8px rgba(2, 37, 89, 0.2);
+            box-shadow: 0 4px 16px rgba(43, 86, 224, 0.28);
         }
 
         .home-cta-card-secondary {
-            background: #80d6c5;
+            background: #ffffff;
             color: #022559;
-            border: 2px solid #022559;
+            border: 2px solid #2b56e0;
             border-bottom: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(43, 86, 224, 0.10);
         }
 
         .home-cta-title {
@@ -165,25 +165,25 @@ def inject_custom_css():
         }
 
         .home-cta-card-primary .home-cta-desc {
-            color: rgba(255, 255, 255, 0.82);
+            color: rgba(255, 255, 255, 0.85);
         }
 
         .home-cta-card-secondary .home-cta-desc {
-            color: #022559;
+            color: #3a4a6b;
         }
 
         /* Style the native CTA buttons to match the cards below them */
         [data-testid="stColumn"]:first-child [data-testid="stBaseButton-primary"] {
             border-radius: 0 0 14px 14px !important;
-            background: #011840 !important;
+            background: #1a40c4 !important;
             border: none !important;
             margin-top: -4px !important;
         }
 
         [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"] {
             border-radius: 0 0 14px 14px !important;
-            background: #6acbb8 !important;
-            border: 2px solid #022559 !important;
+            background: #f0f4ff !important;
+            border: 2px solid #2b56e0 !important;
             border-top: none !important;
             color: #022559 !important;
             margin-top: -4px !important;

@@ -1,7 +1,13 @@
 import re
+import base64
 import html as html_lib
 import streamlit as st
+from PIL import Image
 from styles import inject_custom_css
+
+def _get_logo_b64(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
 
 
 def _format_cv_html(text: str) -> str:
@@ -86,8 +92,8 @@ def _format_improved_html(text: str) -> str:
     return "".join(html_parts)
 
 st.set_page_config(
-    page_title="Career Up | CV Master AI",
-    page_icon="📄",
+    page_title="CareerUp | CV Master AI",
+    page_icon=Image.open("logo_icon.png"),
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -136,12 +142,14 @@ def reset_build():
 
 
 def render_header():
-    st.markdown("""
-    <div class="app-header">
-        <h1><span class="logo-cv">CV-Master</span> <span class="logo-ai">AI</span></h1>
-        <p>כלי חכם ליצירה ושיפור קורות חיים מקצועיים</p>
-    </div>
-    """, unsafe_allow_html=True)
+    logo_b64 = _get_logo_b64("logo_full.png")
+    st.markdown(
+        f'<div class="app-header">'
+        f'<img src="data:image/png;base64,{logo_b64}" style="height:56px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;" alt="CareerUp Logo">'
+        f'<p>כלי חכם ליצירה ושיפור קורות חיים מקצועיים</p>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
 
 def render_home():
@@ -169,7 +177,7 @@ def render_home():
     with col2:
         st.markdown("""
         <div class="home-cta-card home-cta-card-secondary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#022559" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2b56e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
                 <circle cx="7" cy="12" r="5"/>
                 <line x1="11" y1="16" x2="14" y2="19"/>
                 <line x1="20" y1="18" x2="20" y2="6"/>
