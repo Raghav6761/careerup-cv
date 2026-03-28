@@ -559,29 +559,6 @@ def render_improve_export():
     st.markdown('<div class="section-header">✏️ עריכה סופית</div>', unsafe_allow_html=True)
     st.markdown("זה הזמן לליטושים אחרונים. ניתן לערוך כל חלק או לשנות את סדר הסעיפים")
 
-    st.markdown("""
-    <style>
-        [class*="st-key-imp_up_"] button,
-        [class*="st-key-imp_down_"] button {
-            background: #022559 !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 8px !important;
-            font-size: 20px !important;
-            font-weight: 700 !important;
-            width: 100% !important;
-            min-height: 38px !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            line-height: 1 !important;
-        }
-        [class*="st-key-imp_up_"] button:hover,
-        [class*="st-key-imp_down_"] button:hover {
-            background: #03367a !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
     result = st.session_state.analysis_result
     sections = result.get("sections", [])
 
@@ -612,61 +589,60 @@ def render_improve_export():
     n_secs = len(st.session_state.improve_final_sections)
 
     for i, sec in enumerate(st.session_state.improve_final_sections):
-        col_arrows, col_card = st.columns([0.7, 11.3])
-        with col_arrows:
-            if i > 0:
-                if st.button("↑", key=f"imp_up_{i}", help="הזז למעלה"):
-                    _swap_imp_sections(i, i - 1)
-                    st.rerun()
-            if i < n_secs - 1:
-                if st.button("↓", key=f"imp_down_{i}", help="הזז למטה"):
-                    _swap_imp_sections(i, i + 1)
-                    st.rerun()
-        with col_card:
-            with st.container(border=True, key=f"exp_sec_{i}"):
-                col_num, col_title, col_del = st.columns([0.5, 9, 0.8])
-                with col_num:
-                    st.markdown(
-                        f'<div style="background:#022559;color:#fff;border-radius:50%;width:26px;height:26px;'
-                        f'display:flex;align-items:center;justify-content:center;font-size:11px;'
-                        f'font-weight:700;margin-top:4px;">{i + 1}</div>',
-                        unsafe_allow_html=True
-                    )
-                with col_title:
-                    new_title = st.text_input(
-                        "כותרת סעיף",
-                        value=sec["title"],
-                        key=f"imp_title_{i}",
-                        label_visibility="collapsed",
-                        placeholder="כותרת סעיף"
-                    )
-                    st.session_state.improve_final_sections[i]["title"] = new_title
-                with col_del:
-                    if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף", type="tertiary"):
-                        st.session_state.imp_pending_delete = i
-                        st.rerun()
-
-                new_text = st.text_area(
-                    "תוכן",
-                    value=sec["final_text"],
-                    key=f"imp_text_{i}",
-                    height=120,
-                    label_visibility="collapsed",
-                    placeholder="תוכן הסעיף"
+        with st.container(border=True, key=f"exp_sec_{i}"):
+            col_num, col_title, col_up, col_down, col_del = st.columns([0.5, 8.5, 0.6, 0.6, 0.6])
+            with col_num:
+                st.markdown(
+                    f'<div style="background:#022559;color:#fff;border-radius:50%;width:26px;height:26px;'
+                    f'display:flex;align-items:center;justify-content:center;font-size:11px;'
+                    f'font-weight:700;margin-top:4px;">{i + 1}</div>',
+                    unsafe_allow_html=True
                 )
-                st.session_state.improve_final_sections[i]["final_text"] = new_text
+            with col_title:
+                new_title = st.text_input(
+                    "כותרת סעיף",
+                    value=sec["title"],
+                    key=f"imp_title_{i}",
+                    label_visibility="collapsed",
+                    placeholder="כותרת סעיף"
+                )
+                st.session_state.improve_final_sections[i]["title"] = new_title
+            with col_up:
+                if i > 0:
+                    if st.button("↑", key=f"imp_up_{i}", help="הזז למעלה", type="tertiary"):
+                        _swap_imp_sections(i, i - 1)
+                        st.rerun()
+            with col_down:
+                if i < n_secs - 1:
+                    if st.button("↓", key=f"imp_down_{i}", help="הזז למטה", type="tertiary"):
+                        _swap_imp_sections(i, i + 1)
+                        st.rerun()
+            with col_del:
+                if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף", type="tertiary"):
+                    st.session_state.imp_pending_delete = i
+                    st.rerun()
 
-                if st.session_state.imp_pending_delete == i:
-                    st.warning("האם למחוק סעיף זה? לא ניתן לשחזר.")
-                    col_yes, col_no, _ = st.columns([1, 1, 4])
-                    with col_yes:
-                        if st.button("✓ מחק", key=f"confirm_del_{i}", type="primary"):
-                            sections_to_delete.append(i)
-                            st.session_state.imp_pending_delete = None
-                    with col_no:
-                        if st.button("ביטול", key=f"cancel_del_{i}"):
-                            st.session_state.imp_pending_delete = None
-                            st.rerun()
+            new_text = st.text_area(
+                "תוכן",
+                value=sec["final_text"],
+                key=f"imp_text_{i}",
+                height=120,
+                label_visibility="collapsed",
+                placeholder="תוכן הסעיף"
+            )
+            st.session_state.improve_final_sections[i]["final_text"] = new_text
+
+            if st.session_state.imp_pending_delete == i:
+                st.warning("האם למחוק סעיף זה? לא ניתן לשחזר.")
+                col_yes, col_no, _ = st.columns([1, 1, 4])
+                with col_yes:
+                    if st.button("✓ מחק", key=f"confirm_del_{i}", type="primary"):
+                        sections_to_delete.append(i)
+                        st.session_state.imp_pending_delete = None
+                with col_no:
+                    if st.button("ביטול", key=f"cancel_del_{i}"):
+                        st.session_state.imp_pending_delete = None
+                        st.rerun()
 
     if sections_to_delete:
         for idx in sorted(sections_to_delete, reverse=True):
