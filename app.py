@@ -360,18 +360,19 @@ def render_improve_review():
             impr_ck     = _ck if impr_sel else "<!-- -->"
 
             # ── Both cards in one flex row — CSS equalises heights automatically ──
+            # direction:ltr on wrapper overrides global RTL so first child is always LEFT
             st.markdown(
-                f'<div style="display:flex;gap:16px;align-items:stretch;margin-bottom:8px;">'
+                f'<div style="display:flex;direction:ltr;gap:16px;align-items:stretch;margin-bottom:8px;">'
                 f'<div style="flex:1;border:{impr_border};border-radius:12px;padding:14px 14px 10px;'
-                f'background:{impr_bg};position:relative;">'
+                f'background:{impr_bg};position:relative;height:100%;">'
                 f'{impr_ck}'
-                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div>'
+                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מחודש / מוצע</div>'
                 f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_improved_html(improved)}</div>'
                 f'</div>'
                 f'<div style="flex:1;border:{orig_border};border-radius:12px;padding:14px 14px 10px;'
-                f'background:{orig_bg};position:relative;">'
+                f'background:{orig_bg};position:relative;height:100%;">'
                 f'{orig_ck}'
-                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div>'
+                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מקור</div>'
                 f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_cv_html(original)}</div>'
                 f'</div>'
                 f'</div>',
