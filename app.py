@@ -155,42 +155,43 @@ def render_header():
 def render_home():
     render_header()
 
-    col1, col2 = st.columns(2)
+    with st.container(key="home_cta"):
+        col1, col2 = st.columns(2)
 
-    with col1:
-        st.markdown("""
-        <div class="home-cta-card home-cta-card-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
-                <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
-                <line x1="16" y1="8" x2="2" y2="22"/>
-                <line x1="17.5" y1="15" x2="9" y2="15"/>
-            </svg>
-            <div class="home-cta-title">בנה קו"ח חדשים</div>
-            <div class="home-cta-desc">תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("בחר →", key="btn_build_cta", use_container_width=True, type="primary"):
-            reset_build()
-            go_to("build_form")
-            st.rerun()
+        with col1:
+            st.markdown("""
+            <div class="home-cta-card home-cta-card-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
+                    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+                    <line x1="16" y1="8" x2="2" y2="22"/>
+                    <line x1="17.5" y1="15" x2="9" y2="15"/>
+                </svg>
+                <div class="home-cta-title">בנה קו"ח חדשים</div>
+                <div class="home-cta-desc">תהליך מודרך, מובנה ומקצועי לבניית קורות חיים מנצחים מאפס.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("בחר →", key="btn_build_cta", use_container_width=True, type="primary"):
+                reset_build()
+                go_to("build_form")
+                st.rerun()
 
-    with col2:
-        st.markdown("""
-        <div class="home-cta-card home-cta-card-secondary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2b56e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
-                <circle cx="7" cy="12" r="5"/>
-                <line x1="11" y1="16" x2="14" y2="19"/>
-                <line x1="20" y1="18" x2="20" y2="6"/>
-                <polyline points="18,8 20,6 22,8"/>
-            </svg>
-            <div class="home-cta-title">שפר קו"ח קיימים</div>
-            <div class="home-cta-desc">קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.</div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("בחר →", key="btn_improve_cta", use_container_width=True):
-            reset_improve()
-            go_to("improve_upload")
-            st.rerun()
+        with col2:
+            st.markdown("""
+            <div class="home-cta-card home-cta-card-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2b56e0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;top:12px;left:14px;">
+                    <circle cx="7" cy="12" r="5"/>
+                    <line x1="11" y1="16" x2="14" y2="19"/>
+                    <line x1="20" y1="18" x2="20" y2="6"/>
+                    <polyline points="18,8 20,6 22,8"/>
+                </svg>
+                <div class="home-cta-title">שפר קו"ח קיימים</div>
+                <div class="home-cta-desc">קבל ניתוח שוק, טיפים לשיפור, ואיתור פערים בקלות.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("בחר →", key="btn_improve_cta", use_container_width=True):
+                reset_improve()
+                go_to("improve_upload")
+                st.rerun()
 
 
 def render_improve_upload():
@@ -359,54 +360,56 @@ def render_improve_review():
             orig_ck     = _ck if orig_sel else "<!-- -->"
             impr_ck     = _ck if impr_sel else "<!-- -->"
 
-            # ── Both cards in one flex row — CSS equalises heights automatically ──
-            # direction:ltr on wrapper overrides global RTL so first child is always LEFT
-            st.markdown(
-                f'<div style="display:flex;direction:ltr;gap:16px;align-items:stretch;margin-bottom:8px;">'
-                f'<div style="flex:1;border:{impr_border};border-radius:12px;padding:14px 14px 10px;'
-                f'background:{impr_bg};position:relative;height:100%;">'
-                f'{impr_ck}'
-                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מחודש / מוצע</div>'
-                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_improved_html(improved)}</div>'
-                f'</div>'
-                f'<div style="flex:1;border:{orig_border};border-radius:12px;padding:14px 14px 10px;'
-                f'background:{orig_bg};position:relative;height:100%;">'
-                f'{orig_ck}'
-                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מקור</div>'
-                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">{_format_cv_html(original)}</div>'
-                f'</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+            # ── Card + button together in each column inside a keyed container ──
+            # CSS in styles.py targets st-key-cmprow_ to equalise card heights
+            with st.container(key=f"cmprow_{i}"):
+                col_impr, col_orig = st.columns(2)
 
-            # ── Buttons below (separate columns, matching card order) ──
-            col_impr, col_orig = st.columns(2)
-            with col_impr:
-                if st.button(
-                    "✓ נבחר" if impr_sel else "בחר נוסח זה",
-                    key=f"sel_impr_{i}",
-                    use_container_width=True,
-                    type="primary" if impr_sel else "secondary",
-                    disabled=impr_sel,
-                ):
-                    st.session_state.section_decisions[decision_key] = "improved"
-                    st.session_state.section_decisions[f"text_{i}"] = improved
-                    if current_decision == "custom":
-                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
-                    st.rerun()
-            with col_orig:
-                if st.button(
-                    "✓ נבחר" if orig_sel else "בחר נוסח זה",
-                    key=f"sel_orig_{i}",
-                    use_container_width=True,
-                    type="primary" if orig_sel else "secondary",
-                    disabled=orig_sel,
-                ):
-                    st.session_state.section_decisions[decision_key] = "original"
-                    st.session_state.section_decisions[f"text_{i}"] = original
-                    if current_decision == "custom":
-                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
-                    st.rerun()
+                with col_impr:
+                    st.markdown(
+                        f'<div class="cmp-card" style="border:{impr_border};border-radius:12px;'
+                        f'padding:14px 14px 10px;background:{impr_bg};position:relative;">'
+                        f'{impr_ck}'
+                        f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div>'
+                        f'<div style="font-size:13px;line-height:1.6;">{_format_improved_html(improved)}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                    if st.button(
+                        "✓ נבחר" if impr_sel else "בחר נוסח זה",
+                        key=f"sel_impr_{i}",
+                        use_container_width=True,
+                        type="primary" if impr_sel else "secondary",
+                        disabled=impr_sel,
+                    ):
+                        st.session_state.section_decisions[decision_key] = "improved"
+                        st.session_state.section_decisions[f"text_{i}"] = improved
+                        if current_decision == "custom":
+                            st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                        st.rerun()
+
+                with col_orig:
+                    st.markdown(
+                        f'<div class="cmp-card" style="border:{orig_border};border-radius:12px;'
+                        f'padding:14px 14px 10px;background:{orig_bg};position:relative;">'
+                        f'{orig_ck}'
+                        f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div>'
+                        f'<div style="font-size:13px;line-height:1.6;">{_format_cv_html(original)}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                    if st.button(
+                        "✓ נבחר" if orig_sel else "בחר נוסח זה",
+                        key=f"sel_orig_{i}",
+                        use_container_width=True,
+                        type="primary" if orig_sel else "secondary",
+                        disabled=orig_sel,
+                    ):
+                        st.session_state.section_decisions[decision_key] = "original"
+                        st.session_state.section_decisions[f"text_{i}"] = original
+                        if current_decision == "custom":
+                            st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                        st.rerun()
 
             # ── Edit manually ──
             if current_decision == "custom":

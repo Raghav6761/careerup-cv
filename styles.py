@@ -172,15 +172,17 @@ def inject_custom_css():
             color: #3a4a6b;
         }
 
-        /* Style the native CTA buttons to match the cards below them */
-        [data-testid="stColumn"]:first-child [data-testid="stBaseButton-primary"] {
+        /* Style the native CTA buttons — scoped to home_cta container only */
+        [class*="st-key-home_cta"] [data-testid="column"]:first-child [data-testid="stBaseButton-primary"],
+        [class*="st-key-home_cta"] [data-testid="stColumn"]:first-child [data-testid="stBaseButton-primary"] {
             border-radius: 0 0 14px 14px !important;
             background: #1a40c4 !important;
             border: none !important;
             margin-top: -4px !important;
         }
 
-        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"] {
+        [class*="st-key-home_cta"] [data-testid="column"]:last-child [data-testid="stBaseButton-secondary"],
+        [class*="st-key-home_cta"] [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"] {
             border-radius: 0 0 14px 14px !important;
             background: #f0f4ff !important;
             border: 2px solid #2b56e0 !important;
@@ -189,13 +191,36 @@ def inject_custom_css():
             margin-top: -4px !important;
         }
 
-        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:hover,
-        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:active,
-        [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:focus {
+        [class*="st-key-home_cta"] [data-testid="column"]:last-child [data-testid="stBaseButton-secondary"]:hover,
+        [class*="st-key-home_cta"] [data-testid="column"]:last-child [data-testid="stBaseButton-secondary"]:active,
+        [class*="st-key-home_cta"] [data-testid="column"]:last-child [data-testid="stBaseButton-secondary"]:focus,
+        [class*="st-key-home_cta"] [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:hover {
             background: #80d6c5 !important;
             border: 2px solid #022559 !important;
             border-top: none !important;
             color: #022559 !important;
+        }
+
+        /* Equal-height compare cards in improve_review */
+        [class*="st-key-cmprow_"] [data-testid="stHorizontalBlock"] {
+            align-items: stretch !important;
+        }
+        [class*="st-key-cmprow_"] [data-testid="column"] {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        [class*="st-key-cmprow_"] [data-testid="column"] > div {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+        }
+        [class*="st-key-cmprow_"] [data-testid="stMarkdownContainer"] {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        [class*="st-key-cmprow_"] .cmp-card {
+            flex: 1 !important;
         }
 
         .e1mwqyj92 {
