@@ -58,19 +58,27 @@ streamlit run app.py --server.port 5000
 - Military lines filtered from personal/contact section in improve exports via `_is_military_line()` helper
 - Optional sections (military, volunteering, projects, additional) only appear if user provided content
 
-## One-Page PDF Enforcement
-- All 4 PDF export functions use a 5-level compression retry loop (`_PDF_COMPRESSION_LEVELS`)
-- After building each PDF, `_count_pdf_pages()` checks page count via pdfplumber
-- If >1 page, the next compression level is applied and the PDF is rebuilt
-- Compression levels reduce: side margins (18mm→12mm), section spacing, leading, font size (9→8pt at level 3+)
-- Font-only reduction happens at levels 3 and 4 to preserve readability as long as possible
-- DOCX exports use tighter margins (1.5cm sides, 1.0cm top/bottom) and tighter spacing (space_after=1pt, section header space_before=5pt)
+## One-Page / Two-Page PDF Selector
+- Both flows (improve_upload + build_form) show a "📄 כמה עמודים תרצו?" radio card: "עמוד אחד (מומלץ)" (default) or "עד שני עמודים"
+- Session keys: `improve_max_pages` (int 1 or 2), `build_max_pages` (int 1 or 2)
+- `reset_improve()` clears `improve_max_pages` and its widget key `improve_pages_radio`
+- All 4 PDF export functions accept `max_pages: int = 1`; compression loop stops when `_count_pdf_pages() <= max_pages`
+- AI prompts have conditional content limits: 1-page (4 jobs, 3 bullets, 50-word summary) vs 2-page (6 jobs, 5 bullets, 80-word summary, 12 technical skills)
+- Compression still acts as a safety net at 2-page mode (stops at > max_pages, not just > 1)
+- DOCX exports are unchanged (no page-count enforcement)
 
 ## AI Content Limits
-- Summary: max 2-3 sentences
-- Experience: max 4 most recent jobs, max 2-3 bullet points per job
-- Skills: max 8 technical + 4 soft skills
+### One-page mode (default)
+- Summary: max 3 sentences, 50 words
+- Experience: max 4 most recent jobs, max 3 bullet points per job (12 words each)
+- Skills: max 8 technical + 5 soft skills
 - Optional sections (courses, projects): max 3 items each
+
+### Two-page mode
+- Summary: max 4 sentences, 80 words
+- Experience: max 6 most recent jobs, max 5 bullet points per job (15 words each)
+- Skills: max 12 technical + 8 soft skills
+- Optional sections (courses, projects): max 6 items each
 
 ## Design
 - Hebrew RTL interface

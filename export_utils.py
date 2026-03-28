@@ -274,7 +274,7 @@ def _get_pdf_styles(font_name, bold_font, cparams=None):
     }
 
 
-def export_cv_to_pdf(cv_data: dict) -> bytes:
+def export_cv_to_pdf(cv_data: dict, max_pages: int = 1) -> bytes:
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
@@ -423,7 +423,7 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
 
         doc.build(elements)
         pdf_bytes = buffer.getvalue()
-        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+        if _count_pdf_pages(pdf_bytes) <= max_pages or level == len(_PDF_COMPRESSION_LEVELS) - 1:
             return pdf_bytes
 
     return buffer.getvalue()
@@ -758,7 +758,7 @@ def _set_docx_rtl(paragraph, font_name="Assistant"):
             rPr.append(bCs)
 
 
-def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str = "") -> bytes:
+def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str = "", max_pages: int = 1) -> bytes:
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
@@ -834,7 +834,7 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
 
         doc.build(elements)
         pdf_bytes = buffer.getvalue()
-        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+        if _count_pdf_pages(pdf_bytes) <= max_pages or level == len(_PDF_COMPRESSION_LEVELS) - 1:
             return pdf_bytes
 
     return buffer.getvalue()
@@ -1015,7 +1015,7 @@ def _get_pdf_styles_en(font_name, bold_font, cparams=None):
     }
 
 
-def export_cv_to_pdf_en(cv_data: dict) -> bytes:
+def export_cv_to_pdf_en(cv_data: dict, max_pages: int = 1) -> bytes:
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
@@ -1164,7 +1164,7 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
 
         doc.build(elements)
         pdf_bytes = buffer.getvalue()
-        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+        if _count_pdf_pages(pdf_bytes) <= max_pages or level == len(_PDF_COMPRESSION_LEVELS) - 1:
             return pdf_bytes
 
     return buffer.getvalue()
@@ -1363,7 +1363,7 @@ def _clean_section_title(line: str) -> str:
     return stripped.rstrip(":")
 
 
-def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "") -> bytes:
+def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "", max_pages: int = 1) -> bytes:
     font_name = register_hebrew_font()
     bold_font = f"{font_name}-Bold" if font_name == "Assistant" else "Helvetica-Bold"
 
@@ -1471,7 +1471,7 @@ def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "") -> by
 
         doc.build(elements)
         pdf_bytes = buffer.getvalue()
-        if _count_pdf_pages(pdf_bytes) <= 1 or level == len(_PDF_COMPRESSION_LEVELS) - 1:
+        if _count_pdf_pages(pdf_bytes) <= max_pages or level == len(_PDF_COMPRESSION_LEVELS) - 1:
             return pdf_bytes
 
     return buffer.getvalue()

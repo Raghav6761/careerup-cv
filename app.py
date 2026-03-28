@@ -201,6 +201,7 @@ def reset_improve():
     st.session_state.analysis_result = None
     st.session_state.section_decisions = {}
     for _k in ["improve_final_sections", "improve_target_position", "improve_language",
+                "improve_max_pages", "improve_pages_radio",
                 "improve_cv_title", "cv_title_input",
                 "improve_en_translated", "improve_en_translating",
                 "_improve_export_cache_key", "_improve_pdf", "_improve_docx",
@@ -286,8 +287,8 @@ def render_improve_upload():
 
     st.markdown("""
     <style>
-        [class*="st-key-card_upload"], [class*="st-key-card_language"], [class*="st-key-card_target"] { background-color: #f2f1ef !important; }
-        div:has(>[class*="st-key-card_upload"]), div:has(>[class*="st-key-card_language"]), div:has(>[class*="st-key-card_target"]) { background-color: #f2f1ef !important; border-color: #f2f1ef !important; border-width: 2px !important; border-radius: 12px !important; }
+        [class*="st-key-card_upload"], [class*="st-key-card_language"], [class*="st-key-card_target"], [class*="st-key-card_pages"] { background-color: #f2f1ef !important; }
+        div:has(>[class*="st-key-card_upload"]), div:has(>[class*="st-key-card_language"]), div:has(>[class*="st-key-card_target"]), div:has(>[class*="st-key-card_pages"]) { background-color: #f2f1ef !important; border-color: #f2f1ef !important; border-width: 2px !important; border-radius: 12px !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -312,6 +313,20 @@ def render_improve_upload():
             label_visibility="collapsed"
         )
         st.session_state.improve_language = "en" if lang_choice == "English" else "he"
+
+    with st.container(border=True, key="card_pages"):
+        st.markdown('<div class="section-header">📄 כמה עמודים תרצו?</div>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:16px; color:#6b7c93;">עמוד אחד מומלץ ברוב המקרים. בחרו שני עמודים אם יש לכם ניסיון עשיר שלא הייתם רוצים לקצץ</span>', unsafe_allow_html=True)
+        if "improve_max_pages" not in st.session_state:
+            st.session_state.improve_max_pages = 1
+        pages_choice = st.radio(
+            "מספר עמודים",
+            ["עמוד אחד (מומלץ)", "עד שני עמודים"],
+            horizontal=True,
+            key="improve_pages_radio",
+            label_visibility="collapsed"
+        )
+        st.session_state.improve_max_pages = 1 if pages_choice == "עמוד אחד (מומלץ)" else 2
 
     with st.container(border=True, key="card_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
@@ -348,7 +363,8 @@ def render_improve_upload():
                     st.write("📊 מזהה סעיפים ומנסח הצעות שיפור...")
 
                     lang = st.session_state.get("improve_language", "he")
-                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang)
+                    max_pages = st.session_state.get("improve_max_pages", 1)
+                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang, max_pages=max_pages)
 
                     st.write("✅ הניתוח הושלם!")
                     status.update(label="הניתוח הושלם!", state="complete")
@@ -772,11 +788,12 @@ def render_improve_reorder():
         st.session_state._improve_docx = None
         st.session_state._improve_pdf_err = None
         st.session_state._improve_docx_err = None
+        _imp_max_pages = st.session_state.get("improve_max_pages", 1)
         if is_english_mode:
             en_src = "\n\n".join([f"=== {s['title']} ===\n{s['final_text']}" for s in export_sections])
             try:
                 from export_utils import export_improved_cv_to_pdf_en
-                st.session_state._improve_pdf = export_improved_cv_to_pdf_en(en_src, cv_title=cv_title.strip())
+                st.session_state._improve_pdf = export_improved_cv_to_pdf_en(en_src, cv_title=cv_title.strip(), max_pages=_imp_max_pages)
             except Exception as e:
                 st.session_state._improve_pdf_err = str(e)
             try:
@@ -787,7 +804,7 @@ def render_improve_reorder():
         else:
             try:
                 from export_utils import export_improved_cv_to_pdf
-                st.session_state._improve_pdf = export_improved_cv_to_pdf(export_sections, cv_title=cv_title.strip())
+                st.session_state._improve_pdf = export_improved_cv_to_pdf(export_sections, cv_title=cv_title.strip(), max_pages=_imp_max_pages)
             except Exception as e:
                 st.session_state._improve_pdf_err = str(e)
             try:
@@ -874,6 +891,7 @@ def render_improve_reorder():
                             st.session_state._improve_en_pdf = export_improved_cv_to_pdf_en(
                                 st.session_state.improve_en_translated,
                                 cv_title=st.session_state.get("improve_cv_title", "").strip(),
+                                max_pages=st.session_state.get("improve_max_pages", 1),
                             )
                         except Exception:
                             pass
@@ -970,6 +988,20 @@ def render_build_form():
         [class*="st-key-bf_add_lang"] button:hover { background: #5ec4b0 !important; }
     </style>
     """, unsafe_allow_html=True)
+
+    with st.container(border=True, key="bfc_pages"):
+        st.markdown('<div class="section-header">📄 כמה עמודים תרצו?</div>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:15px; color:#6b7c93;">עמוד אחד מומלץ ברוב המקרים. בחרו שני עמודים אם יש לכם ניסיון עשיר שלא הייתם רוצים לקצץ</span>', unsafe_allow_html=True)
+        if "build_max_pages" not in st.session_state:
+            st.session_state.build_max_pages = 1
+        build_pages_choice = st.radio(
+            "מספר עמודים",
+            ["עמוד אחד (מומלץ)", "עד שני עמודים"],
+            horizontal=True,
+            key="build_pages_radio",
+            label_visibility="collapsed"
+        )
+        st.session_state.build_max_pages = 1 if build_pages_choice == "עמוד אחד (מומלץ)" else 2
 
     with st.container(border=True, key="bfc_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
@@ -1187,7 +1219,7 @@ def render_build_form():
             st.write("📋 אוסף את הנתונים מהטופס...")
             from ai_engine import generate_cv_from_form
             st.write("🤖 הבינה המלאכותית מעבדת ומשפרת... (15-30 שניות)")
-            cv_data = generate_cv_from_form(fd, target_position=st.session_state.build_target_position)
+            cv_data = generate_cv_from_form(fd, target_position=st.session_state.build_target_position, max_pages=st.session_state.get("build_max_pages", 1))
             st.write("✅ קורות החיים מוכנים!")
             status.update(label="קורות החיים מוכנים!", state="complete")
 
@@ -1438,7 +1470,7 @@ def render_build_preview():
     with col2:
         try:
             from export_utils import export_cv_to_pdf
-            pdf_bytes = export_cv_to_pdf(cv_data)
+            pdf_bytes = export_cv_to_pdf(cv_data, max_pages=st.session_state.get("build_max_pages", 1))
             st.download_button(
                 label="📥 הורד כ-PDF",
                 data=pdf_bytes,
@@ -1490,7 +1522,7 @@ def render_build_preview():
         with col4:
             try:
                 from export_utils import export_cv_to_pdf_en
-                pdf_en = export_cv_to_pdf_en(st.session_state.build_en_translated)
+                pdf_en = export_cv_to_pdf_en(st.session_state.build_en_translated, max_pages=st.session_state.get("build_max_pages", 1))
                 st.download_button(
                     label="📥 Download PDF (English)",
                     data=pdf_en,
