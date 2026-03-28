@@ -360,56 +360,60 @@ def render_improve_review():
             orig_ck     = _ck if orig_sel else "<!-- -->"
             impr_ck     = _ck if impr_sel else "<!-- -->"
 
-            # ── Card + button together in each column inside a keyed container ──
-            # CSS in styles.py targets st-key-cmprow_ to equalise card heights
-            with st.container(key=f"cmprow_{i}"):
-                col_impr, col_orig = st.columns(2)
+            # ── Cards as HTML table — cells in same row are always equal height ──
+            st.markdown(
+                f'<table style="width:100%;border-collapse:separate;border-spacing:16px 0;'
+                f'table-layout:fixed;direction:ltr;margin-bottom:4px;">'
+                f'<tr>'
+                f'<td style="vertical-align:top;border:{impr_border};border-radius:12px;'
+                f'padding:14px 14px 10px;background:{impr_bg};position:relative;width:50%;">'
+                f'{impr_ck}'
+                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;'
+                f'letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מחודש / מוצע</div>'
+                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">'
+                f'{_format_improved_html(improved)}</div>'
+                f'</td>'
+                f'<td style="vertical-align:top;border:{orig_border};border-radius:12px;'
+                f'padding:14px 14px 10px;background:{orig_bg};position:relative;width:50%;">'
+                f'{orig_ck}'
+                f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;'
+                f'letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מקור</div>'
+                f'<div style="font-size:13px;line-height:1.6;direction:rtl;text-align:right;">'
+                f'{_format_cv_html(original)}</div>'
+                f'</td>'
+                f'</tr>'
+                f'</table>',
+                unsafe_allow_html=True,
+            )
 
-                with col_impr:
-                    st.markdown(
-                        f'<div class="cmp-card" style="border:{impr_border};border-radius:12px;'
-                        f'padding:14px 14px 10px;background:{impr_bg};position:relative;">'
-                        f'{impr_ck}'
-                        f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מחודש / מוצע</div>'
-                        f'<div style="font-size:13px;line-height:1.6;">{_format_improved_html(improved)}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-                    if st.button(
-                        "✓ נבחר" if impr_sel else "בחר נוסח זה",
-                        key=f"sel_impr_{i}",
-                        use_container_width=True,
-                        type="primary" if impr_sel else "secondary",
-                        disabled=impr_sel,
-                    ):
-                        st.session_state.section_decisions[decision_key] = "improved"
-                        st.session_state.section_decisions[f"text_{i}"] = improved
-                        if current_decision == "custom":
-                            st.session_state.section_decisions.pop(f"custom_text_{i}", None)
-                        st.rerun()
-
-                with col_orig:
-                    st.markdown(
-                        f'<div class="cmp-card" style="border:{orig_border};border-radius:12px;'
-                        f'padding:14px 14px 10px;background:{orig_bg};position:relative;">'
-                        f'{orig_ck}'
-                        f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;letter-spacing:.3px;">נוסח מקור</div>'
-                        f'<div style="font-size:13px;line-height:1.6;">{_format_cv_html(original)}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-                    if st.button(
-                        "✓ נבחר" if orig_sel else "בחר נוסח זה",
-                        key=f"sel_orig_{i}",
-                        use_container_width=True,
-                        type="primary" if orig_sel else "secondary",
-                        disabled=orig_sel,
-                    ):
-                        st.session_state.section_decisions[decision_key] = "original"
-                        st.session_state.section_decisions[f"text_{i}"] = original
-                        if current_decision == "custom":
-                            st.session_state.section_decisions.pop(f"custom_text_{i}", None)
-                        st.rerun()
+            # ── Buttons — col_orig is first (rightmost in RTL) matching original cell ──
+            col_orig, col_impr = st.columns(2)
+            with col_orig:
+                if st.button(
+                    "✓ נבחר" if orig_sel else "בחר נוסח זה",
+                    key=f"sel_orig_{i}",
+                    use_container_width=True,
+                    type="primary" if orig_sel else "secondary",
+                    disabled=orig_sel,
+                ):
+                    st.session_state.section_decisions[decision_key] = "original"
+                    st.session_state.section_decisions[f"text_{i}"] = original
+                    if current_decision == "custom":
+                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                    st.rerun()
+            with col_impr:
+                if st.button(
+                    "✓ נבחר" if impr_sel else "בחר נוסח זה",
+                    key=f"sel_impr_{i}",
+                    use_container_width=True,
+                    type="primary" if impr_sel else "secondary",
+                    disabled=impr_sel,
+                ):
+                    st.session_state.section_decisions[decision_key] = "improved"
+                    st.session_state.section_decisions[f"text_{i}"] = improved
+                    if current_decision == "custom":
+                        st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                    st.rerun()
 
             # ── Edit manually ──
             if current_decision == "custom":
