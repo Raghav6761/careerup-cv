@@ -26,7 +26,10 @@ _EMPTY_PLACEHOLDERS = [
     "no data", "not applicable", "na", "tbd", "n.a.", "n.a",
 ]
 
-# Matches any Hebrew "לא + word" phrase (covers all verb-form variants the AI may produce)
+# Matches any Hebrew "לא + word" phrase (covers all verb-form variants the AI may produce).
+# Intentionally broad: any sentence starting with "לא <non-space>" is treated as a
+# "not specified" placeholder. This is safe in CV context — no real section content
+# begins with "לא" in the improve/build flows.
 _HEBREW_NEGATION_RE = re.compile(r"^לא\s+\S", re.UNICODE)
 
 def _is_empty_content(text: str) -> bool:
