@@ -4,8 +4,8 @@ import difflib
 import html as html_lib
 import streamlit as st
 from PIL import Image
+from streamlit_sortables import sort_items
 from styles import inject_custom_css
-from components.section_editor import section_editor
 
 def _get_logo_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -571,16 +571,100 @@ def render_improve_export():
             final_sections.append({"title": title, "final_text": final_text})
         st.session_state.improve_final_sections = final_sections
 
-    # Draggable section editor — custom HTML component
-    editor_result = section_editor(
-        sections=st.session_state.improve_final_sections,
-        key="imp_section_editor",
-    )
+    if "imp_pending_delete" not in st.session_state:
+        st.session_state.imp_pending_delete = None
 
-    if editor_result is not None:
-        if editor_result != st.session_state.improve_final_sections:
-            st.session_state.improve_final_sections = editor_result
-            st.rerun()
+    def _swap_imp_sections(a, b):
+        secs = st.session_state.improve_final_sections
+        for idx in [a, b]:
+            tk, xk = f"imp_title_{idx}", f"imp_text_{idx}"
+            if tk in st.session_state:
+                secs[idx]["title"] = st.session_state[tk]
+                del st.session_state[tk]
+            if xk in st.session_state:
+                secs[idx]["final_text"] = st.session_state[xk]
+                del st.session_state[xk]
+        secs[a], secs[b] = secs[b], secs[a]
+
+    n_secs = len(st.session_state.improve_final_sections)
+
+    # ── Drag-and-drop reorder ──
+    sorted_labels = sort_items(
+        [sec["title"] for sec in st.session_state.improve_final_sections],
+        direction="vertical",
+        key="imp_section_order",
+    )
+    # Map displayed titles back to original indices (handles duplicate titles gracefully)
+    _seen: dict = {}
+    new_order = []
+    for lbl in sorted_labels:
+        count = _seen.get(lbl, 0)
+        candidates = [j for j, s in enumerate(st.session_state.improve_final_sections) if s["title"] == lbl]
+        new_order.append(candidates[count] if count < len(candidates) else candidates[-1])
+        _seen[lbl] = count + 1
+
+    if new_order != list(range(n_secs)):
+        # Flush widget state before reordering
+        for j in range(n_secs):
+            if f"imp_title_{j}" in st.session_state:
+                st.session_state.improve_final_sections[j]["title"] = st.session_state.pop(f"imp_title_{j}")
+            if f"imp_text_{j}" in st.session_state:
+                st.session_state.improve_final_sections[j]["final_text"] = st.session_state.pop(f"imp_text_{j}")
+        st.session_state.improve_final_sections = [st.session_state.improve_final_sections[j] for j in new_order]
+        st.rerun()
+
+    sections_to_delete = []
+
+    for i, sec in enumerate(st.session_state.improve_final_sections):
+        with st.container(border=True, key=f"exp_sec_{i}"):
+            col_num, col_title, col_del = st.columns([0.5, 9.5, 0.6])
+            with col_num:
+                st.markdown(
+                    f'<div style="background:#022559;color:#fff;border-radius:50%;width:26px;height:26px;'
+                    f'display:flex;align-items:center;justify-content:center;font-size:11px;'
+                    f'font-weight:700;margin-top:4px;">{i + 1}</div>',
+                    unsafe_allow_html=True
+                )
+            with col_title:
+                new_title = st.text_input(
+                    "כותרת סעיף",
+                    value=sec["title"],
+                    key=f"imp_title_{i}",
+                    label_visibility="collapsed",
+                    placeholder="כותרת סעיף"
+                )
+                st.session_state.improve_final_sections[i]["title"] = new_title
+            with col_del:
+                if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף", type="tertiary"):
+                    st.session_state.imp_pending_delete = i
+                    st.rerun()
+
+            new_text = st.text_area(
+                "תוכן",
+                value=sec["final_text"],
+                key=f"imp_text_{i}",
+                height=120,
+                label_visibility="collapsed",
+                placeholder="תוכן הסעיף"
+            )
+            st.session_state.improve_final_sections[i]["final_text"] = new_text
+
+            if st.session_state.imp_pending_delete == i:
+                st.warning("האם למחוק סעיף זה? לא ניתן לשחזר.")
+                col_yes, col_no, _ = st.columns([1, 1, 4])
+                with col_yes:
+                    if st.button("✓ מחק", key=f"confirm_del_{i}", type="primary"):
+                        sections_to_delete.append(i)
+                        st.session_state.imp_pending_delete = None
+                with col_no:
+                    if st.button("ביטול", key=f"cancel_del_{i}"):
+                        st.session_state.imp_pending_delete = None
+                        st.rerun()
+
+    if sections_to_delete:
+        for idx in sorted(sections_to_delete, reverse=True):
+            st.session_state.improve_final_sections.pop(idx)
+        st.rerun()
 
     if st.button("➕ הוסף סעיף חדש", key="imp_add_section"):
         st.session_state.improve_final_sections.append({"title": "סעיף חדש", "final_text": ""})
