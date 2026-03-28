@@ -200,12 +200,9 @@ def reset_improve():
     st.session_state.cv_text = ""
     st.session_state.analysis_result = None
     st.session_state.section_decisions = {}
-    if "improve_final_sections" in st.session_state:
-        del st.session_state.improve_final_sections
-    if "improve_target_position" in st.session_state:
-        del st.session_state.improve_target_position
-    if "improve_language" in st.session_state:
-        del st.session_state.improve_language
+    for _k in ["improve_final_sections", "improve_target_position", "improve_language",
+                "improve_cv_filename", "improve_en_translated", "improve_en_translating"]:
+        st.session_state.pop(_k, None)
 
 
 def reset_build():
@@ -641,8 +638,16 @@ def render_improve_export():
 def render_improve_reorder():
     render_header()
     components.html(
-        "<script>window.parent.document.querySelector('.main').scrollTop = 0;</script>",
-        height=0,
+        """<script>
+        (function() {
+            var sel = ['[data-testid="stMain"]', '.main', '[data-testid="stAppViewContainer"]'];
+            for (var i = 0; i < sel.length; i++) {
+                var el = window.parent.document.querySelector(sel[i]);
+                if (el) { el.scrollTop = 0; }
+            }
+        })();
+        </script>""",
+        height=1,
     )
 
     if st.button("→ חזרה לעריכה", key="back_to_export"):
@@ -732,9 +737,29 @@ def render_improve_reorder():
     export_sections = [s for s in st.session_state.improve_final_sections if s["final_text"].strip()]
     is_english_mode = st.session_state.get("improve_language", "he") == "en"
 
+    # ── Editable filename ──
+    if "improve_cv_filename" not in st.session_state:
+        st.session_state.improve_cv_filename = "קורות חיים"
+
+    st.markdown('<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:4px;">שם הקובץ להורדה</div>', unsafe_allow_html=True)
+    cv_filename_raw = st.text_input(
+        "שם הקובץ",
+        value=st.session_state.improve_cv_filename,
+        key="cv_filename_input",
+        placeholder="קורות חיים - דיסקרטי",
+        label_visibility="collapsed",
+    )
+    st.session_state.improve_cv_filename = cv_filename_raw
+    st.markdown('<div style="font-size:12px;color:#6b7c93;margin-bottom:16px;">ניתן להוסיף סיומת כמו: - דיסקרטי, - מנהל, - גוגל</div>', unsafe_allow_html=True)
+
+    # Sanitize: strip, keep Hebrew/English/digits/spaces/hyphens, replace spaces with underscore
+    _raw = cv_filename_raw.strip() or "קורות חיים"
+    _slug = re.sub(r'[^\w\u0590-\u05FF\s\-]', '', _raw).strip()
+    _slug = re.sub(r'\s+', '_', _slug) or "קורות_חיים"
+
     st.markdown("""
     <div style="background:linear-gradient(135deg,#022559 0%,#03367a 100%);border-radius:16px;
-                padding:24px 24px 12px;margin:28px 0 12px;text-align:center;color:#fff;">
+                padding:24px 24px 12px;margin:12px 0 12px;text-align:center;color:#fff;">
         <div style="font-size:22px;margin-bottom:6px;">🎉</div>
         <div style="font-size:18px;font-weight:700;margin-bottom:4px;">קורות החיים שלך מוכנים!</div>
         <div style="font-size:13px;opacity:.75;">בחר פורמט להורדה</div>
@@ -753,7 +778,7 @@ def render_improve_reorder():
                 st.download_button(
                     label="📥 Download PDF (English)",
                     data=pdf_en,
-                    file_name="cv_improved_en.pdf",
+                    file_name=f"{_slug}_en.pdf",
                     mime="application/pdf",
                     use_container_width=True
                 )
@@ -766,7 +791,7 @@ def render_improve_reorder():
                 st.download_button(
                     label="📥 Download DOCX (English)",
                     data=docx_en,
-                    file_name="cv_improved_en.docx",
+                    file_name=f"{_slug}_en.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
@@ -781,7 +806,7 @@ def render_improve_reorder():
                 st.download_button(
                     label="📥 הורד כ-PDF",
                     data=pdf_bytes,
-                    file_name="cv_improved.pdf",
+                    file_name=f"{_slug}.pdf",
                     mime="application/pdf",
                     use_container_width=True
                 )
@@ -794,7 +819,7 @@ def render_improve_reorder():
                 st.download_button(
                     label="📥 הורד כ-DOCX",
                     data=docx_bytes,
-                    file_name="cv_improved.docx",
+                    file_name=f"{_slug}.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
@@ -840,7 +865,7 @@ def render_improve_reorder():
                     st.download_button(
                         label="📥 Download PDF (English)",
                         data=pdf_en,
-                        file_name="cv_english.pdf",
+                        file_name=f"{_slug}_en.pdf",
                         mime="application/pdf",
                         use_container_width=True
                     )
@@ -853,7 +878,7 @@ def render_improve_reorder():
                     st.download_button(
                         label="📥 Download DOCX (English)",
                         data=docx_en,
-                        file_name="cv_english.docx",
+                        file_name=f"{_slug}_en.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         use_container_width=True
                     )
