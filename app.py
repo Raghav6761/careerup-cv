@@ -486,6 +486,15 @@ def render_improve_review():
                     if current_decision == "custom":
                         st.session_state.section_decisions.pop(f"custom_text_{i}", None)
                     st.rerun()
+                if st.button(
+                    "✏️ ערוך נוסח זה",
+                    key=f"edit_orig_{i}",
+                    use_container_width=True,
+                ):
+                    st.session_state.section_decisions[decision_key] = "custom"
+                    st.session_state.section_decisions[f"text_{i}"] = original
+                    st.session_state.section_decisions[f"edit_source_{i}"] = "original"
+                    st.rerun()
             with col_impr:
                 if st.button(
                     "✓ נבחר" if impr_sel else "בחר נוסח זה",
@@ -499,23 +508,27 @@ def render_improve_review():
                     if current_decision == "custom":
                         st.session_state.section_decisions.pop(f"custom_text_{i}", None)
                     st.rerun()
+                if st.button(
+                    "✏️ ערוך נוסח זה",
+                    key=f"edit_impr_{i}",
+                    use_container_width=True,
+                ):
+                    st.session_state.section_decisions[decision_key] = "custom"
+                    st.session_state.section_decisions[f"text_{i}"] = improved
+                    st.session_state.section_decisions[f"edit_source_{i}"] = "improved"
+                    st.rerun()
 
-            # ── Edit manually ──
+            # ── Edit manually — text area below card pair ──
             if current_decision == "custom":
+                edit_source = st.session_state.section_decisions.get(f"edit_source_{i}", "improved")
+                source_label = "נוסח מקור" if edit_source == "original" else "נוסח מחודש"
                 custom_text = st.text_area(
-                    "ערוך ידנית:",
+                    f"✏️ עורך {source_label} — הטקסט הערוך ישמש בקו״ח הסופי:",
                     value=st.session_state.section_decisions.get(f"text_{i}", improved),
                     key=f"custom_text_{i}",
-                    height=120,
+                    height=150,
                 )
                 st.session_state.section_decisions[f"text_{i}"] = custom_text
-            else:
-                if st.button("✏️ ערוך ידנית", key=f"edit_manual_{i}"):
-                    st.session_state.section_decisions[decision_key] = "custom"
-                    st.session_state.section_decisions[f"text_{i}"] = (
-                        improved if current_decision == "improved" else original
-                    )
-                    st.rerun()
 
     st.markdown("---")
 
