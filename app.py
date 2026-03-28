@@ -3,6 +3,7 @@ import base64
 import difflib
 import html as html_lib
 import streamlit as st
+import streamlit.components.v1 as components
 from PIL import Image
 from streamlit_sortables import sort_items
 from styles import inject_custom_css
@@ -639,6 +640,10 @@ def render_improve_export():
 
 def render_improve_reorder():
     render_header()
+    components.html(
+        "<script>window.parent.document.querySelector('.main').scrollTop = 0;</script>",
+        height=0,
+    )
 
     if st.button("→ חזרה לעריכה", key="back_to_export"):
         go_to("improve_export")
