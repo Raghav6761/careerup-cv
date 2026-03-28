@@ -8,6 +8,7 @@ CV-Master AI is a Hebrew (RTL) Streamlit application for creating and improving 
 - **AI**: OpenAI GPT-5 via Replit AI Integrations (no API key needed)
 - **File Processing**: pdfplumber (PDF), python-docx (DOCX), native Python (TXT)
 - **Export**: ReportLab (PDF), python-docx (DOCX)
+- **Section Reorder**: streamlit-sortables (drag-and-drop in improve_export)
 - **Styling**: Custom CSS injected via Streamlit markdown (RTL, Assistant font, pastel blue theme)
 - **Storage**: Streamlit session state (no database)
 

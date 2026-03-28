@@ -4,6 +4,7 @@ import difflib
 import html as html_lib
 import streamlit as st
 from PIL import Image
+from streamlit_sortables import sort_items
 from styles import inject_custom_css
 
 def _get_logo_b64(path: str) -> str:
@@ -585,12 +586,38 @@ def render_improve_export():
                 del st.session_state[xk]
         secs[a], secs[b] = secs[b], secs[a]
 
-    sections_to_delete = []
     n_secs = len(st.session_state.improve_final_sections)
+
+    # ── Drag-and-drop reorder ──
+    sorted_labels = sort_items(
+        [sec["title"] for sec in st.session_state.improve_final_sections],
+        direction="vertical",
+        key="imp_section_order",
+    )
+    # Map displayed titles back to original indices (handles duplicate titles gracefully)
+    _seen: dict = {}
+    new_order = []
+    for lbl in sorted_labels:
+        count = _seen.get(lbl, 0)
+        candidates = [j for j, s in enumerate(st.session_state.improve_final_sections) if s["title"] == lbl]
+        new_order.append(candidates[count] if count < len(candidates) else candidates[-1])
+        _seen[lbl] = count + 1
+
+    if new_order != list(range(n_secs)):
+        # Flush widget state before reordering
+        for j in range(n_secs):
+            if f"imp_title_{j}" in st.session_state:
+                st.session_state.improve_final_sections[j]["title"] = st.session_state.pop(f"imp_title_{j}")
+            if f"imp_text_{j}" in st.session_state:
+                st.session_state.improve_final_sections[j]["final_text"] = st.session_state.pop(f"imp_text_{j}")
+        st.session_state.improve_final_sections = [st.session_state.improve_final_sections[j] for j in new_order]
+        st.rerun()
+
+    sections_to_delete = []
 
     for i, sec in enumerate(st.session_state.improve_final_sections):
         with st.container(border=True, key=f"exp_sec_{i}"):
-            col_num, col_title, col_up, col_down, col_del = st.columns([0.5, 8.5, 0.6, 0.6, 0.6])
+            col_num, col_title, col_del = st.columns([0.5, 9.5, 0.6])
             with col_num:
                 st.markdown(
                     f'<div style="background:#022559;color:#fff;border-radius:50%;width:26px;height:26px;'
@@ -607,16 +634,6 @@ def render_improve_export():
                     placeholder="כותרת סעיף"
                 )
                 st.session_state.improve_final_sections[i]["title"] = new_title
-            with col_up:
-                if i > 0:
-                    if st.button("↑", key=f"imp_up_{i}", help="הזז למעלה", type="tertiary"):
-                        _swap_imp_sections(i, i - 1)
-                        st.rerun()
-            with col_down:
-                if i < n_secs - 1:
-                    if st.button("↓", key=f"imp_down_{i}", help="הזז למטה", type="tertiary"):
-                        _swap_imp_sections(i, i + 1)
-                        st.rerun()
             with col_del:
                 if st.button("🗑️", key=f"imp_del_{i}", help="מחק סעיף", type="tertiary"):
                     st.session_state.imp_pending_delete = i
