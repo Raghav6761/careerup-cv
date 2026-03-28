@@ -658,7 +658,16 @@ def render_improve_reorder():
         st.warning("לא נמצאו סעיפים לסידור. חזור לשלב העריכה.")
         return
 
+    # Flush any lingering edit-widget state into the canonical list so
+    # arriving here from step 3 always reflects the very latest edits.
     secs = st.session_state.improve_final_sections
+    for j in range(len(secs)):
+        tk, xk = f"imp_title_{j}", f"imp_text_{j}"
+        if tk in st.session_state:
+            secs[j]["title"] = st.session_state.pop(tk)
+        if xk in st.session_state:
+            secs[j]["final_text"] = st.session_state.pop(xk)
+
     n_secs = len(secs)
 
     _REORDER_STYLE = """
