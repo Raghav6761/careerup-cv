@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: transparent;
+    padding: 4px 2px 8px 2px;
+    direction: rtl;
+  }
+
+  #cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sec-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(2,37,89,0.07);
+    overflow: hidden;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+
+  .sec-card:hover {
+    border-color: #7fb3d8;
+    box-shadow: 0 2px 10px rgba(2,37,89,0.10);
+  }
+
+  .sec-card.sortable-ghost {
+    opacity: 0.38;
+    border: 2px dashed #7fb3d8;
+  }
+
+  .sec-card.sortable-chosen {
+    box-shadow: 0 6px 20px rgba(2,37,89,0.18);
+    border-color: #2b56e0;
+  }
+
+  /* Header row */
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #f8faff;
+    border-bottom: 1px solid #eef2fa;
+  }
+
+  .drag-handle {
+    cursor: grab;
+    color: #94a3b8;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    user-select: none;
+    flex-shrink: 0;
+    transition: color 0.1s;
+  }
+  .drag-handle:hover { color: #022559; }
+  .drag-handle:active { cursor: grabbing; }
+
+  .section-num {
+    background: #022559;
+    color: #fff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .title-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #022559;
+    direction: rtl;
+    outline: none;
+    min-width: 0;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .title-input:focus {
+    background: #eef2fb;
+    outline: 2px solid #2b56e0;
+    outline-offset: 0px;
+  }
+
+  .del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 3px 5px;
+    border-radius: 5px;
+    color: #94a3b8;
+    flex-shrink: 0;
+    transition: color 0.1s, background 0.1s;
+  }
+  .del-btn:hover { color: #ef4444; background: #fee2e2; }
+
+  /* Delete confirm row */
+  .del-confirm {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #fff7ed;
+    border-top: 1px solid #fed7aa;
+    font-size: 12px;
+    color: #92400e;
+  }
+  .del-confirm.visible { display: flex; }
+  .del-confirm span { flex: 1; }
+  .confirm-yes {
+    background: #ef4444; color: #fff;
+    border: none; border-radius: 5px;
+    padding: 3px 10px; font-size: 12px; cursor: pointer;
+  }
+  .confirm-yes:hover { background: #dc2626; }
+  .confirm-no {
+    background: #e2e8f0; color: #374151;
+    border: none; border-radius: 5px;
+    padding: 3px 10px; font-size: 12px; cursor: pointer;
+  }
+  .confirm-no:hover { background: #cbd5e1; }
+
+  /* Content textarea */
+  .card-body { padding: 8px 10px 10px 10px; }
+
+  .content-area {
+    width: 100%;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 7px 9px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #1e293b;
+    direction: rtl;
+    resize: vertical;
+    min-height: 90px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: #fafcff;
+  }
+  .content-area:focus {
+    border-color: #2b56e0;
+    box-shadow: 0 0 0 2px rgba(43,86,224,0.12);
+    background: #fff;
+  }
+</style>
+</head>
+<body>
+<div id="cards-container"></div>
+
+<script>
+  "use strict";
+
+  let _sections = [];
+  let _sortable = null;
+  let _pendingDeleteIdx = null;
+
+  /* ── Streamlit messaging ── */
+  function sendUpdate() {
+    window.parent.postMessage(
+      { type: "streamlit:setComponentValue", value: _sections },
+      "*"
+    );
+  }
+
+  function sendHeight() {
+    const h = Math.max(document.body.scrollHeight + 8, 60);
+    window.parent.postMessage({ type: "streamlit:setFrameHeight", height: h }, "*");
+  }
+
+  /* ── Helpers ── */
+  function esc(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  /* ── Render ── */
+  function render() {
+    _pendingDeleteIdx = null;
+    const container = document.getElementById("cards-container");
+
+    // Destroy old Sortable
+    if (_sortable) { _sortable.destroy(); _sortable = null; }
+    container.innerHTML = "";
+
+    _sections.forEach((sec, i) => {
+      const card = document.createElement("div");
+      card.className = "sec-card";
+      card.dataset.idx = i;
+
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="drag-handle" title="גרור לשינוי סדר">&#9776;</span>
+          <span class="section-num">${i + 1}</span>
+          <input class="title-input" type="text" value="${esc(sec.title)}"
+                 placeholder="כותרת סעיף" data-i="${i}" />
+          <button class="del-btn" data-i="${i}" title="מחק סעיף">🗑️</button>
+        </div>
+        <div class="del-confirm" id="del-confirm-${i}">
+          <span>למחוק סעיף זה? לא ניתן לשחזר.</span>
+          <button class="confirm-no" data-i="${i}">ביטול</button>
+          <button class="confirm-yes" data-i="${i}">✓ מחק</button>
+        </div>
+        <div class="card-body">
+          <textarea class="content-area" rows="4" data-i="${i}"
+                    placeholder="תוכן הסעיף">${esc(sec.final_text)}</textarea>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    /* Title blur */
+    container.querySelectorAll(".title-input").forEach(inp => {
+      inp.addEventListener("blur", () => {
+        const idx = parseInt(inp.dataset.i);
+        _sections[idx].title = inp.value;
+        sendUpdate();
+      });
+    });
+
+    /* Textarea blur — auto-resize then send */
+    container.querySelectorAll(".content-area").forEach(ta => {
+      ta.addEventListener("input", () => autoResize(ta));
+      ta.addEventListener("blur", () => {
+        const idx = parseInt(ta.dataset.i);
+        _sections[idx].final_text = ta.value;
+        sendUpdate();
+      });
+      autoResize(ta);
+    });
+
+    /* Delete button — show confirm row */
+    container.querySelectorAll(".del-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.i);
+        if (_pendingDeleteIdx !== null && _pendingDeleteIdx !== idx) {
+          const prev = document.getElementById(`del-confirm-${_pendingDeleteIdx}`);
+          if (prev) prev.classList.remove("visible");
+        }
+        _pendingDeleteIdx = (_pendingDeleteIdx === idx) ? null : idx;
+        const row = document.getElementById(`del-confirm-${idx}`);
+        if (row) row.classList.toggle("visible", _pendingDeleteIdx === idx);
+        sendHeight();
+      });
+    });
+
+    /* Confirm delete */
+    container.querySelectorAll(".confirm-yes").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.i);
+        _sections.splice(idx, 1);
+        render();
+        sendUpdate();
+        sendHeight();
+      });
+    });
+
+    /* Cancel delete */
+    container.querySelectorAll(".confirm-no").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.dataset.i);
+        const row = document.getElementById(`del-confirm-${idx}`);
+        if (row) row.classList.remove("visible");
+        _pendingDeleteIdx = null;
+        sendHeight();
+      });
+    });
+
+    /* SortableJS */
+    _sortable = Sortable.create(container, {
+      handle: ".drag-handle",
+      animation: 180,
+      ghostClass: "sortable-ghost",
+      chosenClass: "sortable-chosen",
+      onEnd: function (evt) {
+        if (evt.oldIndex === evt.newIndex) return;
+        const moved = _sections.splice(evt.oldIndex, 1)[0];
+        _sections.splice(evt.newIndex, 0, moved);
+        /* Re-number badges without full re-render */
+        container.querySelectorAll(".section-num").forEach((el, i) => {
+          el.textContent = i + 1;
+        });
+        /* Update data-i on inputs/textareas/buttons */
+        container.querySelectorAll(".sec-card").forEach((card, i) => {
+          card.dataset.idx = i;
+          card.querySelectorAll("[data-i]").forEach(el => { el.dataset.i = i; });
+        });
+        sendUpdate();
+        sendHeight();
+      }
+    });
+
+    sendHeight();
+  }
+
+  function autoResize(ta) {
+    ta.style.height = "auto";
+    ta.style.height = (ta.scrollHeight + 4) + "px";
+  }
+
+  /* ── Streamlit lifecycle ── */
+  window.addEventListener("message", function (e) {
+    const msg = e.data;
+    if (!msg || typeof msg !== "object") return;
+
+    if (msg.type === "streamlit:render") {
+      const incoming = msg.args && msg.args.sections;
+      if (!incoming) return;
+
+      /* Only re-render if data actually changed (prevents flicker on text-edit) */
+      if (JSON.stringify(incoming) !== JSON.stringify(_sections)) {
+        _sections = JSON.parse(JSON.stringify(incoming));
+        render();
+      } else {
+        sendHeight();
+      }
+    }
+  });
+
+  /* Signal ready */
+  window.parent.postMessage({ type: "streamlit:componentReady", apiVersion: 1 }, "*");
+</script>
+</body>
+</html>
