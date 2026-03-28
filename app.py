@@ -781,7 +781,7 @@ def render_improve_reorder():
 
     # ── Cache export bytes so cv_title-field reruns don't break download URLs ──
     # Key is based on sections content + cv_title + language mode; regenerate only on change.
-    _cache_key = (is_english_mode, cv_title.strip(), tuple((s["title"], s["final_text"]) for s in export_sections))
+    _cache_key = (is_english_mode, cv_title.strip(), st.session_state.get("improve_max_pages", 1), tuple((s["title"], s["final_text"]) for s in export_sections))
     if st.session_state.get("_improve_export_cache_key") != _cache_key:
         st.session_state._improve_export_cache_key = _cache_key
         st.session_state._improve_pdf = None
