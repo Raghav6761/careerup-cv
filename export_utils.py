@@ -69,7 +69,10 @@ def _count_pdf_pages(pdf_bytes: bytes) -> int:
         return 1
 
 def _has_real_exp(exp: dict) -> bool:
-    if exp.get("title", "").strip() or exp.get("company", "").strip() or exp.get("period", "").strip():
+    title = exp.get("title", "").strip()
+    company = exp.get("company", "").strip()
+    period = exp.get("period", "").strip()
+    if (title and not _is_empty_content(title)) or (company and not _is_empty_content(company)) or (period and not _is_empty_content(period)):
         return True
     achs = [a for a in exp.get("achievements", []) if a.strip() and not _is_empty_content(a)]
     if achs:
@@ -77,7 +80,14 @@ def _has_real_exp(exp: dict) -> bool:
     return False
 
 def _has_real_edu(edu: dict) -> bool:
-    return bool(edu.get("degree", "").strip() or edu.get("institution", "").strip() or edu.get("year", "").strip())
+    degree = edu.get("degree", "").strip()
+    institution = edu.get("institution", "").strip()
+    year = edu.get("year", "").strip()
+    return bool(
+        (degree and not _is_empty_content(degree)) or
+        (institution and not _is_empty_content(institution)) or
+        (year and not _is_empty_content(year))
+    )
 
 
 def register_hebrew_font():
@@ -366,21 +376,19 @@ def export_cv_to_pdf(cv_data: dict) -> bytes:
             if soft:
                 elements.append(Paragraph(reshape_hebrew(", ".join(soft)), styles["body"]))
 
-        languages = cv_data.get("languages", [])
-        if languages:
+        lang_parts = []
+        for lang in cv_data.get("languages", []):
+            lang_name = lang.get("language", "").strip()
+            lang_level = lang.get("level", "").strip()
+            if lang_name and not _is_empty_content(lang_name):
+                part = lang_name
+                if lang_level and not _is_empty_content(lang_level):
+                    part += f" – {lang_level}"
+                lang_parts.append(part)
+        if lang_parts:
             elements.append(Paragraph(reshape_hebrew("שפות"), styles["section_header"]))
             elements.append(_make_section_separator())
-            lang_parts = []
-            for lang in languages:
-                lang_name = lang.get("language", "")
-                lang_level = lang.get("level", "")
-                if lang_name:
-                    part = lang_name
-                    if lang_level:
-                        part += f" – {lang_level}"
-                    lang_parts.append(part)
-            if lang_parts:
-                elements.append(Paragraph(reshape_hebrew(" | ".join(lang_parts)), styles["body"]))
+            elements.append(Paragraph(reshape_hebrew(" | ".join(lang_parts)), styles["body"]))
 
         military = _filter_list(cv_data.get("military", []))
         if military:
@@ -633,20 +641,18 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         if soft:
             _add_docx_body_paragraph(doc, ", ".join(soft))
 
-    languages = cv_data.get("languages", [])
-    if languages:
+    lang_parts = []
+    for lang in cv_data.get("languages", []):
+        lang_name = lang.get("language", "").strip()
+        level = lang.get("level", "").strip()
+        if lang_name and not _is_empty_content(lang_name):
+            part = lang_name
+            if level and not _is_empty_content(level):
+                part += f" – {level}"
+            lang_parts.append(part)
+    if lang_parts:
         _add_docx_section_header(doc, "שפות")
-        lang_parts = []
-        for lang in languages:
-            lang_name = lang.get("language", "")
-            level = lang.get("level", "")
-            if lang_name and not _is_empty_content(lang_name):
-                part = lang_name
-                if level and not _is_empty_content(level):
-                    part += f" – {level}"
-                lang_parts.append(part)
-        if lang_parts:
-            _add_docx_body_paragraph(doc, " | ".join(lang_parts))
+        _add_docx_body_paragraph(doc, " | ".join(lang_parts))
 
     military = _filter_list(cv_data.get("military", []))
     if military:
@@ -1111,21 +1117,19 @@ def export_cv_to_pdf_en(cv_data: dict) -> bytes:
             if soft:
                 elements.append(Paragraph(", ".join(soft), styles["body"]))
 
-        languages = cv_data.get("languages", [])
-        if languages:
+        lang_parts = []
+        for lang in cv_data.get("languages", []):
+            lang_name = lang.get("language", "").strip()
+            lang_level = lang.get("level", "").strip()
+            if lang_name and not _is_empty_content(lang_name):
+                part = lang_name
+                if lang_level and not _is_empty_content(lang_level):
+                    part += f" – {lang_level}"
+                lang_parts.append(part)
+        if lang_parts:
             elements.append(Paragraph("Languages", styles["section_header"]))
             elements.append(_make_section_separator())
-            lang_parts = []
-            for lang in languages:
-                lang_name = lang.get("language", "")
-                lang_level = lang.get("level", "")
-                if lang_name:
-                    part = lang_name
-                    if lang_level:
-                        part += f" – {lang_level}"
-                    lang_parts.append(part)
-            if lang_parts:
-                elements.append(Paragraph(" | ".join(lang_parts), styles["body"]))
+            elements.append(Paragraph(" | ".join(lang_parts), styles["body"]))
 
         military = _filter_list(cv_data.get("military", []))
         if military:
@@ -1272,20 +1276,18 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
         if soft:
             _add_docx_body_paragraph(doc, ", ".join(soft), is_rtl=False)
 
-    languages = cv_data.get("languages", [])
-    if languages:
+    lang_parts = []
+    for lang in cv_data.get("languages", []):
+        lang_name = lang.get("language", "").strip()
+        level = lang.get("level", "").strip()
+        if lang_name and not _is_empty_content(lang_name):
+            part = lang_name
+            if level and not _is_empty_content(level):
+                part += f" – {level}"
+            lang_parts.append(part)
+    if lang_parts:
         _add_docx_section_header_en(doc, "Languages")
-        lang_parts = []
-        for lang in languages:
-            lang_name = lang.get("language", "")
-            level = lang.get("level", "")
-            if lang_name:
-                part = lang_name
-                if level:
-                    part += f" – {level}"
-                lang_parts.append(part)
-        if lang_parts:
-            _add_docx_body_paragraph(doc, " | ".join(lang_parts), is_rtl=False)
+        _add_docx_body_paragraph(doc, " | ".join(lang_parts), is_rtl=False)
 
     military = _filter_list(cv_data.get("military", []))
     if military:
