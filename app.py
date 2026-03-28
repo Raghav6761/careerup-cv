@@ -495,6 +495,7 @@ def render_improve_review():
                     st.session_state.section_decisions[decision_key] = "custom"
                     st.session_state.section_decisions[f"text_{i}"] = original
                     st.session_state.section_decisions[f"edit_source_{i}"] = "original"
+                    st.session_state[f"custom_text_{i}"] = original
                     st.rerun()
             with col_impr:
                 if st.button(
@@ -518,6 +519,7 @@ def render_improve_review():
                     st.session_state.section_decisions[decision_key] = "custom"
                     st.session_state.section_decisions[f"text_{i}"] = improved
                     st.session_state.section_decisions[f"edit_source_{i}"] = "improved"
+                    st.session_state[f"custom_text_{i}"] = improved
                     st.rerun()
 
             # ── Edit manually — text area below card pair ──
