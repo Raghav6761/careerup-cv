@@ -302,17 +302,9 @@
         if (evt.oldIndex === evt.newIndex) return;
         const moved = _sections.splice(evt.oldIndex, 1)[0];
         _sections.splice(evt.newIndex, 0, moved);
-        /* Re-number badges without full re-render */
-        container.querySelectorAll(".section-num").forEach((el, i) => {
-          el.textContent = i + 1;
-        });
-        /* Update data-i on inputs/textareas/buttons */
-        container.querySelectorAll(".sec-card").forEach((card, i) => {
-          card.dataset.idx = i;
-          card.querySelectorAll("[data-i]").forEach(el => { el.dataset.i = i; });
-        });
+        /* Full re-render so all element IDs (incl. del-confirm-N) stay in sync */
+        render();
         sendUpdate();
-        sendHeight();
       }
     });
 
