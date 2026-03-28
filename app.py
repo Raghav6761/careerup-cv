@@ -472,8 +472,8 @@ def render_improve_review():
                 unsafe_allow_html=True,
             )
 
-            # ── Buttons — col_orig is first (rightmost in RTL) matching original cell ──
-            col_orig, col_impr = st.columns(2)
+            # ── Buttons: col_impr first (LEFT visual) under improved TD, col_orig second (RIGHT visual) under original TD ──
+            col_impr, col_orig = st.columns(2)
             with col_orig:
                 if st.button(
                     "✓ נבחר" if orig_sel else "בחר נוסח זה",
