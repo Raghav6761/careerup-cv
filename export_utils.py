@@ -1394,6 +1394,7 @@ def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "") -> by
         in_personal = False
         personal_lines = []
         deferred_military_lines = []
+        pending_header = None  # deferred — only emitted when real content follows
         for line in translated_text.split("\n"):
             stripped = line.strip()
             if not stripped:
@@ -1421,19 +1422,34 @@ def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "") -> by
                 if any(k in lower_header for k in ["personal", "contact"]):
                     in_personal = True
                     last_header = header_text
+                    pending_header = None
                     continue
                 in_personal = False
                 last_header = header_text
-                elements.append(Paragraph(header_text, styles["section_header"]))
-                elements.append(_make_section_separator())
+                pending_header = header_text  # defer; emit only when real content follows
             elif in_personal:
                 personal_lines.append(stripped)
             elif _is_job_header_line(stripped):
-                elements.append(Paragraph(stripped, styles["job_title"]))
+                if not _is_empty_content(stripped):
+                    if pending_header is not None:
+                        elements.append(Paragraph(pending_header, styles["section_header"]))
+                        elements.append(_make_section_separator())
+                        pending_header = None
+                    elements.append(Paragraph(stripped, styles["job_title"]))
             elif stripped.startswith("-") or stripped.startswith("•"):
-                elements.append(Paragraph(stripped, styles["bullet"]))
+                if not _is_empty_content(stripped):
+                    if pending_header is not None:
+                        elements.append(Paragraph(pending_header, styles["section_header"]))
+                        elements.append(_make_section_separator())
+                        pending_header = None
+                    elements.append(Paragraph(stripped, styles["bullet"]))
             else:
-                elements.append(Paragraph(stripped, styles["body"]))
+                if not _is_empty_content(stripped):
+                    if pending_header is not None:
+                        elements.append(Paragraph(pending_header, styles["section_header"]))
+                        elements.append(_make_section_separator())
+                        pending_header = None
+                    elements.append(Paragraph(stripped, styles["body"]))
 
         if in_personal and personal_lines:
             contact_only = [l for l in personal_lines if not _is_military_line(l)]
@@ -1522,6 +1538,7 @@ def export_improved_cv_to_docx_en(translated_text: str, cv_title: str = "") -> b
     in_personal = False
     personal_lines = []
     deferred_military_lines = []
+    pending_header = None  # deferred — only emitted when real content follows
     for line in translated_text.split("\n"):
         stripped = line.strip()
         if not stripped:
@@ -1538,18 +1555,31 @@ def export_improved_cv_to_docx_en(translated_text: str, cv_title: str = "") -> b
             if any(k in lower_header for k in ["personal", "contact"]):
                 in_personal = True
                 last_header = header_text
+                pending_header = None
                 continue
             in_personal = False
             last_header = header_text
-            _add_docx_section_header_en(doc, header_text)
+            pending_header = header_text  # defer; emit only when real content follows
         elif in_personal:
             personal_lines.append(stripped)
         elif _is_job_header_line(stripped):
-            _add_docx_job_header(doc, stripped, is_rtl=False)
+            if not _is_empty_content(stripped):
+                if pending_header is not None:
+                    _add_docx_section_header_en(doc, pending_header)
+                    pending_header = None
+                _add_docx_job_header(doc, stripped, is_rtl=False)
         elif stripped.startswith("-") or stripped.startswith("•"):
-            _add_docx_bullet_paragraph(doc, stripped, is_rtl=False)
+            if not _is_empty_content(stripped):
+                if pending_header is not None:
+                    _add_docx_section_header_en(doc, pending_header)
+                    pending_header = None
+                _add_docx_bullet_paragraph(doc, stripped, is_rtl=False)
         else:
-            _add_docx_body_paragraph(doc, stripped, is_rtl=False)
+            if not _is_empty_content(stripped):
+                if pending_header is not None:
+                    _add_docx_section_header_en(doc, pending_header)
+                    pending_header = None
+                _add_docx_body_paragraph(doc, stripped, is_rtl=False)
 
     if in_personal and personal_lines:
         mil = _add_docx_personal_block_en(doc, personal_lines)
