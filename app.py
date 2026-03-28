@@ -201,7 +201,8 @@ def reset_improve():
     st.session_state.analysis_result = None
     st.session_state.section_decisions = {}
     for _k in ["improve_final_sections", "improve_target_position", "improve_language",
-                "improve_cv_filename", "improve_en_translated", "improve_en_translating"]:
+                "improve_cv_filename", "cv_filename_input",
+                "improve_en_translated", "improve_en_translating"]:
         st.session_state.pop(_k, None)
 
 
