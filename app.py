@@ -485,6 +485,7 @@ def render_improve_review():
                     st.session_state.section_decisions[f"text_{i}"] = original
                     if current_decision == "custom":
                         st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                    st.session_state.section_decisions.pop(f"edit_source_{i}", None)
                     st.rerun()
                 if st.button(
                     "✏️ ערוך נוסח זה",
@@ -507,6 +508,7 @@ def render_improve_review():
                     st.session_state.section_decisions[f"text_{i}"] = improved
                     if current_decision == "custom":
                         st.session_state.section_decisions.pop(f"custom_text_{i}", None)
+                    st.session_state.section_decisions.pop(f"edit_source_{i}", None)
                     st.rerun()
                 if st.button(
                     "✏️ ערוך נוסח זה",
