@@ -982,7 +982,7 @@ def render_build_form():
             font-size: 22px !important; font-weight: 700 !important;
             height: 44px !important; min-height: 44px !important;
             border: none !important; border-radius: 10px !important;
-            box-shadow: none !important; padding: 0 !important;
+            box-shadow: none !important; padding: 4px 16px !important;
         }
         [class*="st-key-bf_add_exp"] button[data-testid="stBaseButton-secondary"]:hover,
         [class*="st-key-bf_add_edu"] button[data-testid="stBaseButton-secondary"]:hover,
