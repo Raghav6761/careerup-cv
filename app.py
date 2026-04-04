@@ -316,17 +316,17 @@ def render_improve_upload():
 
     with st.container(border=True, key="card_pages"):
         st.markdown('<div class="section-header">📄 כמה עמודים תרצו?</div>', unsafe_allow_html=True)
-        st.markdown('<span style="font-size:16px; color:#6b7c93;">עמוד אחד מומלץ ברוב המקרים. בחרו שני עמודים אם יש לכם ניסיון עשיר שלא הייתם רוצים לקצץ</span>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:16px; color:#6b7c93;">ננסה להכניס לעמוד אחד. אם הניסיון עשיר - עדיף לגלוש לעמוד שני על פני קיצוץ תוכן חשוב. בחרו "עד שני עמודים" כדי לאפשר זאת מראש.</span>', unsafe_allow_html=True)
         if "improve_max_pages" not in st.session_state:
             st.session_state.improve_max_pages = 1
         pages_choice = st.radio(
             "מספר עמודים",
-            ["עמוד אחד (מומלץ)", "עד שני עמודים"],
+            ["נסה להכניס לעמוד אחד (מומלץ)", "עד שני עמודים"],
             horizontal=True,
             key="improve_pages_radio",
             label_visibility="collapsed"
         )
-        st.session_state.improve_max_pages = 1 if pages_choice == "עמוד אחד (מומלץ)" else 2
+        st.session_state.improve_max_pages = 1 if pages_choice == "נסה להכניס לעמוד אחד (מומלץ)" else 2
 
     with st.container(border=True, key="card_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
@@ -980,17 +980,17 @@ def render_build_form():
 
     with st.container(border=True, key="bfc_pages"):
         st.markdown('<div class="section-header">📄 כמה עמודים תרצו?</div>', unsafe_allow_html=True)
-        st.markdown('<span style="font-size:15px; color:#6b7c93;">עמוד אחד מומלץ ברוב המקרים. בחרו שני עמודים אם יש לכם ניסיון עשיר שלא הייתם רוצים לקצץ</span>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:15px; color:#6b7c93;">ננסה להכניס לעמוד אחד. אם הניסיון עשיר - עדיף לגלוש לעמוד שני על פני קיצוץ תוכן חשוב. בחרו "עד שני עמודים" כדי לאפשר זאת מראש.</span>', unsafe_allow_html=True)
         if "build_max_pages" not in st.session_state:
             st.session_state.build_max_pages = 1
         build_pages_choice = st.radio(
             "מספר עמודים",
-            ["עמוד אחד (מומלץ)", "עד שני עמודים"],
+            ["נסה להכניס לעמוד אחד (מומלץ)", "עד שני עמודים"],
             horizontal=True,
             key="build_pages_radio",
             label_visibility="collapsed"
         )
-        st.session_state.build_max_pages = 1 if build_pages_choice == "עמוד אחד (מומלץ)" else 2
+        st.session_state.build_max_pages = 1 if build_pages_choice == "נסה להכניס לעמוד אחד (מומלץ)" else 2
 
     with st.container(border=True, key="bfc_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
