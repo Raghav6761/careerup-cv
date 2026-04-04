@@ -975,20 +975,6 @@ def render_build_form():
             border-color: #022559 !important; border-width: 1.5px !important;
             border-radius: 14px !important; background-color: #f2f1ef !important;
         }
-        [class*="st-key-bf_add_exp"] button[data-testid="stBaseButton-secondary"],
-        [class*="st-key-bf_add_edu"] button[data-testid="stBaseButton-secondary"],
-        [class*="st-key-bf_add_lang"] button[data-testid="stBaseButton-secondary"] {
-            background: #80d6c5 !important; color: #022559 !important;
-            font-size: 22px !important; font-weight: 700 !important;
-            height: 44px !important; min-height: 44px !important;
-            border: none !important; border-radius: 10px !important;
-            box-shadow: none !important; padding: 4px 16px !important;
-        }
-        [class*="st-key-bf_add_exp"] button[data-testid="stBaseButton-secondary"]:hover,
-        [class*="st-key-bf_add_edu"] button[data-testid="stBaseButton-secondary"]:hover,
-        [class*="st-key-bf_add_lang"] button[data-testid="stBaseButton-secondary"]:hover {
-            background: #5ec4b0 !important; border: none !important;
-        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -1082,7 +1068,7 @@ def render_build_form():
                 experience.pop(idx)
             st.rerun()
 
-    if st.button("+", key="bf_add_exp", use_container_width=True):
+    if st.button("+ הוסף תפקיד", key="bf_add_exp", use_container_width=True, type="primary"):
         experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
         st.rerun()
 
@@ -1113,7 +1099,7 @@ def render_build_form():
                 education.pop(idx)
             st.rerun()
 
-    if st.button("+", key="bf_add_edu", use_container_width=True):
+    if st.button("+ הוסף השכלה", key="bf_add_edu", use_container_width=True, type="primary"):
         education.append({"degree": "", "institution": "", "year": "", "honors": ""})
         st.rerun()
 
@@ -1152,7 +1138,7 @@ def render_build_form():
                 languages.pop(idx)
             st.rerun()
 
-    if st.button("+", key="bf_add_lang", use_container_width=True):
+    if st.button("+ הוסף שפה", key="bf_add_lang", use_container_width=True, type="primary"):
         languages.append({"language": "", "level": ""})
         st.rerun()
 
