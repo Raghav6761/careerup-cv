@@ -975,6 +975,11 @@ def render_build_form():
             border-color: #022559 !important; border-width: 1.5px !important;
             border-radius: 14px !important; background-color: #f2f1ef !important;
         }
+        [class*="st-key-bf_add_exp"] [data-testid="stVerticalBlockBorderWrapper"],
+        [class*="st-key-bf_add_edu"] [data-testid="stVerticalBlockBorderWrapper"],
+        [class*="st-key-bf_add_lang"] [data-testid="stVerticalBlockBorderWrapper"] {
+            border: none !important; background: transparent !important;
+        }
         [class*="st-key-bf_add_exp"] button,
         [class*="st-key-bf_add_edu"] button,
         [class*="st-key-bf_add_lang"] button {
