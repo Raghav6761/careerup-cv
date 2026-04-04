@@ -975,17 +975,20 @@ def render_build_form():
             border-color: #022559 !important; border-width: 1.5px !important;
             border-radius: 14px !important; background-color: #f2f1ef !important;
         }
-        [class*="st-key-bf_add_exp"] button,
-        [class*="st-key-bf_add_edu"] button,
-        [class*="st-key-bf_add_lang"] button {
+        [class*="st-key-bf_add_exp"] button[data-testid="stBaseButton-secondary"],
+        [class*="st-key-bf_add_edu"] button[data-testid="stBaseButton-secondary"],
+        [class*="st-key-bf_add_lang"] button[data-testid="stBaseButton-secondary"] {
             background: #80d6c5 !important; color: #022559 !important;
             font-size: 22px !important; font-weight: 700 !important;
-            height: 44px !important; border: none !important;
-            border-radius: 10px !important; box-shadow: none !important;
+            height: 44px !important; min-height: 44px !important;
+            border: none !important; border-radius: 10px !important;
+            box-shadow: none !important; padding: 0 !important;
         }
-        [class*="st-key-bf_add_exp"] button:hover,
-        [class*="st-key-bf_add_edu"] button:hover,
-        [class*="st-key-bf_add_lang"] button:hover { background: #5ec4b0 !important; }
+        [class*="st-key-bf_add_exp"] button[data-testid="stBaseButton-secondary"]:hover,
+        [class*="st-key-bf_add_edu"] button[data-testid="stBaseButton-secondary"]:hover,
+        [class*="st-key-bf_add_lang"] button[data-testid="stBaseButton-secondary"]:hover {
+            background: #5ec4b0 !important; border: none !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 
