@@ -975,11 +975,6 @@ def render_build_form():
             border-color: #022559 !important; border-width: 1.5px !important;
             border-radius: 14px !important; background-color: #f2f1ef !important;
         }
-        [class*="st-key-bf_add_exp"] [data-testid="stVerticalBlockBorderWrapper"],
-        [class*="st-key-bf_add_edu"] [data-testid="stVerticalBlockBorderWrapper"],
-        [class*="st-key-bf_add_lang"] [data-testid="stVerticalBlockBorderWrapper"] {
-            border: none !important; background: transparent !important;
-        }
         [class*="st-key-bf_add_exp"] button,
         [class*="st-key-bf_add_edu"] button,
         [class*="st-key-bf_add_lang"] button {
@@ -1084,9 +1079,9 @@ def render_build_form():
                 experience.pop(idx)
             st.rerun()
 
-        if st.button("+", key="bf_add_exp", use_container_width=True):
-            experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
-            st.rerun()
+    if st.button("+", key="bf_add_exp", use_container_width=True):
+        experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
+        st.rerun()
 
     with st.container(border=True, key="bfc_education"):
         st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
@@ -1115,9 +1110,9 @@ def render_build_form():
                 education.pop(idx)
             st.rerun()
 
-        if st.button("+", key="bf_add_edu", use_container_width=True):
-            education.append({"degree": "", "institution": "", "year": "", "honors": ""})
-            st.rerun()
+    if st.button("+", key="bf_add_edu", use_container_width=True):
+        education.append({"degree": "", "institution": "", "year": "", "honors": ""})
+        st.rerun()
 
     with st.container(border=True, key="bfc_skills"):
         st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
@@ -1154,9 +1149,9 @@ def render_build_form():
                 languages.pop(idx)
             st.rerun()
 
-        if st.button("+", key="bf_add_lang", use_container_width=True):
-            languages.append({"language": "", "level": ""})
-            st.rerun()
+    if st.button("+", key="bf_add_lang", use_container_width=True):
+        languages.append({"language": "", "level": ""})
+        st.rerun()
 
     with st.container(border=True, key="bfc_military"):
         st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי (אופציונלי)</div>', unsafe_allow_html=True)
