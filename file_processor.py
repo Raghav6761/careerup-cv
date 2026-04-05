@@ -62,11 +62,30 @@ def _fix_reversed_text(text: str) -> str:
     return "\n".join(fixed_lines)
 
 
-def _extract_page_text_position_aware(page) -> str:
-    words = page.extract_words(x_tolerance=3, y_tolerance=3, keep_blank_chars=False)
+def _find_column_split(words, page_width) -> float | None:
+    if not words:
+        return None
+    xs = sorted(set(round(w["x0"]) for w in words))
+    if len(xs) < 2:
+        return None
+    max_gap = 0
+    split_x = None
+    for i in range(1, len(xs)):
+        gap = xs[i] - xs[i - 1]
+        if gap > max_gap:
+            max_gap = gap
+            split_x = (xs[i - 1] + xs[i]) / 2
+    if max_gap >= 60 and split_x is not None:
+        covered_left  = sum(1 for w in words if w["x0"] < split_x)
+        covered_right = sum(1 for w in words if w["x0"] >= split_x)
+        if covered_left >= 3 and covered_right >= 3:
+            return split_x
+    return None
+
+
+def _words_to_text(words) -> str:
     if not words:
         return ""
-
     sorted_words = sorted(words, key=lambda w: w["top"])
     line_groups = []
     current_group = [sorted_words[0]]
@@ -92,8 +111,23 @@ def _extract_page_text_position_aware(page) -> str:
                 else:
                     parts.append(w["text"])
         line_texts.append(" ".join(parts))
-
     return "\n".join(line_texts)
+
+
+def _extract_page_text_position_aware(page) -> str:
+    words = page.extract_words(x_tolerance=3, y_tolerance=3, keep_blank_chars=False)
+    if not words:
+        return ""
+
+    split_x = _find_column_split(words, page.width)
+    if split_x is not None:
+        col_a = [w for w in words if w["x0"] < split_x]
+        col_b = [w for w in words if w["x0"] >= split_x]
+        text_a = _words_to_text(col_a)
+        text_b = _words_to_text(col_b)
+        return text_a + "\n" + text_b if text_b.strip() else text_a
+
+    return _words_to_text(words)
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
