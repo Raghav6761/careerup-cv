@@ -763,7 +763,7 @@ def render_improve_reorder():
     export_sections = [
         s for s in st.session_state.improve_final_sections
         if s["final_text"].strip() and (
-            any(k in s.get("title", "") for k in ["פרטים", "אישיים", "personal", "Personal"])
+            any(k in s.get("title", "") for k in ["פרטים", "אישיים", "פרטי", "קשר", "personal", "Personal", "contact", "Contact"])
             or not _exp_is_empty(s["final_text"])
         )
     ]

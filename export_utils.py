@@ -823,7 +823,7 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
         for section in sections:
             title = section.get("title", "")
             content = section.get("final_text", section.get("improved", ""))
-            is_personal = title and any(k in title for k in ["פרטים", "אישיים", "personal", "Personal"])
+            is_personal = title and any(k in title for k in ["פרטים", "אישיים", "פרטי", "קשר", "personal", "Personal", "contact", "Contact"])
             if not is_personal and _is_empty_content(content):
                 continue
             if title and not is_personal:
@@ -907,7 +907,7 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str 
     for section in sections:
         title = section.get("title", "")
         content = section.get("final_text", section.get("improved", ""))
-        is_personal = title and any(k in title for k in ["פרטים", "אישיים", "personal", "Personal"])
+        is_personal = title and any(k in title for k in ["פרטים", "אישיים", "פרטי", "קשר", "personal", "Personal", "contact", "Contact"])
 
         if not is_personal and _is_empty_content(content):
             continue
