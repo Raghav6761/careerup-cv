@@ -583,8 +583,11 @@ def render_improve_export():
 
     if "improve_final_sections" not in st.session_state:
         final_sections = []
+        _DECOMPOSED_TITLES = {"שונות", "כישורים נוספים", "miscellaneous", "other"}
         for i, section in enumerate(sections):
             title = section.get("title", f"סעיף {i+1}")
+            if title.strip() in _DECOMPOSED_TITLES:
+                continue
             final_text = st.session_state.section_decisions.get(f"text_{i}", section.get("improved", ""))
             final_sections.append({"title": title, "final_text": final_text})
         st.session_state.improve_final_sections = final_sections
