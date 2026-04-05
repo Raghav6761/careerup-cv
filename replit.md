@@ -65,6 +65,8 @@ streamlit run app.py --server.port 5000
 - Skills section: minimum 12 items, including standard industry skills inferred from experience
 - If no academic degree detected: general_tips includes a recommendation to add high-school major and school name
 - general_tips expander is open by default (expanded=True)
+- Professional summary (1-page): 2-3 rich sentences: title+years+tech → expertise+value → standout trait; continuous paragraph, no lists/dashes
+- Professional summary (2-page): 3-4 sentences; same structure with optional 4th sentence on personal strength
 
 ## One-Page / Two-Page PDF Selector
 - Both flows (improve_upload + build_form) show a "📄 כמה עמודים תרצו?" radio card: "נסה להכניס לעמוד אחד (מומלץ)" (default) or "עד שני עמודים"

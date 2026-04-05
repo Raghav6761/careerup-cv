@@ -318,7 +318,7 @@ def export_cv_to_pdf(cv_data: dict, max_pages: int = 1) -> bytes:
         if summary and not _is_empty_content(summary):
             elements.append(Paragraph(reshape_hebrew("תקציר מקצועי"), styles["section_header"]))
             elements.append(_make_section_separator())
-            elements.append(Paragraph(reshape_hebrew_paragraph(summary, max_width=(210 - 2*margin_mm)*mm), styles["body"]))
+            elements.append(Paragraph(reshape_hebrew_paragraph(summary, font_size=cparams["body_size"], max_width=(210 - 2*margin_mm)*mm), styles["body"]))
 
         experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
         if experience:
@@ -867,7 +867,7 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
                         elif stripped.startswith("-") or stripped.startswith("•"):
                             elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
                         else:
-                            elements.append(Paragraph(reshape_hebrew_paragraph(stripped, max_width=(210 - 2*margin_mm)*mm), styles["body"]))
+                            elements.append(Paragraph(reshape_hebrew_paragraph(stripped, font_size=cparams["body_size"], max_width=(210 - 2*margin_mm)*mm), styles["body"]))
 
         doc.build(elements)
         pdf_bytes = buffer.getvalue()
