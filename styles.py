@@ -269,6 +269,17 @@ def inject_custom_css():
             border-color: #f2f1ef !important;
         }
 
+        /* Delete confirmation buttons — compact, equal height */
+        [class*="st-key-confirm_del"] button,
+        [class*="st-key-cancel_del"] button {
+            font-size: 14px !important;
+            padding: 8px 14px !important;
+            min-height: 38px !important;
+            height: 38px !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+        }
+
         /* Bare icon delete buttons using tertiary type */
         button[data-testid="stBaseButton-tertiary"] {
             min-height: 0px !important;
