@@ -73,7 +73,7 @@ streamlit run app.py --server.port 5000
 - All 4 PDF export functions accept `max_pages: int = 1`; compression loop stops when `_count_pdf_pages() <= max_pages`
 - "עמוד אחד" is an aspiration, not a hard limit — AI writes all content and PDF compression tries to fit; if it can't, 2 pages is acceptable
 - "עד שני עמודים" is a hard maximum — AI must not exceed 2 pages
-- `_PDF_COMPRESSION_LEVELS` has 3 levels (9pt → 8.5pt → 8pt minimum); margins reduced: 15mm → 13mm → 11mm (was 18mm → 16mm → 14mm) to better fill the page
+- `_PDF_COMPRESSION_LEVELS` has 3 levels (10pt → 9pt → 8pt minimum); margins reduced: 15mm → 13mm → 11mm (was 18mm → 16mm → 14mm) to better fill the page
 - DOCX exports are unchanged (no page-count enforcement)
 
 ## AI Content Guidelines

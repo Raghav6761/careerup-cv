@@ -429,7 +429,7 @@ def render_improve_review():
         improved = section.get("improved", "")
         explanation = section.get("explanation", "")
 
-        with st.expander(f"📌 {title}", expanded=(i == 0)):
+        with st.expander(f"📌 {title}", expanded=True):
             if explanation:
                 st.info(f"💡 {explanation}")
 
