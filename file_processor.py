@@ -62,11 +62,45 @@ def _fix_reversed_text(text: str) -> str:
     return "\n".join(fixed_lines)
 
 
+def _extract_page_text_position_aware(page) -> str:
+    words = page.extract_words(x_tolerance=3, y_tolerance=3, keep_blank_chars=False)
+    if not words:
+        return ""
+
+    sorted_words = sorted(words, key=lambda w: w["top"])
+    line_groups = []
+    current_group = [sorted_words[0]]
+    for w in sorted_words[1:]:
+        if abs(w["top"] - current_group[0]["top"]) <= 1:
+            current_group.append(w)
+        else:
+            line_groups.append(current_group)
+            current_group = [w]
+    line_groups.append(current_group)
+
+    line_texts = []
+    for group in line_groups:
+        line_words = sorted(group, key=lambda w: w["x0"])
+        parts = []
+        for i, w in enumerate(line_words):
+            if i == 0:
+                parts.append(w["text"])
+            else:
+                gap = w["x0"] - line_words[i - 1]["x1"]
+                if gap < 1.0:
+                    parts[-1] = parts[-1] + w["text"]
+                else:
+                    parts.append(w["text"])
+        line_texts.append(" ".join(parts))
+
+    return "\n".join(line_texts)
+
+
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     text_parts = []
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
-            page_text = page.extract_text()
+            page_text = _extract_page_text_position_aware(page)
             if page_text:
                 text_parts.append(page_text)
     raw_text = "\n".join(text_parts)
