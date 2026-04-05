@@ -630,13 +630,13 @@ def render_improve_export():
 
             if st.session_state.imp_pending_delete == i:
                 st.warning("האם למחוק סעיף זה? לא ניתן לשחזר.")
-                col_yes, col_no, _ = st.columns([1, 1, 4])
+                _, col_no, col_yes = st.columns([4, 1, 1])
                 with col_yes:
-                    if st.button("✓ מחק", key=f"confirm_del_{i}", type="primary"):
+                    if st.button("✓ מחק", key=f"confirm_del_{i}", type="primary", use_container_width=True):
                         sections_to_delete.append(i)
                         st.session_state.imp_pending_delete = None
                 with col_no:
-                    if st.button("ביטול", key=f"cancel_del_{i}"):
+                    if st.button("ביטול", key=f"cancel_del_{i}", use_container_width=True):
                         st.session_state.imp_pending_delete = None
                         st.rerun()
 
