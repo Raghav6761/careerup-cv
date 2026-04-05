@@ -318,7 +318,7 @@ def export_cv_to_pdf(cv_data: dict, max_pages: int = 1) -> bytes:
         if summary and not _is_empty_content(summary):
             elements.append(Paragraph(reshape_hebrew("תקציר מקצועי"), styles["section_header"]))
             elements.append(_make_section_separator())
-            elements.append(Paragraph(reshape_hebrew_paragraph(summary), styles["body"]))
+            elements.append(Paragraph(reshape_hebrew_paragraph(summary, max_width=(210 - 2*margin_mm)*mm), styles["body"]))
 
         experience = [e for e in cv_data.get("experience", []) if _has_real_exp(e)]
         if experience:
@@ -724,11 +724,13 @@ def _is_job_header_line(line: str) -> bool:
     line = line.strip()
     if line.startswith("-") or line.startswith("•") or line.startswith("–"):
         return False
+    lower = line.lower()
+    if re.search(r'(19|20)\d{2}', line) and ('–' in line or '-' in line or '|' in line or 'הווה' in line or 'נוכחי' in line or 'היום' in line or 'present' in lower):
+        return True
     military_keywords_he = ['שירות מלא', 'שירות סדיר', 'חיל ', 'צה"ל', 'צבא', 'שירות לאומי', 'שירות צבאי']
     for keyword in military_keywords_he:
         if keyword in line:
             return False
-    lower = line.lower()
     military_keywords_en = [
         'military service', 'army', 'air force', 'navy', 'idf',
         'israeli defense', 'israeli air force', 'israeli navy',
@@ -737,8 +739,6 @@ def _is_job_header_line(line: str) -> bool:
     for keyword in military_keywords_en:
         if keyword in lower:
             return False
-    if re.search(r'(19|20)\d{2}', line) and ('–' in line or '-' in line or '|' in line or 'הווה' in line or 'נוכחי' in line or 'היום' in line or 'present' in lower):
-        return True
     return False
 
 
@@ -867,7 +867,7 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
                         elif stripped.startswith("-") or stripped.startswith("•"):
                             elements.append(Paragraph(reshape_hebrew(stripped), styles["bullet"]))
                         else:
-                            elements.append(Paragraph(reshape_hebrew_paragraph(stripped), styles["body"]))
+                            elements.append(Paragraph(reshape_hebrew_paragraph(stripped, max_width=(210 - 2*margin_mm)*mm), styles["body"]))
 
         doc.build(elements)
         pdf_bytes = buffer.getvalue()

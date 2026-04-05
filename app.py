@@ -699,7 +699,9 @@ def render_improve_reorder():
         if tk in st.session_state:
             secs[j]["title"] = st.session_state.pop(tk)
         if xk in st.session_state:
-            secs[j]["final_text"] = st.session_state.pop(xk)
+            new_val = st.session_state.pop(xk)
+            if new_val.strip() or not secs[j].get("final_text", "").strip():
+                secs[j]["final_text"] = new_val
 
     n_secs = len(secs)
 
