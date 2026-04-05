@@ -114,8 +114,8 @@ def _clean_hebrew_text(text: str) -> str:
         return ""
     text = text.replace('\u200f', '').replace('\u200e', '')
     text = text.replace('(', ' - ').replace(')', '').replace('（', ' - ').replace('）', '')
-    text = text.replace('"', "'").replace('"', "'").replace('"', "'")
-    text = text.replace('״', "'").replace('׳', "'")
+    text = text.replace('"', '״').replace('"', '״').replace('"', '״')
+    text = text.replace('׳', "'")
     return text
 
 
