@@ -58,6 +58,14 @@ streamlit run app.py --server.port 5000
 - Military lines filtered from personal/contact section in improve exports via `_is_military_line()` helper
 - Optional sections (military, volunteering, projects, additional) only appear if user provided content
 
+## AI Content Enrichment (per-job detail)
+- Each job bullet must include: action + specific technology/tool + operational/business impact
+- One-page mode: 3-5 bullets per job (was 2-4)
+- Two-page mode: 4-6 bullets per job (was up to 5)
+- Skills section: minimum 12 items, including standard industry skills inferred from experience
+- If no academic degree detected: general_tips includes a recommendation to add high-school major and school name
+- general_tips expander is open by default (expanded=True)
+
 ## One-Page / Two-Page PDF Selector
 - Both flows (improve_upload + build_form) show a "📄 כמה עמודים תרצו?" radio card: "נסה להכניס לעמוד אחד (מומלץ)" (default) or "עד שני עמודים"
 - Session keys: `improve_max_pages` (int 1 or 2), `build_max_pages` (int 1 or 2)
@@ -65,7 +73,7 @@ streamlit run app.py --server.port 5000
 - All 4 PDF export functions accept `max_pages: int = 1`; compression loop stops when `_count_pdf_pages() <= max_pages`
 - "עמוד אחד" is an aspiration, not a hard limit — AI writes all content and PDF compression tries to fit; if it can't, 2 pages is acceptable
 - "עד שני עמודים" is a hard maximum — AI must not exceed 2 pages
-- `_PDF_COMPRESSION_LEVELS` has 3 levels (9pt → 8.5pt → 8pt minimum); removed the 7.5pt level to keep text readable
+- `_PDF_COMPRESSION_LEVELS` has 3 levels (9pt → 8.5pt → 8pt minimum); margins reduced: 15mm → 13mm → 11mm (was 18mm → 16mm → 14mm) to better fill the page
 - DOCX exports are unchanged (no page-count enforcement)
 
 ## AI Content Guidelines

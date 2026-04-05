@@ -56,9 +56,9 @@ def _filter_list(items: list) -> list:
 
 
 _PDF_COMPRESSION_LEVELS = [
-    {"margin_mm": 18, "top_mm": 12, "bot_mm": 12, "sec_before": 8,   "body_lead": 13,  "bul_lead": 12,  "body_size": 9,   "sec_size": 12, "contact_after": 6, "name_lead": 24},
-    {"margin_mm": 16, "top_mm": 10, "bot_mm": 10, "sec_before": 6,   "body_lead": 12,  "bul_lead": 11,  "body_size": 8.5, "sec_size": 11, "contact_after": 4, "name_lead": 22},
-    {"margin_mm": 14, "top_mm": 8,  "bot_mm": 8,  "sec_before": 4,   "body_lead": 11,  "bul_lead": 10,  "body_size": 8,   "sec_size": 10, "contact_after": 3, "name_lead": 20},
+    {"margin_mm": 15, "top_mm": 10, "bot_mm": 10, "sec_before": 7,   "body_lead": 13,  "bul_lead": 12,  "body_size": 9,   "sec_size": 12, "contact_after": 5, "name_lead": 24},
+    {"margin_mm": 13, "top_mm": 9,  "bot_mm": 9,  "sec_before": 6,   "body_lead": 12,  "bul_lead": 11,  "body_size": 8.5, "sec_size": 11, "contact_after": 4, "name_lead": 22},
+    {"margin_mm": 11, "top_mm": 7,  "bot_mm": 7,  "sec_before": 4,   "body_lead": 11,  "bul_lead": 10,  "body_size": 8,   "sec_size": 10, "contact_after": 3, "name_lead": 20},
 ]
 
 
