@@ -55,6 +55,7 @@ def _fix_reversed_text(text: str) -> str:
             continue
         if re.search(r'[\u0590-\u05FF]', stripped):
             fixed_line = get_display(stripped, base_dir='R')
+            fixed_line = re.sub(r'([א-ת]{2,}) ([א-ת])([.,]?\s*)$', r'\1\2\3', fixed_line)
             fixed_lines.append(fixed_line)
         else:
             fixed_lines.append(stripped)
