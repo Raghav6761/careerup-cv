@@ -685,6 +685,40 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
     return buffer.getvalue()
 
 
+def _is_skills_section(title: str) -> bool:
+    """Return True if the section title represents a skills/tools section."""
+    keywords = ["מיומנויות", "כלים", "טכנולוגי", "skills", "tools", "technologies", "technical"]
+    t = title.lower().strip()
+    return any(k.lower() in t for k in keywords)
+
+
+def _chunk_skills_lines(content: str, chunk_size: int = 4) -> list:
+    """
+    Split comma-separated skills content into bullet-ready chunks.
+    If the content already uses bullet formatting, return lines as-is.
+    Returns a list of strings, each representing one bullet line.
+    """
+    lines = [l.strip() for l in content.split("\n") if l.strip()]
+    # If already bulleted — return as-is
+    if any(l.startswith("•") or l.startswith("-") for l in lines):
+        return lines
+    # Collect all items from comma-separated lines
+    all_items = []
+    for line in lines:
+        for item in line.split(","):
+            item = item.strip()
+            if item:
+                all_items.append(item)
+    if not all_items:
+        return lines
+    # Group into chunks
+    chunks = []
+    for i in range(0, len(all_items), chunk_size):
+        chunk = all_items[i:i + chunk_size]
+        chunks.append("• " + ", ".join(chunk))
+    return chunks
+
+
 def _is_job_header_line(line: str) -> bool:
     import re
     line = line.strip()
@@ -820,8 +854,12 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
                             elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
                         elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
                 else:
-                    for line in content.split("\n"):
-                        stripped = line.strip()
+                    render_lines = (
+                        _chunk_skills_lines(content)
+                        if _is_skills_section(title)
+                        else [l.strip() for l in content.split("\n") if l.strip()]
+                    )
+                    for stripped in render_lines:
                         if not stripped:
                             continue
                         if _is_job_header_line(stripped):
@@ -917,8 +955,12 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str 
                         _set_docx_rtl(p)
                     _add_docx_hr(doc)
             else:
-                for line in content.split("\n"):
-                    stripped = line.strip()
+                render_lines = (
+                    _chunk_skills_lines(content)
+                    if _is_skills_section(title)
+                    else [l.strip() for l in content.split("\n") if l.strip()]
+                )
+                for stripped in render_lines:
                     if not stripped:
                         continue
                     if _is_job_header_line(stripped):
