@@ -839,15 +839,16 @@ def render_improve_reorder():
 
     col1, col2 = st.columns(2)
     with col2:
-        if st.session_state.get("_improve_pdf"):
-            st.download_button(
-                label=_pdf_label,
-                data=st.session_state._improve_pdf,
-                file_name=_pdf_name,
-                mime="application/pdf",
-                use_container_width=True,
-                key="dl_pdf_main",
-            )
+        if False:  # PDF_HIDDEN
+            if st.session_state.get("_improve_pdf"):
+                st.download_button(
+                    label=_pdf_label,
+                    data=st.session_state._improve_pdf,
+                    file_name=_pdf_name,
+                    mime="application/pdf",
+                    use_container_width=True,
+                    key="dl_pdf_main",
+                )
     with col1:
         if st.session_state.get("_improve_docx"):
             st.download_button(
@@ -915,15 +916,16 @@ def render_improve_reorder():
         else:
             col3, col4 = st.columns(2)
             with col4:
-                if st.session_state.get("_improve_en_pdf"):
-                    st.download_button(
-                        label="📥 Download PDF (English)",
-                        data=st.session_state._improve_en_pdf,
-                        file_name="cv_improved_en.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                        key="dl_pdf_translated",
-                    )
+                if False:  # PDF_HIDDEN
+                    if st.session_state.get("_improve_en_pdf"):
+                        st.download_button(
+                            label="📥 Download PDF (English)",
+                            data=st.session_state._improve_en_pdf,
+                            file_name="cv_improved_en.pdf",
+                            mime="application/pdf",
+                            use_container_width=True,
+                            key="dl_pdf_translated",
+                        )
             with col3:
                 if st.session_state.get("_improve_en_docx"):
                     st.download_button(
@@ -1462,18 +1464,19 @@ def render_build_preview():
     col1, col2 = st.columns(2)
 
     with col2:
-        try:
-            from export_utils import export_cv_to_pdf
-            pdf_bytes = export_cv_to_pdf(cv_data, max_pages=st.session_state.get("build_max_pages", 1))
-            st.download_button(
-                label="📥 הורד כ-PDF",
-                data=pdf_bytes,
-                file_name="cv_master.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"שגיאה ביצירת PDF: {str(e)}")
+        if False:  # PDF_HIDDEN
+            try:
+                from export_utils import export_cv_to_pdf
+                pdf_bytes = export_cv_to_pdf(cv_data, max_pages=st.session_state.get("build_max_pages", 1))
+                st.download_button(
+                    label="📥 הורד כ-PDF",
+                    data=pdf_bytes,
+                    file_name="cv_master.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.error(f"שגיאה ביצירת PDF: {str(e)}")
 
     with col1:
         try:
@@ -1514,18 +1517,19 @@ def render_build_preview():
     else:
         col3, col4 = st.columns(2)
         with col4:
-            try:
-                from export_utils import export_cv_to_pdf_en
-                pdf_en = export_cv_to_pdf_en(st.session_state.build_en_translated, max_pages=st.session_state.get("build_max_pages", 1))
-                st.download_button(
-                    label="📥 Download PDF (English)",
-                    data=pdf_en,
-                    file_name="cv_english.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error(f"שגיאה ביצירת PDF: {str(e)}")
+            if False:  # PDF_HIDDEN
+                try:
+                    from export_utils import export_cv_to_pdf_en
+                    pdf_en = export_cv_to_pdf_en(st.session_state.build_en_translated, max_pages=st.session_state.get("build_max_pages", 1))
+                    st.download_button(
+                        label="📥 Download PDF (English)",
+                        data=pdf_en,
+                        file_name="cv_english.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"שגיאה ביצירת PDF: {str(e)}")
         with col3:
             try:
                 from export_utils import export_cv_to_docx_en
