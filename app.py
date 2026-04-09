@@ -837,28 +837,25 @@ def render_improve_reorder():
     _pdf_name   = "cv_improved_en.pdf"  if is_english_mode else "cv_improved.pdf"
     _docx_name  = "cv_improved_en.docx" if is_english_mode else "cv_improved.docx"
 
-    col1, col2 = st.columns(2)
-    with col2:
-        if False:  # PDF_HIDDEN
-            if st.session_state.get("_improve_pdf"):
-                st.download_button(
-                    label=_pdf_label,
-                    data=st.session_state._improve_pdf,
-                    file_name=_pdf_name,
-                    mime="application/pdf",
-                    use_container_width=True,
-                    key="dl_pdf_main",
-                )
-    with col1:
-        if st.session_state.get("_improve_docx"):
+    if False:  # PDF_HIDDEN
+        if st.session_state.get("_improve_pdf"):
             st.download_button(
-                label=_docx_label,
-                data=st.session_state._improve_docx,
-                file_name=_docx_name,
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                label=_pdf_label,
+                data=st.session_state._improve_pdf,
+                file_name=_pdf_name,
+                mime="application/pdf",
                 use_container_width=True,
-                key="dl_docx_main",
+                key="dl_pdf_main",
             )
+    if st.session_state.get("_improve_docx"):
+        st.download_button(
+            label=_docx_label,
+            data=st.session_state._improve_docx,
+            file_name=_docx_name,
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+            key="dl_docx_main",
+        )
 
     if not is_english_mode:
         st.markdown("""
@@ -914,28 +911,25 @@ def render_improve_reorder():
                         st.error(f"שגיאה בתרגום: {str(e)}")
                         st.session_state.improve_en_translating = False
         else:
-            col3, col4 = st.columns(2)
-            with col4:
-                if False:  # PDF_HIDDEN
-                    if st.session_state.get("_improve_en_pdf"):
-                        st.download_button(
-                            label="📥 Download PDF (English)",
-                            data=st.session_state._improve_en_pdf,
-                            file_name="cv_improved_en.pdf",
-                            mime="application/pdf",
-                            use_container_width=True,
-                            key="dl_pdf_translated",
-                        )
-            with col3:
-                if st.session_state.get("_improve_en_docx"):
+            if False:  # PDF_HIDDEN
+                if st.session_state.get("_improve_en_pdf"):
                     st.download_button(
-                        label="📥 Download DOCX (English)",
-                        data=st.session_state._improve_en_docx,
-                        file_name="cv_improved_en.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        label="📥 Download PDF (English)",
+                        data=st.session_state._improve_en_pdf,
+                        file_name="cv_improved_en.pdf",
+                        mime="application/pdf",
                         use_container_width=True,
-                        key="dl_docx_translated",
+                        key="dl_pdf_translated",
                     )
+            if st.session_state.get("_improve_en_docx"):
+                st.download_button(
+                    label="📥 Download DOCX (English)",
+                    data=st.session_state._improve_en_docx,
+                    file_name="cv_improved_en.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True,
+                    key="dl_docx_translated",
+                )
 
     st.markdown("---")
     if st.button("🏠 חזרה לדף הבית", use_container_width=True, key="reorder_home_btn"):
@@ -1461,36 +1455,32 @@ def render_build_preview():
     st.markdown("---")
     st.markdown('<div class="section-header">⬇️ הורדת קורות החיים</div>', unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-
-    with col2:
-        if False:  # PDF_HIDDEN
-            try:
-                from export_utils import export_cv_to_pdf
-                pdf_bytes = export_cv_to_pdf(cv_data, max_pages=st.session_state.get("build_max_pages", 1))
-                st.download_button(
-                    label="📥 הורד כ-PDF",
-                    data=pdf_bytes,
-                    file_name="cv_master.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-            except Exception as e:
-                st.error(f"שגיאה ביצירת PDF: {str(e)}")
-
-    with col1:
+    if False:  # PDF_HIDDEN
         try:
-            from export_utils import export_cv_to_docx
-            docx_bytes = export_cv_to_docx(cv_data)
+            from export_utils import export_cv_to_pdf
+            pdf_bytes = export_cv_to_pdf(cv_data, max_pages=st.session_state.get("build_max_pages", 1))
             st.download_button(
-                label="📥 הורד כ-DOCX",
-                data=docx_bytes,
-                file_name="cv_master.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                label="📥 הורד כ-PDF",
+                data=pdf_bytes,
+                file_name="cv_master.pdf",
+                mime="application/pdf",
                 use_container_width=True
             )
         except Exception as e:
-            st.error(f"שגיאה ביצירת DOCX: {str(e)}")
+            st.error(f"שגיאה ביצירת PDF: {str(e)}")
+
+    try:
+        from export_utils import export_cv_to_docx
+        docx_bytes = export_cv_to_docx(cv_data)
+        st.download_button(
+            label="📥 הורד כ-DOCX",
+            data=docx_bytes,
+            file_name="cv_master.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True
+        )
+    except Exception as e:
+        st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
     st.markdown('<div class="section-header">🌐 הורדה באנגלית (תרגום)</div>', unsafe_allow_html=True)
 
@@ -1515,34 +1505,31 @@ def render_build_preview():
                     st.error(f"שגיאה בתרגום: {str(e)}")
                     st.session_state.build_en_translating = False
     else:
-        col3, col4 = st.columns(2)
-        with col4:
-            if False:  # PDF_HIDDEN
-                try:
-                    from export_utils import export_cv_to_pdf_en
-                    pdf_en = export_cv_to_pdf_en(st.session_state.build_en_translated, max_pages=st.session_state.get("build_max_pages", 1))
-                    st.download_button(
-                        label="📥 Download PDF (English)",
-                        data=pdf_en,
-                        file_name="cv_english.pdf",
-                        mime="application/pdf",
-                        use_container_width=True
-                    )
-                except Exception as e:
-                    st.error(f"שגיאה ביצירת PDF: {str(e)}")
-        with col3:
+        if False:  # PDF_HIDDEN
             try:
-                from export_utils import export_cv_to_docx_en
-                docx_en = export_cv_to_docx_en(st.session_state.build_en_translated)
+                from export_utils import export_cv_to_pdf_en
+                pdf_en = export_cv_to_pdf_en(st.session_state.build_en_translated, max_pages=st.session_state.get("build_max_pages", 1))
                 st.download_button(
-                    label="📥 Download DOCX (English)",
-                    data=docx_en,
-                    file_name="cv_english.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    label="📥 Download PDF (English)",
+                    data=pdf_en,
+                    file_name="cv_english.pdf",
+                    mime="application/pdf",
                     use_container_width=True
                 )
             except Exception as e:
-                st.error(f"שגיאה ביצירת DOCX: {str(e)}")
+                st.error(f"שגיאה ביצירת PDF: {str(e)}")
+        try:
+            from export_utils import export_cv_to_docx_en
+            docx_en = export_cv_to_docx_en(st.session_state.build_en_translated)
+            st.download_button(
+                label="📥 Download DOCX (English)",
+                data=docx_en,
+                file_name="cv_english.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"שגיאה ביצירת DOCX: {str(e)}")
 
     st.markdown("---")
     if st.button("🏠 חזרה לדף הבית", use_container_width=True):

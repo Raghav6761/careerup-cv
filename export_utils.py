@@ -565,7 +565,7 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
     if contact.get("city"):
         contact_parts.append(contact["city"])
     if contact.get("linkedin"):
-        contact_parts.append(contact["linkedin"])
+        contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
     if contact_parts:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -760,6 +760,17 @@ def _ltr_wrap(text: str) -> str:
     return '\u202a' + text + '\u202c'
 
 
+def _format_linkedin_display(val: str) -> str:
+    import re
+    v = val.strip()
+    if v.startswith('http'):
+        m = re.search(r'linkedin\.com/in/([^/?#\s]+)', v, re.IGNORECASE)
+        if m:
+            return m.group(1)
+        return re.sub(r'^https?://(www\.)?', '', v).rstrip('/')
+    return v
+
+
 def _is_phone_value(v: str) -> bool:
     import re
     return bool(re.match(r'^\+?[\d\s\-\(\)\.]{6,}$', v.strip()))
@@ -948,11 +959,19 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str 
                     p.paragraph_format.line_spacing = Pt(24)
                     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     _set_docx_rtl(p)
+                    _linkedin_labels = ["פרופיל לינקדין", "פרופיל לינקדאין", "לינקדין", "לינקדאין", "linkedin"]
                     contact_values = []
                     for cl in inline_contact + extra_lines:
                         val = _extract_contact_value(cl)
                         if val:
-                            contact_values.append(_ltr_wrap(val) if _is_phone_value(val) else val)
+                            cl_lower = cl.lower().strip()
+                            is_li = any(cl_lower.startswith(lbl.lower()) for lbl in _linkedin_labels)
+                            if is_li:
+                                contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                            elif _is_phone_value(val):
+                                contact_values.append(_ltr_wrap(val))
+                            else:
+                                contact_values.append(val)
                     if contact_values:
                         p = doc.add_paragraph()
                         run = p.add_run(" | ".join(contact_values))
@@ -1257,7 +1276,7 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
     if contact.get("city"):
         contact_parts.append(contact["city"])
     if contact.get("linkedin"):
-        contact_parts.append(contact["linkedin"])
+        contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
     if contact_parts:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
