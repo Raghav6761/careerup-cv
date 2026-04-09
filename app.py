@@ -212,10 +212,10 @@ def reset_improve():
 
 def reset_build():
     st.session_state.generated_cv = None
-    if "build_form_data" in st.session_state:
-        del st.session_state.build_form_data
-    if "build_target_position" in st.session_state:
-        del st.session_state.build_target_position
+    for _k in ["build_form_data", "build_target_position",
+               "build_max_pages", "build_pages_radio",
+               "build_en_translated", "build_en_translating"]:
+        st.session_state.pop(_k, None)
 
 
 def render_header():

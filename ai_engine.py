@@ -510,12 +510,15 @@ def generate_cv_from_interview(conversation_history: list) -> dict:
     except (json.JSONDecodeError, Exception):
         return {
             "full_name": "",
-            "contact": {"phone": "", "email": "", "city": ""},
+            "contact": {"phone": "", "email": "", "city": "", "linkedin": ""},
             "professional_summary": result[:300],
             "experience": [],
             "education": [],
             "skills": {"technical": [], "soft": []},
             "languages": [],
+            "military": [],
+            "volunteering": [],
+            "projects": [],
             "additional": []
         }
 
@@ -723,13 +726,17 @@ def generate_cv_from_form(form_data: dict, target_position: str = "", max_pages:
             "contact": {
                 "phone": form_data.get("phone", ""),
                 "email": form_data.get("email", ""),
-                "city": form_data.get("city", "")
+                "city": form_data.get("city", ""),
+                "linkedin": form_data.get("linkedin", "")
             },
             "professional_summary": form_data.get("professional_summary", ""),
             "experience": [],
             "education": [],
             "skills": {"technical": [], "soft": []},
             "languages": [],
+            "military": [],
+            "volunteering": [],
+            "projects": [],
             "additional": []
         }
 

@@ -308,7 +308,7 @@ def export_cv_to_pdf(cv_data: dict, max_pages: int = 1) -> bytes:
         if contact.get("city"):
             contact_parts.append(reshape_hebrew(contact["city"]))
         if contact.get("linkedin"):
-            contact_parts.append(contact["linkedin"])
+            contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
         if contact_parts:
             elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
 
@@ -865,11 +865,17 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
                             inline_contact = []
                             extra_lines = contact_only[1:]
                         elements.append(Paragraph(reshape_hebrew(name), styles["name"]))
+                        _linkedin_labels = ["פרופיל לינקדין", "פרופיל לינקדאין", "לינקדין", "לינקדאין", "linkedin"]
                         contact_values = []
                         for cl in inline_contact + extra_lines:
                             val = _extract_contact_value(cl)
                             if val:
-                                contact_values.append(reshape_hebrew(val))
+                                cl_lower = cl.lower().strip()
+                                is_li = any(cl_lower.startswith(lbl.lower()) for lbl in _linkedin_labels)
+                                if is_li:
+                                    contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                                else:
+                                    contact_values.append(reshape_hebrew(val))
                         if contact_values:
                             elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
                         elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
@@ -1119,7 +1125,7 @@ def export_cv_to_pdf_en(cv_data: dict, max_pages: int = 1) -> bytes:
         if contact.get("city"):
             contact_parts.append(contact["city"])
         if contact.get("linkedin"):
-            contact_parts.append(contact["linkedin"])
+            contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
         if contact_parts:
             elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
 
@@ -1478,11 +1484,17 @@ def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "", max_p
                     deferred_military_lines.extend(military_only)
                     if contact_only:
                         elements.append(Paragraph(contact_only[0], styles["name"]))
+                        _linkedin_labels_en = ["linkedin"]
                         contact_values = []
                         for cl in contact_only[1:]:
                             val = _extract_contact_value(cl)
                             if val:
-                                contact_values.append(val)
+                                cl_lower = cl.lower().strip()
+                                is_li = any(cl_lower.startswith(lbl) for lbl in _linkedin_labels_en)
+                                if is_li:
+                                    contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                                else:
+                                    contact_values.append(val)
                         if contact_values:
                             elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
                     elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
@@ -1529,11 +1541,17 @@ def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "", max_p
             deferred_military_lines.extend(military_only)
             if contact_only:
                 elements.append(Paragraph(contact_only[0], styles["name"]))
+                _linkedin_labels_en = ["linkedin"]
                 contact_values = []
                 for cl in contact_only[1:]:
                     val = _extract_contact_value(cl)
                     if val:
-                        contact_values.append(val)
+                        cl_lower = cl.lower().strip()
+                        is_li = any(cl_lower.startswith(lbl) for lbl in _linkedin_labels_en)
+                        if is_li:
+                            contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                        else:
+                            contact_values.append(val)
                 if contact_values:
                     elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
             elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
@@ -1562,11 +1580,17 @@ def _add_docx_personal_block_en(doc, personal_lines):
     p.paragraph_format.space_after = Pt(2)
     p.paragraph_format.line_spacing = Pt(24)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    _linkedin_labels_en = ["linkedin"]
     contact_values = []
     for cl in contact_only[1:]:
         val = _extract_contact_value(cl)
         if val:
-            contact_values.append(val)
+            cl_lower = cl.lower().strip()
+            is_li = any(cl_lower.startswith(lbl) for lbl in _linkedin_labels_en)
+            if is_li:
+                contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+            else:
+                contact_values.append(val)
     if contact_values:
         p = doc.add_paragraph()
         run = p.add_run(" | ".join(contact_values))
