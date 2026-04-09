@@ -469,8 +469,8 @@ def render_improve_review():
             legend = (
                 '<div style="font-size:11px;color:#666;direction:rtl;text-align:right;'
                 'margin-bottom:6px;display:flex;gap:16px;justify-content:flex-end;align-items:center;">'
-                '<span><span style="color:#2b56e0;font-weight:700;">■</span>&nbsp;נוסף</span>'
-                '<span><span style="text-decoration:line-through;color:#aaa;">אאא</span>&nbsp;הוסר</span>'
+                '<span style="color:#2b56e0;font-weight:700;">נוסף</span>'
+                '<span style="text-decoration:line-through;color:#aaa;">הוסר</span>'
                 '</div>'
             )
             st.markdown(legend, unsafe_allow_html=True)
