@@ -146,11 +146,25 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
 
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
+    from docx.oxml.ns import qn
     doc = Document(io.BytesIO(file_bytes))
     text_parts = []
     for para in doc.paragraphs:
-        if para.text.strip():
-            text_parts.append(para.text.strip())
+        para_text = para.text.strip()
+        if not para_text:
+            continue
+        try:
+            hyperlinks = para._element.findall(".//" + qn("w:hyperlink"))
+            for hl in hyperlinks:
+                r_id = hl.get(qn("r:id"))
+                if r_id and r_id in para.part.rels:
+                    rel = para.part.rels[r_id]
+                    url = rel.target_ref
+                    if "linkedin.com" in url.lower() and url not in para_text:
+                        para_text = para_text + " " + url
+        except Exception:
+            pass
+        text_parts.append(para_text)
     return "\n".join(text_parts)
 
 
