@@ -358,13 +358,17 @@ def _parallel_analyze(
     Phase 3: merge results into the standard output dict.
     Raises on Phase 1 failure so caller can fall back to monolithic.
     """
+    import time as _time
+
     # ── Phase 1: parse & metadata ──
     logger.info("Parallel Phase 1: parsing CV into sections + metadata")
+    _t0 = _time.monotonic()
     phase1 = _parse_cv_sections(cv_text, target_instruction, lang_rule, is_english)
+    _t1 = _time.monotonic()
     sections = phase1.get("sections", [])
     if not sections:
         raise ValueError("Phase 1 returned no sections")
-    logger.info(f"Phase 1 complete: {len(sections)} sections, score={phase1.get('score')}")
+    logger.info(f"Phase 1 complete in {_t1 - _t0:.1f}s: {len(sections)} sections, score={phase1.get('score')}")
 
     # ── Phase 2: parallel section improvements ──
     fallback_msg = (
@@ -399,8 +403,27 @@ def _parallel_analyze(
             return idx, original, fallback_msg
 
     logger.info(f"Parallel Phase 2: improving {len(sections)} sections concurrently (max_workers=5)")
+    _t2 = _time.monotonic()
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        results = list(executor.map(_improve_task, enumerate(sections)))
+        futures = [
+            (idx, section, executor.submit(_improve_task, (idx, section)))
+            for idx, section in enumerate(sections)
+        ]
+
+    results = []
+    for idx, section, future in futures:
+        title = section.get("title", f"section_{idx}")
+        try:
+            results.append(future.result(timeout=120))
+        except concurrent.futures.TimeoutError:
+            logger.warning(f"Section '{title}' timed out after 120s — keeping original")
+            results.append((idx, section.get("original", ""), fallback_msg))
+        except Exception as exc:
+            logger.warning(f"Section '{title}' future error: {exc} — keeping original")
+            results.append((idx, section.get("original", ""), fallback_msg))
+
+    _t3 = _time.monotonic()
+    logger.info(f"Phase 2 complete in {_t3 - _t2:.1f}s — total parallel analysis: {_t3 - _t0:.1f}s")
 
     # ── Phase 3: merge ──
     for idx, improved, explanation in results:
