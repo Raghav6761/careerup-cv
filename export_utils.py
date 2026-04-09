@@ -756,6 +756,15 @@ def _is_military_line(line: str) -> bool:
     return False
 
 
+def _is_section_title_line(line: str, section_title: str) -> bool:
+    """True if the line is just a repeat of the section title (with optional trailing colon/punctuation)."""
+    if not line or not section_title:
+        return False
+    norm_line  = line.strip().rstrip(":;–-—. ").strip().lower()
+    norm_title = section_title.strip().rstrip(":;–-—. ").strip().lower()
+    return norm_line == norm_title
+
+
 def _ltr_wrap(text: str) -> str:
     return '\u202a' + text + '\u202c'
 
@@ -888,6 +897,8 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
                     for stripped in render_lines:
                         if not stripped:
                             continue
+                        if _is_section_title_line(stripped, title):
+                            continue
                         if _is_job_header_line(stripped):
                             elements.append(Paragraph(reshape_hebrew(stripped), styles["job_title"]))
                         elif stripped.startswith("-") or stripped.startswith("•"):
@@ -996,6 +1007,8 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str 
                 )
                 for stripped in render_lines:
                     if not stripped:
+                        continue
+                    if _is_section_title_line(stripped, title):
                         continue
                     if _is_job_header_line(stripped):
                         _add_docx_job_header(doc, stripped)
