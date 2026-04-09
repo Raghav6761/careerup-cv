@@ -132,15 +132,26 @@ def _extract_page_text_position_aware(page) -> str:
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
     text_parts = []
+    linkedin_urls = []
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
             page_text = _extract_page_text_position_aware(page)
             if page_text:
                 text_parts.append(page_text)
+            try:
+                for annot in (page.annots or []):
+                    uri = annot.get("uri") or ""
+                    if "linkedin.com" in uri.lower() and uri not in linkedin_urls:
+                        linkedin_urls.append(uri)
+            except Exception:
+                pass
     raw_text = "\n".join(text_parts)
 
     if _is_text_visually_reversed(raw_text):
         raw_text = _fix_reversed_text(raw_text)
+
+    if linkedin_urls:
+        raw_text += "\nlinkedin: " + linkedin_urls[0]
 
     return raw_text
 
