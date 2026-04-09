@@ -809,7 +809,7 @@ def _set_run_ltr(run):
 
 def _add_linkedin_paragraph(doc, li_val: str, font_size: int = 9):
     p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_after = Pt(2)
     p.paragraph_format.line_spacing = Pt(12)
     label = p.add_run("LinkedIn: ")
