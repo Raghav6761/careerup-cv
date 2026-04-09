@@ -559,21 +559,23 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
     contact = cv_data.get("contact", {})
     contact_parts = []
     if contact.get("phone"):
-        contact_parts.append(contact["phone"])
+        contact_parts.append(_ltr_wrap(contact["phone"]))
     if contact.get("email"):
         contact_parts.append(contact["email"])
     if contact.get("city"):
         contact_parts.append(contact["city"])
+    if contact.get("linkedin"):
+        contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
     if contact_parts:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_after = Pt(2)
+        run = p.add_run(" | ".join(contact_parts))
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(85, 85, 85)
+        p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.line_spacing = Pt(12)
         _set_docx_rtl(p)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        _add_contact_runs(p, contact_parts, font_size=9)
-    if contact.get("linkedin"):
-        _add_linkedin_paragraph(doc, _format_linkedin_display(contact["linkedin"]))
 
     _add_docx_hr(doc)
 
@@ -759,89 +761,14 @@ def _ltr_wrap(text: str) -> str:
 
 
 def _format_linkedin_display(val: str) -> str:
-    return val.strip()
-
-
-def _add_docx_hyperlink(paragraph, url: str, text: str, font_size: int = 9, color_hex: str = "0563C1"):
-    from docx.oxml.ns import qn
-    from docx.oxml import OxmlElement
-    HYPERLINK_REL = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
-    try:
-        r_id = paragraph.part.relate_to(url, HYPERLINK_REL, is_external=True)
-        hyperlink = OxmlElement("w:hyperlink")
-        hyperlink.set(qn("r:id"), r_id)
-        wr = OxmlElement("w:r")
-        rPr = OxmlElement("w:rPr")
-        u = OxmlElement("w:u")
-        u.set(qn("w:val"), "single")
-        rPr.append(u)
-        col = OxmlElement("w:color")
-        col.set(qn("w:val"), color_hex)
-        rPr.append(col)
-        sz = OxmlElement("w:sz")
-        sz.set(qn("w:val"), str(font_size * 2))
-        rPr.append(sz)
-        szCs = OxmlElement("w:szCs")
-        szCs.set(qn("w:val"), str(font_size * 2))
-        rPr.append(szCs)
-        wr.append(rPr)
-        t = OxmlElement("w:t")
-        t.text = text
-        wr.append(t)
-        hyperlink.append(wr)
-        paragraph._p.append(hyperlink)
-    except Exception:
-        run = paragraph.add_run(text)
-        run.font.size = Pt(font_size)
-        run.font.color.rgb = RGBColor(5, 99, 193)
-
-
-def _set_run_ltr(run):
-    from docx.oxml.ns import qn
-    from docx.oxml import OxmlElement
-    rPr = run._r.get_or_add_rPr()
-    for existing in rPr.findall(qn("w:rtl")):
-        rPr.remove(existing)
-    el = OxmlElement("w:rtl")
-    el.set(qn("w:val"), "0")
-    rPr.append(el)
-
-
-def _add_linkedin_paragraph(doc, li_val: str, font_size: int = 9):
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.paragraph_format.space_after = Pt(2)
-    p.paragraph_format.line_spacing = Pt(12)
-    label = p.add_run("LinkedIn: ")
-    label.font.size = Pt(font_size)
-    label.font.color.rgb = RGBColor(85, 85, 85)
-    if li_val.startswith("http"):
-        _add_docx_hyperlink(p, li_val, li_val, font_size=font_size)
-    else:
-        vrun = p.add_run(li_val)
-        vrun.font.size = Pt(font_size)
-        vrun.font.color.rgb = RGBColor(85, 85, 85)
-
-
-def _add_contact_runs(paragraph, parts: list, font_size: int = 9,
-                      color: RGBColor = None, is_rtl: bool = True):
-    if color is None:
-        color = RGBColor(85, 85, 85)
-    first = True
-    for part in parts:
-        clean = part.strip("\u202a\u202c")
-        if clean.startswith("LinkedIn:"):
-            continue
-        if not first:
-            sep = paragraph.add_run(" | ")
-            sep.font.size = Pt(font_size)
-            sep.font.color.rgb = color
-        first = False
-        run = paragraph.add_run(clean)
-        run.font.size = Pt(font_size)
-        run.font.color.rgb = color
-        if _is_phone_value(clean):
-            _set_run_ltr(run)
+    import re
+    v = val.strip()
+    if v.startswith('http'):
+        m = re.search(r'linkedin\.com/in/([^/?#\s]+)', v, re.IGNORECASE)
+        if m:
+            return m.group(1)
+        return re.sub(r'^https?://(www\.)?', '', v).rstrip('/')
+    return v
 
 
 def _is_phone_value(v: str) -> bool:
@@ -1034,25 +961,26 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str 
                     _set_docx_rtl(p)
                     _linkedin_labels = ["פרופיל לינקדין", "פרופיל לינקדאין", "לינקדין", "לינקדאין", "linkedin"]
                     contact_values = []
-                    linkedin_val = None
                     for cl in inline_contact + extra_lines:
                         val = _extract_contact_value(cl)
                         if val:
                             cl_lower = cl.lower().strip()
                             is_li = any(cl_lower.startswith(lbl.lower()) for lbl in _linkedin_labels)
                             if is_li:
-                                linkedin_val = _format_linkedin_display(val)
+                                contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                            elif _is_phone_value(val):
+                                contact_values.append(_ltr_wrap(val))
                             else:
                                 contact_values.append(val)
                     if contact_values:
                         p = doc.add_paragraph()
-                        p.paragraph_format.space_after = Pt(2)
+                        run = p.add_run(" | ".join(contact_values))
+                        run.font.size = Pt(9)
+                        run.font.color.rgb = RGBColor(85, 85, 85)
+                        p.paragraph_format.space_after = Pt(6)
                         p.paragraph_format.line_spacing = Pt(12)
                         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         _set_docx_rtl(p)
-                        _add_contact_runs(p, contact_values, font_size=9)
-                    if linkedin_val:
-                        _add_linkedin_paragraph(doc, linkedin_val)
                     _add_docx_hr(doc)
             else:
                 render_lines = (
@@ -1347,14 +1275,16 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
         contact_parts.append(contact["email"])
     if contact.get("city"):
         contact_parts.append(contact["city"])
+    if contact.get("linkedin"):
+        contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
     if contact_parts:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_after = Pt(2)
+        run = p.add_run(" | ".join(contact_parts))
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(85, 85, 85)
+        p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.line_spacing = Pt(12)
-        _add_contact_runs(p, contact_parts, font_size=9)
-    if contact.get("linkedin"):
-        _add_linkedin_paragraph(doc, _format_linkedin_display(contact["linkedin"]))
 
     _add_docx_hr(doc)
 
@@ -1632,26 +1562,19 @@ def _add_docx_personal_block_en(doc, personal_lines):
     p.paragraph_format.space_after = Pt(2)
     p.paragraph_format.line_spacing = Pt(24)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    _li_labels_en = ["linkedin", "פרופיל לינקדין", "פרופיל לינקדאין", "לינקדין", "לינקדאין"]
     contact_values = []
-    linkedin_val = None
     for cl in contact_only[1:]:
         val = _extract_contact_value(cl)
         if val:
-            cl_lower = cl.lower().strip()
-            is_li = any(cl_lower.startswith(lbl.lower()) for lbl in _li_labels_en)
-            if is_li:
-                linkedin_val = _format_linkedin_display(val)
-            else:
-                contact_values.append(val)
+            contact_values.append(val)
     if contact_values:
         p = doc.add_paragraph()
-        p.paragraph_format.space_after = Pt(2)
+        run = p.add_run(" | ".join(contact_values))
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(85, 85, 85)
+        p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.line_spacing = Pt(12)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        _add_contact_runs(p, contact_values, font_size=9)
-    if linkedin_val:
-        _add_linkedin_paragraph(doc, linkedin_val)
     _add_docx_hr(doc)
     return military_only
 

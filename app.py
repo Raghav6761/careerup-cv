@@ -203,7 +203,6 @@ def reset_improve():
     for _k in ["improve_final_sections", "improve_target_position", "improve_language",
                 "improve_max_pages", "improve_pages_radio",
                 "improve_cv_title", "cv_title_input",
-                "improve_linkedin_url", "linkedin_url_input",
                 "improve_en_translated", "improve_en_translating",
                 "_improve_export_cache_key", "_improve_pdf", "_improve_docx",
                 "_improve_pdf_err", "_improve_docx_err",
@@ -653,52 +652,8 @@ def render_improve_export():
         st.session_state.improve_final_sections.append({"title": "סעיף חדש", "final_text": ""})
         st.rerun()
 
-    # LinkedIn URL override — shown when personal section has a name instead of a URL
-    _li_labels_detect = ["linkedin", "לינקדאין", "לינקדין"]
-    _personal_kw = ["פרטים", "אישיים", "personal", "contact"]
-    _personal_sec_idx = None
-    for _i, _sec in enumerate(st.session_state.improve_final_sections):
-        if any(k in _sec["title"].lower() for k in _personal_kw):
-            _personal_sec_idx = _i
-            break
-    if _personal_sec_idx is not None:
-        _ptext = st.session_state.improve_final_sections[_personal_sec_idx]["final_text"]
-        _li_line = next(
-            (ln for ln in _ptext.split("\n")
-             if any(ln.lower().strip().startswith(lbl) for lbl in _li_labels_detect)),
-            None
-        )
-        _li_has_url = _li_line and "http" in _li_line.lower()
-        if not _li_has_url:
-            st.info("💡 זוהה שדה לינקדאין ללא קישור URL — הוסף קישור מלא לפרופיל שלך כדי שיופיע כלחיץ בקובץ:")
-            _li_url_val = st.text_input(
-                "קישור לינקדאין",
-                value=st.session_state.get("improve_linkedin_url", ""),
-                key="linkedin_url_input",
-                placeholder="https://www.linkedin.com/in/your-profile",
-                label_visibility="collapsed",
-            )
-            st.session_state.improve_linkedin_url = _li_url_val
-        else:
-            st.session_state.improve_linkedin_url = ""
-
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
     if st.button("המשך לסידור סעיפים ←", key="go_to_reorder", type="primary", use_container_width=True):
-        # Apply LinkedIn URL override into personal section text
-        _override_url = st.session_state.get("improve_linkedin_url", "").strip()
-        if _override_url and _personal_sec_idx is not None:
-            _ptext = st.session_state.improve_final_sections[_personal_sec_idx]["final_text"]
-            _new_lines = []
-            _replaced = False
-            for _ln in _ptext.split("\n"):
-                if not _replaced and any(_ln.lower().strip().startswith(lbl) for lbl in _li_labels_detect):
-                    _new_lines.append(f"linkedin: {_override_url}")
-                    _replaced = True
-                else:
-                    _new_lines.append(_ln)
-            if not _replaced:
-                _new_lines.append(f"linkedin: {_override_url}")
-            st.session_state.improve_final_sections[_personal_sec_idx]["final_text"] = "\n".join(_new_lines)
         go_to("improve_reorder")
         st.rerun()
 
