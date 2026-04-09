@@ -1,6 +1,6 @@
 import re
 import base64
-import difflib
+from collections import Counter
 import html as html_lib
 import streamlit as st
 import streamlit.components.v1 as components
@@ -98,13 +98,19 @@ def _format_improved_html(text: str) -> str:
 def _word_diff_html(original: str, improved: str, mode: str) -> str:
     """
     Return HTML of text with word-level diff highlights.
-    mode='original': removed words (in orig, not in improved) → orange #fde68a
-    mode='improved': added words (in improved, not in orig)   → green  #bbf7d0
+    mode='original': words that appear more in orig than improved → yellow #fde68a
+    mode='improved': words that appear more in improved than orig → green  #bbf7d0
     Preserves newlines as <br> tags.
+
+    Uses frequency-based comparison (Counter) instead of sequence-based diff so
+    words that merely moved position are NOT highlighted — only truly removed or
+    added words are marked.
     """
-    # Tokenize into words, whitespace runs, and newlines (kept as separate tokens)
     def _tok(text: str):
         return re.findall(r"\n|[^\S\n]+|[^\s]+", text)
+
+    def _norm(token: str) -> str:
+        return re.sub(r"^[\W_]+|[\W_]+$", "", token, flags=re.UNICODE).lower()
 
     if mode not in ("original", "improved"):
         raise ValueError(f"_word_diff_html: mode must be 'original' or 'improved', got {mode!r}")
@@ -112,56 +118,48 @@ def _word_diff_html(original: str, improved: str, mode: str) -> str:
     orig_tok = _tok(original)
     impr_tok = _tok(improved)
 
-    sm = difflib.SequenceMatcher(None, orig_tok, impr_tok, autojunk=False)
-    parts = []
+    orig_counts = Counter(_norm(t) for t in orig_tok if t.strip())
+    impr_counts = Counter(_norm(t) for t in impr_tok if t.strip())
+    orig_counts.pop("", None)
+    impr_counts.pop("", None)
+
+    removed_budget = {w: max(0, orig_counts[w] - impr_counts.get(w, 0)) for w in orig_counts}
+    added_budget   = {w: max(0, impr_counts[w] - orig_counts.get(w, 0)) for w in impr_counts}
+
+    used_removed: Counter = Counter()
+    used_added:   Counter = Counter()
 
     DEL_STYLE = "background:#fde68a;border-radius:3px;padding:0 2px;display:inline;direction:rtl;unicode-bidi:isolate;"
     ADD_STYLE = "background:#bbf7d0;border-radius:3px;padding:0 2px;display:inline;direction:rtl;unicode-bidi:isolate;"
 
-    for tag, i1, i2, j1, j2 in sm.get_opcodes():
-        if tag == "equal":
-            for t in orig_tok[i1:i2]:
-                parts.append("<br>" if t == "\n" else html_lib.escape(t))
+    parts = []
 
-        elif tag == "delete":
-            if mode == "original":
-                for t in orig_tok[i1:i2]:
-                    if t == "\n":
-                        parts.append("<br>")
-                    elif t.strip():
-                        parts.append(f'<span style="{DEL_STYLE}">{html_lib.escape(t)}</span>')
-                    else:
-                        parts.append(html_lib.escape(t))
-            # mode='improved' — deleted tokens don't appear in the improved text, skip
-
-        elif tag == "insert":
-            if mode == "improved":
-                for t in impr_tok[j1:j2]:
-                    if t == "\n":
-                        parts.append("<br>")
-                    elif t.strip():
-                        parts.append(f'<span style="{ADD_STYLE}">{html_lib.escape(t)}</span>')
-                    else:
-                        parts.append(html_lib.escape(t))
-            # mode='original' — inserted tokens don't appear in the original text, skip
-
-        elif tag == "replace":
-            if mode == "original":
-                for t in orig_tok[i1:i2]:
-                    if t == "\n":
-                        parts.append("<br>")
-                    elif t.strip():
-                        parts.append(f'<span style="{DEL_STYLE}">{html_lib.escape(t)}</span>')
-                    else:
-                        parts.append(html_lib.escape(t))
-            else:  # mode='improved'
-                for t in impr_tok[j1:j2]:
-                    if t == "\n":
-                        parts.append("<br>")
-                    elif t.strip():
-                        parts.append(f'<span style="{ADD_STYLE}">{html_lib.escape(t)}</span>')
-                    else:
-                        parts.append(html_lib.escape(t))
+    if mode == "original":
+        for t in orig_tok:
+            if t == "\n":
+                parts.append("<br>")
+            elif t.strip():
+                w = _norm(t)
+                if w and removed_budget.get(w, 0) > used_removed[w]:
+                    parts.append(f'<span style="{DEL_STYLE}">{html_lib.escape(t)}</span>')
+                    used_removed[w] += 1
+                else:
+                    parts.append(html_lib.escape(t))
+            else:
+                parts.append(html_lib.escape(t))
+    else:  # mode == "improved"
+        for t in impr_tok:
+            if t == "\n":
+                parts.append("<br>")
+            elif t.strip():
+                w = _norm(t)
+                if w and added_budget.get(w, 0) > used_added[w]:
+                    parts.append(f'<span style="{ADD_STYLE}">{html_lib.escape(t)}</span>')
+                    used_added[w] += 1
+                else:
+                    parts.append(html_lib.escape(t))
+            else:
+                parts.append(html_lib.escape(t))
 
     return "".join(parts)
 
