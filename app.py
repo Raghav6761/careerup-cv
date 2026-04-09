@@ -387,26 +387,35 @@ def render_improve_upload():
                 sections_count = None
                 sections_done  = 0
 
-                for event in analyze_cv_streaming(
-                    cv_text,
-                    target_position=st.session_state.improve_target_position,
-                    language=lang,
-                    max_pages=max_pages,
-                ):
-                    if event["type"] == "metadata":
-                        sections_count = event["sections_count"]
-                        prog_bar.progress(20)
-                        prog_text.markdown(f"✅ זוהו **{sections_count} סעיפים** — מנסח שיפורים...")
+                try:
+                    for event in analyze_cv_streaming(
+                        cv_text,
+                        target_position=st.session_state.improve_target_position,
+                        language=lang,
+                        max_pages=max_pages,
+                    ):
+                        if event["type"] == "metadata":
+                            sections_count = event["sections_count"]
+                            prog_bar.progress(20)
+                            prog_text.markdown(f"✅ זוהו **{sections_count} סעיפים** — מנסח שיפורים...")
 
-                    elif event["type"] == "section":
-                        sections_done += 1
-                        title = event["title"]
-                        pct = 20 + int((sections_done / sections_count) * 70) if sections_count else min(90, 20 + sections_done * 10)
-                        prog_bar.progress(min(pct, 90))
-                        prog_text.markdown(f"✅ **{title}** ({sections_done}/{sections_count or '?'})")
+                        elif event["type"] == "section":
+                            sections_done += 1
+                            title = event["title"]
+                            pct = 20 + int((sections_done / sections_count) * 70) if sections_count else min(90, 20 + sections_done * 10)
+                            prog_bar.progress(min(pct, 90))
+                            prog_text.markdown(f"✅ סיים: **{title}** — {sections_done}/{sections_count or '?'}")
 
-                    elif event["type"] == "done":
-                        result = event["result"]
+                        elif event["type"] == "done":
+                            result = event["result"]
+
+                except Exception as stream_err:
+                    import logging as _logging
+                    _logging.getLogger(__name__).warning(f"Streaming failed ({stream_err}), falling back to analyze_cv()")
+                    from ai_engine import analyze_cv
+                    prog_bar.progress(25)
+                    prog_text.markdown("🤖 הבינה המלאכותית מנתחת... (עשוי לקחת כמה דקות)")
+                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang, max_pages=max_pages)
 
                 # Step 3: complete
                 prog_bar.progress(100)
