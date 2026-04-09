@@ -357,6 +357,7 @@ def render_improve_upload():
             try:
                 from file_processor import process_uploaded_file
                 from ai_engine import analyze_cv
+                from streamlit.runtime.scriptrunner import add_script_run_ctx
 
                 prog_bar  = st.progress(0)
                 prog_text = st.empty()
@@ -379,6 +380,8 @@ def render_improve_upload():
                 prog_text.markdown("🤖 שולח לבינה המלאכותית...")
 
                 # Auto-advance: slowly fills 20 → 82 % while AI runs (~1 % per 1.8 s)
+                # add_script_run_ctx attaches the current Streamlit session context
+                # to the worker thread so st.* calls inside are safe and reliable.
                 _stop = threading.Event()
                 _val  = [20]
 
@@ -391,14 +394,18 @@ def render_improve_upload():
                             prog_text.markdown("🤖 הבינה המלאכותית מנתחת... (עשוי לקחת כמה דקות)")
 
                 _t = threading.Thread(target=_crawl, daemon=True)
+                add_script_run_ctx(_t)
                 _t.start()
 
-                lang = st.session_state.get("improve_language", "he")
-                max_pages = st.session_state.get("improve_max_pages", 1)
-                result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang, max_pages=max_pages)
-
-                _stop.set()
-                _t.join(timeout=2)
+                result = None
+                try:
+                    lang = st.session_state.get("improve_language", "he")
+                    max_pages = st.session_state.get("improve_max_pages", 1)
+                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang, max_pages=max_pages)
+                finally:
+                    # Always stop the crawl thread, whether AI succeeded or raised
+                    _stop.set()
+                    _t.join(timeout=2)
 
                 # Step 3: processing results
                 prog_bar.progress(90)
