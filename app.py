@@ -126,7 +126,7 @@ def _word_diff_html(original: str, improved: str, mode: str) -> str:
         return "".join(parts)
 
     DEL_STYLE = (
-        "text-decoration:line-through;color:#aaa;"
+        "text-decoration:line-through;color:#1a1a1a;"
         "display:inline;direction:rtl;unicode-bidi:isolate;"
     )
     ADD_STYLE = (
@@ -523,7 +523,7 @@ def render_improve_review():
                 '<div style="font-size:11px;color:#666;direction:rtl;text-align:right;'
                 'margin-bottom:6px;display:flex;gap:16px;justify-content:flex-end;align-items:center;">'
                 '<span style="color:#2b56e0;font-weight:700;">נוסף</span>'
-                '<span style="text-decoration:line-through;color:#aaa;">הוסר</span>'
+                '<span style="text-decoration:line-through;color:#1a1a1a;">הוסר</span>'
                 '</div>'
             )
             st.markdown(legend, unsafe_allow_html=True)
