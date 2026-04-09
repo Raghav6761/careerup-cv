@@ -479,7 +479,13 @@ def _parallel_analyze(
     }
 
 
-def analyze_cv(cv_text: str, target_position: str = "", language: str = "he", max_pages: int = 1) -> dict:
+def _build_cv_params(
+    cv_text: str,
+    target_position: str,
+    language: str,
+    max_pages: int,
+) -> dict:
+    """Build all AI prompt parameters for CV analysis (shared by streaming + monolithic paths)."""
     is_english = (language == "en")
 
     if target_position.strip():
@@ -571,20 +577,39 @@ No specific job provided:
         "שאף להכניס לעמוד אחד. אם הניסיון עשיר - עדיף לגלוש לעמוד שני על פני השמטת תוכן חשוב"
     )
 
-    # ── Try parallel two-phase approach ──
+    return {
+        "cv_text":             cv_text,
+        "is_english":          is_english,
+        "expert_intro":        expert_intro,
+        "work_context":        work_context,
+        "target_instruction":  target_instruction,
+        "lang_rule":           lang_rule,
+        "content_limits_block": content_limits_block,
+        "_pages_tech_note":    _pages_tech_note,
+    }
+
+
+def analyze_cv(cv_text: str, target_position: str = "", language: str = "he", max_pages: int = 1) -> dict:
+    # ── Try streaming parallel approach ──
     try:
-        return _parallel_analyze(
-            cv_text=cv_text,
-            is_english=is_english,
-            expert_intro=expert_intro,
-            work_context=work_context,
-            target_instruction=target_instruction,
-            lang_rule=lang_rule,
-            content_limits_block=content_limits_block,
-            _pages_tech_note=_pages_tech_note,
-        )
+        result = None
+        for event in analyze_cv_streaming(cv_text, target_position, language, max_pages):
+            if event["type"] == "done":
+                result = event["result"]
+        if result is not None:
+            return result
     except Exception as parallel_err:
         logger.warning(f"Parallel analysis failed ({parallel_err}), falling back to monolithic call")
+
+    # ── Monolithic fallback: unpack params ──
+    _p                   = _build_cv_params(cv_text, target_position, language, max_pages)
+    is_english           = _p["is_english"]
+    expert_intro         = _p["expert_intro"]
+    work_context         = _p["work_context"]
+    target_instruction   = _p["target_instruction"]
+    lang_rule            = _p["lang_rule"]
+    content_limits_block = _p["content_limits_block"]
+    _pages_tech_note     = _p["_pages_tech_note"]
 
     # ── Monolithic fallback (original single-call approach) ──
     system_prompt = f"""{expert_intro}
@@ -743,6 +768,147 @@ No specific job provided:
             "keywords_to_add": [],
             "score": 50
         }
+
+
+def analyze_cv_streaming(
+    cv_text: str,
+    target_position: str = "",
+    language: str = "he",
+    max_pages: int = 1,
+):
+    """
+    Generator: yields analysis progress events as sections are completed in parallel.
+
+    Event types (in order):
+      {"type": "metadata", "score": int, "general_tips": [...],
+       "keywords_to_add": [...], "sections_count": int}
+
+      {"type": "section", "idx": int, "title": str,
+       "original": str, "improved": str, "explanation": str}
+       — yielded for each section AS SOON AS it finishes (fastest-first order)
+
+      {"type": "done", "result": full_result_dict}
+
+    Raises ValueError / any exception on Phase 1 failure so analyze_cv()
+    can fall back to the monolithic path.
+    """
+    import time as _time
+
+    p = _build_cv_params(cv_text, target_position, language, max_pages)
+    is_english           = p["is_english"]
+    expert_intro         = p["expert_intro"]
+    work_context         = p["work_context"]
+    target_instruction   = p["target_instruction"]
+    lang_rule            = p["lang_rule"]
+    content_limits_block = p["content_limits_block"]
+    _pages_tech_note     = p["_pages_tech_note"]
+
+    # ── Phase 1: section discovery ──
+    _t0 = _time.monotonic()
+    logger.info("Streaming Phase 1: discovering sections")
+    phase1 = _parse_cv_sections(cv_text, target_instruction, lang_rule, is_english)
+    _t1 = _time.monotonic()
+
+    raw_sections = phase1.get("sections", [])
+    sections = [
+        {"title": t} if isinstance(t, str)
+        else {"title": t.get("title", f"section_{i}")} if isinstance(t, dict)
+        else {"title": f"section_{i}"}
+        for i, t in enumerate(raw_sections)
+    ]
+    if not sections:
+        raise ValueError("Phase 1 returned no sections")
+
+    logger.info(f"Streaming Phase 1 done in {_t1 - _t0:.1f}s: {len(sections)} sections, score={phase1.get('score')}")
+
+    yield {
+        "type":            "metadata",
+        "score":           phase1.get("score", 50),
+        "general_tips":    phase1.get("general_tips", []),
+        "keywords_to_add": phase1.get("keywords_to_add", []),
+        "sections_count":  len(sections),
+    }
+
+    # ── Phase 2: parallel improvement, yield each section as it completes ──
+    fallback_msg = (
+        "Could not auto-improve this section — edit manually"
+        if is_english else
+        "לא הצלחנו לשפר סעיף זה אוטומטית — ניתן לערוך ידנית"
+    )
+
+    def _make_task(idx: int, section: dict) -> tuple:
+        title = section.get("title", f"section_{idx}")
+        try:
+            res = _improve_one_section(
+                section_title=title,
+                cv_text=cv_text,
+                expert_intro=expert_intro,
+                work_context=work_context,
+                target_instruction=target_instruction,
+                lang_rule=lang_rule,
+                content_limits_block=content_limits_block,
+                _pages_tech_note=_pages_tech_note,
+                is_english=is_english,
+            )
+            original    = (res.get("original") or "").strip()
+            improved    = (res.get("improved")  or "").strip() or original
+            explanation = res.get("explanation", "")
+            return idx, original, improved, explanation
+        except Exception as exc:
+            logger.warning(f"Section '{title}' failed in streaming: {exc}")
+            extracted = _extract_section_from_cv(cv_text, title)
+            return idx, extracted, extracted, fallback_msg
+
+    _t2 = _time.monotonic()
+    logger.info(f"Streaming Phase 2: {len(sections)} sections, max_workers=5, using as_completed")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_map = {
+            executor.submit(_make_task, idx, section): (idx, section)
+            for idx, section in enumerate(sections)
+        }
+        for future in concurrent.futures.as_completed(future_map):
+            idx_key, section = future_map[future]
+            title = section.get("title", f"section_{idx_key}")
+            try:
+                res_idx, original, improved, explanation = future.result(timeout=120)
+            except concurrent.futures.TimeoutError:
+                logger.warning(f"Streaming: section '{title}' timed out")
+                extracted = _extract_section_from_cv(cv_text, title)
+                res_idx, original, improved, explanation = idx_key, extracted, extracted, fallback_msg
+            except Exception as exc:
+                logger.warning(f"Streaming: section '{title}' future error: {exc}")
+                extracted = _extract_section_from_cv(cv_text, title)
+                res_idx, original, improved, explanation = idx_key, extracted, extracted, fallback_msg
+
+            sections[res_idx]["original"]    = original
+            sections[res_idx]["improved"]    = improved
+            sections[res_idx]["explanation"] = explanation
+            if not sections[res_idx].get("original", "").strip():
+                sections[res_idx]["original"] = improved
+
+            logger.info(f"Streaming: '{title}' done — {len(improved)} chars improved")
+            yield {
+                "type":        "section",
+                "idx":         res_idx,
+                "title":       sections[res_idx]["title"],
+                "original":    original,
+                "improved":    improved,
+                "explanation": explanation,
+            }
+
+    _t3 = _time.monotonic()
+    logger.info(f"Streaming Phase 2 done in {_t3 - _t2:.1f}s — total: {_t3 - _t0:.1f}s")
+
+    yield {
+        "type": "done",
+        "result": {
+            "sections":        sections,
+            "general_tips":    phase1.get("general_tips", []),
+            "keywords_to_add": phase1.get("keywords_to_add", []),
+            "score":           phase1.get("score", 50),
+        },
+    }
 
 
 def get_interview_question(conversation_history: list, step: int) -> str:

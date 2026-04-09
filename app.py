@@ -358,11 +358,7 @@ def render_improve_upload():
             prog_text = None
             try:
                 from file_processor import process_uploaded_file
-                from ai_engine import analyze_cv
-                try:
-                    from streamlit.runtime.scriptrunner import add_script_run_ctx as _add_ctx
-                except ImportError:
-                    _add_ctx = None
+                from ai_engine import analyze_cv_streaming
 
                 prog_bar  = st.progress(0)
                 prog_text = st.empty()
@@ -380,45 +376,39 @@ def render_improve_upload():
 
                 st.session_state.cv_text = cv_text
 
-                # Step 2: hand off to AI
-                prog_bar.progress(20)
-                prog_text.markdown("🤖 שולח לבינה המלאכותית...")
+                # Step 2: stream AI analysis — progress updates per completed section
+                prog_text.markdown("🤖 שולח לבינה המלאכותית — מזהה סעיפים...")
+                prog_bar.progress(10)
 
-                # Auto-advance: slowly fills 20 → 82 % while AI runs (~1 % per 1.8 s)
-                # add_script_run_ctx attaches the current Streamlit session context
-                # to the worker thread so st.* calls inside are safe and reliable.
-                _stop = threading.Event()
-                _val  = [20]
+                lang      = st.session_state.get("improve_language", "he")
+                max_pages = st.session_state.get("improve_max_pages", 1)
 
-                def _crawl():
-                    while not _stop.is_set() and _val[0] < 82:
-                        time.sleep(1.8)
-                        if not _stop.is_set():
-                            _val[0] = min(82, _val[0] + 1)
-                            prog_bar.progress(_val[0])
-                            prog_text.markdown("🤖 הבינה המלאכותית מנתחת... (עשוי לקחת כמה דקות)")
+                result         = None
+                sections_count = None
+                sections_done  = 0
 
-                _t = threading.Thread(target=_crawl, daemon=True)
-                if _add_ctx is not None:
-                    _add_ctx(_t)
-                _t.start()
+                for event in analyze_cv_streaming(
+                    cv_text,
+                    target_position=st.session_state.improve_target_position,
+                    language=lang,
+                    max_pages=max_pages,
+                ):
+                    if event["type"] == "metadata":
+                        sections_count = event["sections_count"]
+                        prog_bar.progress(20)
+                        prog_text.markdown(f"✅ זוהו **{sections_count} סעיפים** — מנסח שיפורים...")
 
-                result = None
-                try:
-                    lang = st.session_state.get("improve_language", "he")
-                    max_pages = st.session_state.get("improve_max_pages", 1)
-                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang, max_pages=max_pages)
-                finally:
-                    # Always stop the crawl thread, whether AI succeeded or raised
-                    _stop.set()
-                    _t.join(timeout=2)
+                    elif event["type"] == "section":
+                        sections_done += 1
+                        title = event["title"]
+                        pct = 20 + int((sections_done / sections_count) * 70) if sections_count else min(90, 20 + sections_done * 10)
+                        prog_bar.progress(min(pct, 90))
+                        prog_text.markdown(f"✅ **{title}** ({sections_done}/{sections_count or '?'})")
 
-                # Step 3: processing results
-                prog_bar.progress(90)
-                prog_text.markdown("📊 מזהה סעיפים ומנסח הצעות שיפור...")
-                time.sleep(0.35)
+                    elif event["type"] == "done":
+                        result = event["result"]
 
-                # Step 4: complete
+                # Step 3: complete
                 prog_bar.progress(100)
                 prog_text.markdown("✅ הניתוח הושלם!")
                 time.sleep(0.45)
