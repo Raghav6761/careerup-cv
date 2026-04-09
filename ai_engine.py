@@ -330,6 +330,45 @@ Full CV:
     return _safe_json_parse(_strip_code_fences(raw))
 
 
+def _extract_section_from_cv(cv_text: str, section_title: str) -> str:
+    """
+    Heuristic fallback: locate `section_title` in `cv_text` and return the
+    lines that belong to that section (up to the next blank-line-separated
+    block that looks like a new section heading).  Returns an empty string
+    if nothing can be found.
+    """
+    lines = cv_text.splitlines()
+    # Find the line index where the title appears (case-insensitive)
+    title_lower = section_title.strip().lower()
+    start_idx = None
+    for i, line in enumerate(lines):
+        if title_lower in line.strip().lower():
+            start_idx = i
+            break
+    if start_idx is None:
+        return ""
+    # Collect lines until we hit a blank line followed by a short ALL-CAPS /
+    # title-cased line (likely the next section header), or end of text.
+    collected = [lines[start_idx]]
+    blank_streak = 0
+    for line in lines[start_idx + 1:]:
+        stripped = line.strip()
+        if stripped == "":
+            blank_streak += 1
+            if blank_streak >= 2:
+                break
+            collected.append(line)
+            continue
+        blank_streak = 0
+        # Heuristic: a short line (≤ 40 chars) without punctuation is likely a header
+        if len(stripped) <= 40 and stripped == stripped.title() and stripped not in collected:
+            # Peek — if collected already has content, treat as next section
+            if len(collected) > 1:
+                break
+        collected.append(line)
+    return "\n".join(collected).strip()
+
+
 def _parallel_analyze(
     cv_text: str,
     is_english: bool,
@@ -355,9 +394,11 @@ def _parallel_analyze(
     phase1 = _parse_cv_sections(cv_text, target_instruction, lang_rule, is_english)
     _t1 = _time.monotonic()
     raw_sections = phase1.get("sections", [])
-    # Phase 1 now returns a plain list of title strings; handle both formats robustly
+    # Phase 1 now returns a plain list of title strings; handle all formats robustly
     sections = [
-        {"title": t} if isinstance(t, str) else {"title": t.get("title", f"section_{i}")}
+        {"title": t} if isinstance(t, str)
+        else {"title": t.get("title", f"section_{i}")} if isinstance(t, dict)
+        else {"title": f"section_{i}"}
         for i, t in enumerate(raw_sections)
     ]
     if not sections:
@@ -393,7 +434,8 @@ def _parallel_analyze(
             return idx, original, improved, explanation
         except Exception as exc:
             logger.warning(f"Section '{title}' improvement failed: {exc}")
-            return idx, "", "", fallback_msg
+            extracted = _extract_section_from_cv(cv_text, title)
+            return idx, extracted, extracted, fallback_msg
 
     logger.info(f"Parallel Phase 2: improving {len(sections)} sections concurrently (max_workers=5)")
     _t2 = _time.monotonic()
@@ -410,10 +452,12 @@ def _parallel_analyze(
             results.append(future.result(timeout=120))
         except concurrent.futures.TimeoutError:
             logger.warning(f"Section '{title}' timed out after 120s")
-            results.append((idx, "", "", fallback_msg))
+            extracted = _extract_section_from_cv(cv_text, title)
+            results.append((idx, extracted, extracted, fallback_msg))
         except Exception as exc:
             logger.warning(f"Section '{title}' future error: {exc}")
-            results.append((idx, "", "", fallback_msg))
+            extracted = _extract_section_from_cv(cv_text, title)
+            results.append((idx, extracted, extracted, fallback_msg))
 
     _t3 = _time.monotonic()
     logger.info(f"Phase 2 complete in {_t3 - _t2:.1f}s — total parallel analysis: {_t3 - _t0:.1f}s")
