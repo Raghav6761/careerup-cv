@@ -134,17 +134,19 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
     text_parts = []
     linkedin_urls = []
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        for page in pdf.pages:
+        for page_idx, page in enumerate(pdf.pages):
             page_text = _extract_page_text_position_aware(page)
             if page_text:
                 text_parts.append(page_text)
-            try:
-                for annot in (page.annots or []):
-                    uri = annot.get("uri") or ""
-                    if "linkedin.com" in uri.lower() and uri not in linkedin_urls:
-                        linkedin_urls.append(uri)
-            except Exception:
-                pass
+            if page_idx == 0 and not linkedin_urls:
+                try:
+                    for annot in (page.annots or []):
+                        uri = annot.get("uri") or ""
+                        if "linkedin.com" in uri.lower():
+                            linkedin_urls.append(uri)
+                            break
+                except Exception:
+                    pass
     raw_text = "\n".join(text_parts)
 
     if _is_text_visually_reversed(raw_text):
@@ -160,21 +162,24 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
     from docx.oxml.ns import qn
     doc = Document(io.BytesIO(file_bytes))
     text_parts = []
+    linkedin_found = False
     for para in doc.paragraphs:
         para_text = para.text.strip()
         if not para_text:
             continue
-        try:
-            hyperlinks = para._element.findall(".//" + qn("w:hyperlink"))
-            for hl in hyperlinks:
-                r_id = hl.get(qn("r:id"))
-                if r_id and r_id in para.part.rels:
-                    rel = para.part.rels[r_id]
-                    url = rel.target_ref
-                    if "linkedin.com" in url.lower() and url not in para_text:
-                        para_text = para_text + " " + url
-        except Exception:
-            pass
+        if not linkedin_found and "linkedin" in para_text.lower():
+            try:
+                hyperlinks = para._element.findall(".//" + qn("w:hyperlink"))
+                for hl in hyperlinks:
+                    r_id = hl.get(qn("r:id"))
+                    if r_id and r_id in para.part.rels:
+                        url = para.part.rels[r_id].target_ref
+                        if "linkedin.com" in url.lower() and url not in para_text:
+                            para_text = para_text + " " + url
+                            linkedin_found = True
+                            break
+            except Exception:
+                pass
         text_parts.append(para_text)
     return "\n".join(text_parts)
 
