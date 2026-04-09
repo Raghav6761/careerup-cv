@@ -1,5 +1,7 @@
 import re
 import base64
+import time
+import threading
 import difflib
 import html as html_lib
 import streamlit as st
@@ -356,26 +358,60 @@ def render_improve_upload():
                 from file_processor import process_uploaded_file
                 from ai_engine import analyze_cv
 
-                with st.status("מנתח את קורות החיים שלך...", expanded=True) as status:
-                    st.write("📂 מעבד את הקובץ...")
-                    cv_text = process_uploaded_file(uploaded_file)
+                prog_bar  = st.progress(0)
+                prog_text = st.empty()
 
-                    if not cv_text.strip():
-                        st.error("לא הצלחנו לחלץ טקסט מהקובץ. נסה קובץ אחר.")
-                        return
+                # Step 1: file processing
+                prog_text.markdown("📂 מעבד את הקובץ...")
+                prog_bar.progress(5)
+                cv_text = process_uploaded_file(uploaded_file)
 
-                    st.session_state.cv_text = cv_text
+                if not cv_text.strip():
+                    prog_bar.empty()
+                    prog_text.empty()
+                    st.error("לא הצלחנו לחלץ טקסט מהקובץ. נסה קובץ אחר.")
+                    return
 
-                    st.write("🤖 הבינה המלאכותית מנתחת... (עשוי לקחת כמה דקות)")
-                    st.write("🔍 קורא את קורות החיים...")
-                    st.write("📊 מזהה סעיפים ומנסח הצעות שיפור...")
+                st.session_state.cv_text = cv_text
 
-                    lang = st.session_state.get("improve_language", "he")
-                    max_pages = st.session_state.get("improve_max_pages", 1)
-                    result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang, max_pages=max_pages)
+                # Step 2: hand off to AI
+                prog_bar.progress(20)
+                prog_text.markdown("🤖 שולח לבינה המלאכותית...")
 
-                    st.write("✅ הניתוח הושלם!")
-                    status.update(label="הניתוח הושלם!", state="complete")
+                # Auto-advance: slowly fills 20 → 82 % while AI runs (~1 % per 1.8 s)
+                _stop = threading.Event()
+                _val  = [20]
+
+                def _crawl():
+                    while not _stop.is_set() and _val[0] < 82:
+                        time.sleep(1.8)
+                        if not _stop.is_set():
+                            _val[0] = min(82, _val[0] + 1)
+                            prog_bar.progress(_val[0])
+                            prog_text.markdown("🤖 הבינה המלאכותית מנתחת... (עשוי לקחת כמה דקות)")
+
+                _t = threading.Thread(target=_crawl, daemon=True)
+                _t.start()
+
+                lang = st.session_state.get("improve_language", "he")
+                max_pages = st.session_state.get("improve_max_pages", 1)
+                result = analyze_cv(cv_text, target_position=st.session_state.improve_target_position, language=lang, max_pages=max_pages)
+
+                _stop.set()
+                _t.join(timeout=2)
+
+                # Step 3: processing results
+                prog_bar.progress(90)
+                prog_text.markdown("📊 מזהה סעיפים ומנסח הצעות שיפור...")
+                time.sleep(0.35)
+
+                # Step 4: complete
+                prog_bar.progress(100)
+                prog_text.markdown("✅ הניתוח הושלם!")
+                time.sleep(0.45)
+
+                prog_bar.empty()
+                prog_text.empty()
 
                 st.session_state.analysis_result = result
                 st.session_state.section_decisions = {}
