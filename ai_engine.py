@@ -2,6 +2,7 @@ import os
 import re
 import json
 import logging
+import concurrent.futures
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 
@@ -123,6 +124,300 @@ def _safe_json_parse(text: str) -> dict:
         raise
 
 
+def _strip_code_fences(text: str) -> str:
+    """Remove markdown code fences from an AI JSON response."""
+    text = text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    if text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
+def _parse_cv_sections(
+    cv_text: str,
+    target_instruction: str,
+    lang_rule: str,
+    is_english: bool,
+) -> dict:
+    """
+    Phase 1 — Parse & Metadata.
+    Single fast AI call: extracts section titles + original text, calculates
+    score, generates general_tips and keywords_to_add.
+    Does NOT write any improved content — output is small (~300-600 tokens).
+    Raises json.JSONDecodeError on parse failure so caller can fall back.
+    """
+    if is_english:
+        system_prompt = f"""You are a CV analysis expert. Your task in this step is to PARSE ONLY — do NOT write any improved content.
+{target_instruction}
+
+Rules:
+{lang_rule}
+* Do NOT create sections that do not exist in the CV.
+* Never write 'Not specified', 'N/A', 'None', 'Not provided' or any placeholder.
+* Copy the EXACT original text for each section — do not paraphrase or improve.
+* Merge all contact information (name, phone, email, LinkedIn, city) into a single "Personal Details" section.
+* Identify ALL distinct sections present in the CV.
+
+Score rubric (0-100, sum exactly):
+- Contact details (0-10): name + phone + email = 10, one missing = 5, none = 0
+- Professional summary (0-15): present and strong = 15, weak = 8, absent = 0
+- Work experience (0-35): 2+ positions with achievements + dates = 35, 2+ without achievements = 20, 1 position = 15, none = 0
+- Education (0-15): degree + institution + years = 15, partial = 8, absent = 0
+- Skills (0-15): 5+ skills = 15, 1-4 = 8, absent = 0
+- Languages (0-5): at least 1 with proficiency level = 5, without level = 3, absent = 0
+- Bonus (0-5): LinkedIn / volunteering / projects = 5
+
+Return JSON only (no markdown, no code fences):
+{{
+  "sections": [
+    {{"title": "Section Name", "original": "Exact original text from the CV"}}
+  ],
+  "general_tips": ["tip 1", "tip 2"],
+  "keywords_to_add": ["keyword 1"],
+  "score": 72
+}}"""
+        user_prompt = f"""Parse this CV into its sections. Copy the exact original text for each.
+
+---
+{cv_text}
+---"""
+    else:
+        system_prompt = f"""אתה מומחה לניתוח קורות חיים. משימתך בשלב זה היא לפרק בלבד — אל תכתוב תוכן משופר.
+{target_instruction}
+
+כללים:
+{lang_rule}
+* אל תיצור סעיפים שאינם קיימים בקורות החיים.
+* לא לכתוב "לא צוין", "לא סופק" או כל טקסט ממלא מקום.
+* העתק את הטקסט המקורי המדויק לכל סעיף — אל תנסח מחדש.
+* כותרת הסעיף הראשון תמיד תהיה בדיוק "פרטים אישיים" — מזג לתוכו את כל פרטי הקשר.
+* זהה את כל הסעיפים הנפרדים הקיימים בקורות החיים.
+* אם קיים סעיף "שונות" — כלול אותו כסעיף בפני עצמו.
+
+רובריקת ציון (0-100, חבר במדויק):
+- פרטי קשר (0-10): שם + טלפון + אימייל = 10, חסר אחד = 5, אין כלל = 0
+- תקציר מקצועי (0-15): קיים ואיכותי עם זהות מקצועית = 15, קיים אך חלש = 8, לא קיים = 0
+- ניסיון תעסוקתי (0-35): 2+ תפקידים עם הישגים ותאריכים = 35, 2+ ללא הישגים = 20, תפקיד אחד = 15, אין = 0
+- השכלה (0-15): תואר + מוסד + שנים = 15, חלקי = 8, לא קיים = 0
+- מיומנויות (0-15): 5+ מיומנויות = 15, 1-4 = 8, לא קיים = 0
+- שפות (0-5): שפה אחת לפחות עם רמה = 5, ללא רמה = 3, לא קיים = 0
+- בונוס (0-5): לינקדאין / התנדבות / פרויקטים = 5
+- אם בקורות החיים אין תואר אקדמי, הוסף ב-general_tips המלצה לציין את המגמה ושם התיכון.
+
+החזר JSON בלבד (ללא markdown, ללא סימני קוד):
+{{
+  "sections": [
+    {{"title": "שם הסעיף", "original": "הטקסט המקורי המדויק"}}
+  ],
+  "general_tips": ["טיפ 1", "טיפ 2"],
+  "keywords_to_add": ["מילת מפתח 1"],
+  "score": 72
+}}"""
+        user_prompt = f"""פרק את קורות החיים הבאים לסעיפיהם. העתק את הטקסט המקורי המדויק לכל סעיף.
+
+---
+{cv_text}
+---"""
+
+    raw = call_ai(system_prompt, user_prompt)
+    logger.info(f"Phase 1 response: {len(raw)} chars")
+    return _safe_json_parse(_strip_code_fences(raw))
+
+
+def _improve_one_section(
+    section_title: str,
+    section_original: str,
+    cv_text: str,
+    expert_intro: str,
+    work_context: str,
+    target_instruction: str,
+    lang_rule: str,
+    content_limits_block: str,
+    _pages_tech_note: str,
+    is_english: bool,
+) -> dict:
+    """
+    Phase 2 — Single-section improvement.
+    Called concurrently for every section via ThreadPoolExecutor.
+    Returns {"improved": "...", "explanation": "..."}.
+    """
+    if is_english:
+        system_prompt = f"""{expert_intro}
+
+{work_context}
+{target_instruction}
+
+Rules:
+{lang_rule}
+* Do not invent information not present in the original.
+* Include ALL positions that appear in the original — never omit any.
+* Professional, direct, clear language without clichés.
+* Remove non-professional details (ID, family status, photo).
+* {_pages_tech_note}
+* Do not add sub-headings like "Key Achievements" — write achievement bullets directly.
+* If this is the "Personal Details" section: consolidate all contact info. Title must be exactly "Personal Details".
+
+Work market 2026 principles:
+* Define a consistent professional identity.
+* Emphasise business impact with quantifiable outcomes.
+* Frame responsibilities as results, not task lists.
+* Highlight cross-role core skills.
+* Use strong action verbs: Led, Built, Launched, Delivered, Optimised, Scaled.
+
+{content_limits_block}
+
+Task: improve ONLY the "{section_title}" section. The full CV is provided as context for coherence.
+Return JSON only (no markdown, no code fences):
+{{"improved": "improved section text", "explanation": "brief explanation"}}"""
+
+        user_prompt = f"""Improve the "{section_title}" section.
+
+Original section text:
+---
+{section_original}
+---
+
+Full CV context (do not rewrite other sections):
+---
+{cv_text}
+---"""
+
+    else:
+        system_prompt = f"""{expert_intro}
+
+{work_context}
+{target_instruction}
+
+כללי עבודה:
+{lang_rule}
+* אל תמציא נתונים שלא הופיעו במקור.
+* כלול את כל התפקידים שהופיעו במקור — אל תשמיט אף תפקיד בשום מקרה ובשום תנאי.
+* ניסוח מקצועי, ישיר, בהיר וללא קלישאות.
+* הסר רק פרטים שאינם מקצועיים כגון תעודת זהות, מצב משפחתי ותמונה.
+* {_pages_tech_note}
+* אל תוסיף כותרות משנה חוזרות — פשוט רשום נקודות ישירות.
+* אל תשתמש בסוגריים עגולים בטקסט העברי — השתמש במקף או בפסיק. קיצורים עבריים מוסכמים כגון מנכ"ל, משא"ן, ד"ר — שמור אותם כפי שהם.
+* אם זהו סעיף "פרטים אישיים" — מזג את כל פרטי הקשר. כותרת הסעיף תהיה בדיוק "פרטים אישיים". "פרופיל לינקדין"/"פרופיל לינקדאין" — חלץ את הערך שאחריהם.
+* אם זהו סעיף "שונות" — בשדה improved כתוב משפט הסבר קצר בעברית שמסביר מה פוזר לאן.
+
+עקרונות חובה לשוק העבודה 2026:
+* הגדר זהות מקצועית עקבית וברורה.
+* הדגש תרומה עסקית והשפעה בכל תפקיד; תרגם להשפעה מספרית אם אפשר.
+* נסח אחריות בצורה תוצאתית ולא כרשימת משימות.
+* זהה את 5 הכישורים הקריטיים ביותר הרלוונטיים לתפקיד היעד והבלט אותם.
+* צור חוט מקצועי מקשר בין התחנות.
+* הדגש למידה, הסתגלות טכנולוגית ושיפור תהליכים.
+* השתמש בפעלים חזקים ואקטיביים (בצורת שם הפועל): הובלה, ניהול, פיתוח, יזמות, יישום, ייעול, הטמעה, הגדלה.
+* אם מופיע ניסיון בעבודה עם כלי בינה מלאכותית, אוטומציה או כלים דיגיטליים מתקדמים, הדגש זאת.
+* אין להמציא ניסיון בעולמות AI שלא הופיע במקור.
+
+התאמה ל-ATS:
+* שלב מילות מפתח רלוונטיות באופן טבעי.
+* הימנע מעיצוב מורכב או ניסוחים עמומים.
+* שמור על ניסוח ברור וקצר.
+
+{content_limits_block}
+
+משימה: שפר את הסעיף "{section_title}" בלבד. קורות החיים המלאים מסופקים כהקשר לעקביות.
+החזר JSON בלבד (ללא markdown, ללא סימני קוד):
+{{"improved": "הטקסט המשופר של הסעיף", "explanation": "הסבר קצר"}}"""
+
+        user_prompt = f"""שפר את הסעיף "{section_title}".
+
+הטקסט המקורי של הסעיף:
+---
+{section_original}
+---
+
+הקשר - קורות החיים המלאים (אל תשכתב סעיפים אחרים):
+---
+{cv_text}
+---"""
+
+    raw = call_ai(system_prompt, user_prompt)
+    return _safe_json_parse(_strip_code_fences(raw))
+
+
+def _parallel_analyze(
+    cv_text: str,
+    is_english: bool,
+    expert_intro: str,
+    work_context: str,
+    target_instruction: str,
+    lang_rule: str,
+    content_limits_block: str,
+    _pages_tech_note: str,
+) -> dict:
+    """
+    Two-phase parallel CV analysis orchestrator.
+    Phase 1: single fast call — parse sections + metadata (no improvement).
+    Phase 2: one AI call per section, all running concurrently via ThreadPoolExecutor.
+    Phase 3: merge results into the standard output dict.
+    Raises on Phase 1 failure so caller can fall back to monolithic.
+    """
+    # ── Phase 1: parse & metadata ──
+    logger.info("Parallel Phase 1: parsing CV into sections + metadata")
+    phase1 = _parse_cv_sections(cv_text, target_instruction, lang_rule, is_english)
+    sections = phase1.get("sections", [])
+    if not sections:
+        raise ValueError("Phase 1 returned no sections")
+    logger.info(f"Phase 1 complete: {len(sections)} sections, score={phase1.get('score')}")
+
+    # ── Phase 2: parallel section improvements ──
+    fallback_msg = (
+        "Could not auto-improve this section — edit manually"
+        if is_english else
+        "לא הצלחנו לשפר סעיף זה אוטומטית — ניתן לערוך ידנית"
+    )
+
+    def _improve_task(args: tuple) -> tuple:
+        idx, section = args
+        title    = section.get("title", f"section_{idx}")
+        original = section.get("original", "")
+        try:
+            res = _improve_one_section(
+                section_title=title,
+                section_original=original,
+                cv_text=cv_text,
+                expert_intro=expert_intro,
+                work_context=work_context,
+                target_instruction=target_instruction,
+                lang_rule=lang_rule,
+                content_limits_block=content_limits_block,
+                _pages_tech_note=_pages_tech_note,
+                is_english=is_english,
+            )
+            improved    = (res.get("improved") or "").strip() or original
+            explanation = res.get("explanation", "")
+            logger.info(f"Section '{title}': improved ({len(improved)} chars)")
+            return idx, improved, explanation
+        except Exception as exc:
+            logger.warning(f"Section '{title}' improvement failed: {exc} — keeping original")
+            return idx, original, fallback_msg
+
+    logger.info(f"Parallel Phase 2: improving {len(sections)} sections concurrently (max_workers=5)")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        results = list(executor.map(_improve_task, enumerate(sections)))
+
+    # ── Phase 3: merge ──
+    for idx, improved, explanation in results:
+        sections[idx]["improved"]    = improved
+        sections[idx]["explanation"] = explanation
+        if not sections[idx].get("original", "").strip():
+            sections[idx]["original"] = improved
+
+    logger.info("Parallel analysis complete")
+    return {
+        "sections":        sections,
+        "general_tips":    phase1.get("general_tips", []),
+        "keywords_to_add": phase1.get("keywords_to_add", []),
+        "score":           phase1.get("score", 50),
+    }
+
+
 def analyze_cv(cv_text: str, target_position: str = "", language: str = "he", max_pages: int = 1) -> dict:
     is_english = (language == "en")
 
@@ -215,6 +510,22 @@ No specific job provided:
         "שאף להכניס לעמוד אחד. אם הניסיון עשיר - עדיף לגלוש לעמוד שני על פני השמטת תוכן חשוב"
     )
 
+    # ── Try parallel two-phase approach ──
+    try:
+        return _parallel_analyze(
+            cv_text=cv_text,
+            is_english=is_english,
+            expert_intro=expert_intro,
+            work_context=work_context,
+            target_instruction=target_instruction,
+            lang_rule=lang_rule,
+            content_limits_block=content_limits_block,
+            _pages_tech_note=_pages_tech_note,
+        )
+    except Exception as parallel_err:
+        logger.warning(f"Parallel analysis failed ({parallel_err}), falling back to monolithic call")
+
+    # ── Monolithic fallback (original single-call approach) ──
     system_prompt = f"""{expert_intro}
 
 {work_context}
@@ -318,27 +629,17 @@ No specific job provided:
 
 זכור: שדה original חייב להכיל את הטקסט המקורי מקורות החיים. אל תשאיר אותו ריק."""
 
-    logger.info(f"Analyzing CV with {len(cv_text)} characters")
+    logger.info(f"Monolithic fallback: analyzing CV with {len(cv_text)} characters")
     result = call_ai(system_prompt, user_prompt)
-    logger.info(f"AI response length: {len(result)} characters")
+    logger.info(f"Monolithic response: {len(result)} characters")
 
-    result = result.strip()
-    if result.startswith("```json"):
-        result = result[7:]
-    if result.startswith("```"):
-        result = result[3:]
-    if result.endswith("```"):
-        result = result[:-3]
-    result = result.strip()
+    result = _strip_code_fences(result)
 
     try:
         parsed = _safe_json_parse(result)
         sections = parsed.get("sections", [])
-        logger.info(f"Parsed {len(sections)} sections successfully")
+        logger.info(f"Monolithic: parsed {len(sections)} sections")
         for section in sections:
-            orig_len = len(section.get("original", ""))
-            impr_len = len(section.get("improved", ""))
-            logger.info(f"Section '{section.get('title', '?')}': original={orig_len} chars, improved={impr_len} chars")
             if not section.get("original", "").strip():
                 section["original"] = section.get("improved", "לא זמין")
                 logger.warning(f"Section '{section.get('title', '?')}' had empty original, copied from improved")
