@@ -559,7 +559,7 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
     contact = cv_data.get("contact", {})
     contact_parts = []
     if contact.get("phone"):
-        contact_parts.append(contact["phone"])
+        contact_parts.append(_ltr_wrap(contact["phone"]))
     if contact.get("email"):
         contact_parts.append(contact["email"])
     if contact.get("city"):
@@ -756,8 +756,17 @@ def _is_military_line(line: str) -> bool:
     return False
 
 
+def _ltr_wrap(text: str) -> str:
+    return '\u202a' + text + '\u202c'
+
+
+def _is_phone_value(v: str) -> bool:
+    import re
+    return bool(re.match(r'^\+?[\d\s\-\(\)\.]{6,}$', v.strip()))
+
+
 def _extract_contact_value(line: str) -> str:
-    labels = ["טלפון", "אימייל", "מייל", "דוא\"ל", "לינקדאין", "עיר מגורים", "עיר", "כתובת", "אזור מגורים", "מגורים", "linkedin", "phone", "email", "city", "address", "residence"]
+    labels = ["טלפון", "אימייל", "מייל", "דוא\"ל", "פרופיל לינקדין", "פרופיל לינקדאין", "לינקדין", "לינקדאין", "עיר מגורים", "עיר", "כתובת", "אזור מגורים", "מגורים", "linkedin", "phone", "email", "city", "address", "residence"]
     val = line.strip()
     val_lower = val.lower()
     for label in labels:
@@ -943,7 +952,7 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str 
                     for cl in inline_contact + extra_lines:
                         val = _extract_contact_value(cl)
                         if val:
-                            contact_values.append(val)
+                            contact_values.append(_ltr_wrap(val) if _is_phone_value(val) else val)
                     if contact_values:
                         p = doc.add_paragraph()
                         run = p.add_run(" | ".join(contact_values))
