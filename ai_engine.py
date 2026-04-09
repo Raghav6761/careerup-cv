@@ -143,23 +143,21 @@ def _parse_cv_sections(
     is_english: bool,
 ) -> dict:
     """
-    Phase 1 — Parse & Metadata.
-    Single fast AI call: extracts section titles + original text, calculates
-    score, generates general_tips and keywords_to_add.
-    Does NOT write any improved content — output is small (~300-600 tokens).
+    Phase 1 — Section discovery & metadata only. NO original text copied.
+    Outputs ONLY a list of section title strings + score/tips/keywords.
+    Output is ~50-150 tokens regardless of CV length (~5-10 seconds).
     Raises json.JSONDecodeError on parse failure so caller can fall back.
     """
     if is_english:
-        system_prompt = f"""You are a CV analysis expert. Your task in this step is to PARSE ONLY — do NOT write any improved content.
+        system_prompt = f"""You are a CV analysis expert. Your task is to IDENTIFY SECTIONS ONLY — do NOT copy any CV text, do NOT write any improved content.
 {target_instruction}
 
 Rules:
 {lang_rule}
-* Do NOT create sections that do not exist in the CV.
-* Never write 'Not specified', 'N/A', 'None', 'Not provided' or any placeholder.
-* Copy the EXACT original text for each section — do not paraphrase or improve.
-* Merge all contact information (name, phone, email, LinkedIn, city) into a single "Personal Details" section.
-* Identify ALL distinct sections present in the CV.
+* List only sections that actually exist in the CV. Do not invent sections.
+* The first section covering contact info must be titled exactly "Personal Details".
+* If a "Miscellaneous" section exists, include it as its own entry.
+* Output section titles as a plain JSON array of strings — no objects, no original text.
 
 Score rubric (0-100, sum exactly):
 - Contact details (0-10): name + phone + email = 10, one missing = 5, none = 0
@@ -172,30 +170,26 @@ Score rubric (0-100, sum exactly):
 
 Return JSON only (no markdown, no code fences):
 {{
-  "sections": [
-    {{"title": "Section Name", "original": "Exact original text from the CV"}}
-  ],
+  "sections": ["Personal Details", "Professional Summary", "Work Experience"],
   "general_tips": ["tip 1", "tip 2"],
   "keywords_to_add": ["keyword 1"],
   "score": 72
 }}"""
-        user_prompt = f"""Parse this CV into its sections. Copy the exact original text for each.
+        user_prompt = f"""Identify the section names of this CV. Return ONLY the title strings — do not copy any CV text.
 
 ---
 {cv_text}
 ---"""
     else:
-        system_prompt = f"""אתה מומחה לניתוח קורות חיים. משימתך בשלב זה היא לפרק בלבד — אל תכתוב תוכן משופר.
+        system_prompt = f"""אתה מומחה לניתוח קורות חיים. משימתך היא לזהות את שמות הסעיפים בלבד — אל תעתיק טקסט מהקו"ח ואל תכתוב תוכן משופר.
 {target_instruction}
 
 כללים:
 {lang_rule}
-* אל תיצור סעיפים שאינם קיימים בקורות החיים.
-* לא לכתוב "לא צוין", "לא סופק" או כל טקסט ממלא מקום.
-* העתק את הטקסט המקורי המדויק לכל סעיף — אל תנסח מחדש.
-* כותרת הסעיף הראשון תמיד תהיה בדיוק "פרטים אישיים" — מזג לתוכו את כל פרטי הקשר.
-* זהה את כל הסעיפים הנפרדים הקיימים בקורות החיים.
-* אם קיים סעיף "שונות" — כלול אותו כסעיף בפני עצמו.
+* רשום רק סעיפים שקיימים בפועל בקורות החיים. אל תמציא סעיפים.
+* כותרת הסעיף הראשון (פרטי קשר) חייבת להיות בדיוק "פרטים אישיים".
+* אם קיים סעיף "שונות" — כלול אותו כפריט נפרד.
+* פלט את שמות הסעיפים כמערך JSON של מחרוזות בלבד — ללא אובייקטים, ללא טקסט מקורי.
 
 רובריקת ציון (0-100, חבר במדויק):
 - פרטי קשר (0-10): שם + טלפון + אימייל = 10, חסר אחד = 5, אין כלל = 0
@@ -209,14 +203,12 @@ Return JSON only (no markdown, no code fences):
 
 החזר JSON בלבד (ללא markdown, ללא סימני קוד):
 {{
-  "sections": [
-    {{"title": "שם הסעיף", "original": "הטקסט המקורי המדויק"}}
-  ],
+  "sections": ["פרטים אישיים", "תקציר מקצועי", "ניסיון תעסוקתי"],
   "general_tips": ["טיפ 1", "טיפ 2"],
   "keywords_to_add": ["מילת מפתח 1"],
   "score": 72
 }}"""
-        user_prompt = f"""פרק את קורות החיים הבאים לסעיפיהם. העתק את הטקסט המקורי המדויק לכל סעיף.
+        user_prompt = f"""זהה את שמות הסעיפים בקורות החיים הבאים. החזר רק את שמות הסעיפים — אל תעתיק טקסט מהקו"ח.
 
 ---
 {cv_text}
@@ -229,7 +221,6 @@ Return JSON only (no markdown, no code fences):
 
 def _improve_one_section(
     section_title: str,
-    section_original: str,
     cv_text: str,
     expert_intro: str,
     work_context: str,
@@ -240,9 +231,11 @@ def _improve_one_section(
     is_english: bool,
 ) -> dict:
     """
-    Phase 2 — Single-section improvement.
+    Phase 2 — Single-section extract + improve.
     Called concurrently for every section via ThreadPoolExecutor.
-    Returns {"improved": "...", "explanation": "..."}.
+    Receives the full CV text and the section title only.
+    Finds the section itself, copies the original, then improves it.
+    Returns {"original": "...", "improved": "...", "explanation": "..."}.
     """
     if is_english:
         system_prompt = f"""{expert_intro}
@@ -269,18 +262,16 @@ Work market 2026 principles:
 
 {content_limits_block}
 
-Task: improve ONLY the "{section_title}" section. The full CV is provided as context for coherence.
+Task: work on ONLY the "{section_title}" section from this CV.
+1. Locate the section and copy its exact original text into "original".
+2. Write the improved version into "improved".
+3. Write a brief explanation into "explanation".
 Return JSON only (no markdown, no code fences):
-{{"improved": "improved section text", "explanation": "brief explanation"}}"""
+{{"original": "exact text from CV", "improved": "improved section text", "explanation": "brief explanation"}}"""
 
-        user_prompt = f"""Improve the "{section_title}" section.
+        user_prompt = f"""Work on the "{section_title}" section from this CV.
 
-Original section text:
----
-{section_original}
----
-
-Full CV context (do not rewrite other sections):
+Full CV:
 ---
 {cv_text}
 ---"""
@@ -300,7 +291,7 @@ Full CV context (do not rewrite other sections):
 * {_pages_tech_note}
 * אל תוסיף כותרות משנה חוזרות — פשוט רשום נקודות ישירות.
 * אל תשתמש בסוגריים עגולים בטקסט העברי — השתמש במקף או בפסיק. קיצורים עבריים מוסכמים כגון מנכ"ל, משא"ן, ד"ר — שמור אותם כפי שהם.
-* אם זהו סעיף "פרטים אישיים" — מזג את כל פרטי הקשר. כותרת הסעיף תהיה בדיוק "פרטים אישיים". "פרופיל לינקדין"/"פרופיל לינקדאין" — חלץ את הערך שאחריהם.
+* אם זהו סעיף "פרטים אישיים" — מזג את כל פרטי הקשר מכל מקומות הופעתם בקו"ח. כותרת הסעיף תהיה בדיוק "פרטים אישיים". "פרופיל לינקדין"/"פרופיל לינקדאין" — חלץ את הערך שאחריהם.
 * אם זהו סעיף "שונות" — בשדה improved כתוב משפט הסבר קצר בעברית שמסביר מה פוזר לאן.
 
 עקרונות חובה לשוק העבודה 2026:
@@ -321,18 +312,16 @@ Full CV context (do not rewrite other sections):
 
 {content_limits_block}
 
-משימה: שפר את הסעיף "{section_title}" בלבד. קורות החיים המלאים מסופקים כהקשר לעקביות.
+משימה: עבוד על הסעיף "{section_title}" בלבד מקורות החיים הבאים.
+1. אתר את הסעיף והעתק את טקסטו המקורי המדויק לשדה "original".
+2. כתוב גרסה משופרת לשדה "improved".
+3. כתוב הסבר קצר לשדה "explanation".
 החזר JSON בלבד (ללא markdown, ללא סימני קוד):
-{{"improved": "הטקסט המשופר של הסעיף", "explanation": "הסבר קצר"}}"""
+{{"original": "הטקסט המקורי המדויק מהקו\"ח", "improved": "הטקסט המשופר", "explanation": "הסבר קצר"}}"""
 
-        user_prompt = f"""שפר את הסעיף "{section_title}".
+        user_prompt = f"""עבוד על הסעיף "{section_title}" מקורות החיים הבאים.
 
-הטקסט המקורי של הסעיף:
----
-{section_original}
----
-
-הקשר - קורות החיים המלאים (אל תשכתב סעיפים אחרים):
+קורות החיים המלאים:
 ---
 {cv_text}
 ---"""
@@ -365,7 +354,12 @@ def _parallel_analyze(
     _t0 = _time.monotonic()
     phase1 = _parse_cv_sections(cv_text, target_instruction, lang_rule, is_english)
     _t1 = _time.monotonic()
-    sections = phase1.get("sections", [])
+    raw_sections = phase1.get("sections", [])
+    # Phase 1 now returns a plain list of title strings; handle both formats robustly
+    sections = [
+        {"title": t} if isinstance(t, str) else {"title": t.get("title", f"section_{i}")}
+        for i, t in enumerate(raw_sections)
+    ]
     if not sections:
         raise ValueError("Phase 1 returned no sections")
     logger.info(f"Phase 1 complete in {_t1 - _t0:.1f}s: {len(sections)} sections, score={phase1.get('score')}")
@@ -379,12 +373,10 @@ def _parallel_analyze(
 
     def _improve_task(args: tuple) -> tuple:
         idx, section = args
-        title    = section.get("title", f"section_{idx}")
-        original = section.get("original", "")
+        title = section.get("title", f"section_{idx}")
         try:
             res = _improve_one_section(
                 section_title=title,
-                section_original=original,
                 cv_text=cv_text,
                 expert_intro=expert_intro,
                 work_context=work_context,
@@ -394,13 +386,14 @@ def _parallel_analyze(
                 _pages_tech_note=_pages_tech_note,
                 is_english=is_english,
             )
-            improved    = (res.get("improved") or "").strip() or original
+            original    = (res.get("original") or "").strip()
+            improved    = (res.get("improved")  or "").strip() or original
             explanation = res.get("explanation", "")
-            logger.info(f"Section '{title}': improved ({len(improved)} chars)")
-            return idx, improved, explanation
+            logger.info(f"Section '{title}': original={len(original)} chars, improved={len(improved)} chars")
+            return idx, original, improved, explanation
         except Exception as exc:
-            logger.warning(f"Section '{title}' improvement failed: {exc} — keeping original")
-            return idx, original, fallback_msg
+            logger.warning(f"Section '{title}' improvement failed: {exc}")
+            return idx, "", "", fallback_msg
 
     logger.info(f"Parallel Phase 2: improving {len(sections)} sections concurrently (max_workers=5)")
     _t2 = _time.monotonic()
@@ -416,17 +409,18 @@ def _parallel_analyze(
         try:
             results.append(future.result(timeout=120))
         except concurrent.futures.TimeoutError:
-            logger.warning(f"Section '{title}' timed out after 120s — keeping original")
-            results.append((idx, section.get("original", ""), fallback_msg))
+            logger.warning(f"Section '{title}' timed out after 120s")
+            results.append((idx, "", "", fallback_msg))
         except Exception as exc:
-            logger.warning(f"Section '{title}' future error: {exc} — keeping original")
-            results.append((idx, section.get("original", ""), fallback_msg))
+            logger.warning(f"Section '{title}' future error: {exc}")
+            results.append((idx, "", "", fallback_msg))
 
     _t3 = _time.monotonic()
     logger.info(f"Phase 2 complete in {_t3 - _t2:.1f}s — total parallel analysis: {_t3 - _t0:.1f}s")
 
     # ── Phase 3: merge ──
-    for idx, improved, explanation in results:
+    for idx, original, improved, explanation in results:
+        sections[idx]["original"]    = original
         sections[idx]["improved"]    = improved
         sections[idx]["explanation"] = explanation
         if not sections[idx].get("original", "").strip():
