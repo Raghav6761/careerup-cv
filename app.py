@@ -233,7 +233,33 @@ def _word_diff_html(original: str, improved: str, mode: str) -> str:
                 else:
                     parts.append(html_lib.escape(t))
 
-    return "".join(parts)
+    html = "".join(parts)
+
+    # ── Post-process: colorize job-header lines in the track-changes output ──
+    _yr2 = re.compile(r"(19|20)\d{2}")
+    _dash_markers = ("–", "—", "-", "היום", "נוכחי", "הווה", "present")
+
+    def _colorize_diff_line(ln: str) -> str:
+        plain = re.sub(r"<[^>]+>", "", ln)
+        if not _yr2.search(plain):
+            return ln
+        if not any(m in plain.lower() for m in _dash_markers):
+            return ln
+        if "|" not in plain:
+            return ln
+        segs = ln.split(" | ")
+        n = len(segs)
+        if n < 2:
+            return ln
+        colors = ["#2b56e0"] + ["#1a1a2e"] * max(0, n - 2) + ["#022559"]
+        result = []
+        for i, seg in enumerate(segs):
+            c = colors[i] if i < len(colors) else "#1a1a2e"
+            sep = " | " if i > 0 else ""
+            result.append(f'{sep}<span style="color:{c};font-weight:700;">{seg}</span>')
+        return "".join(result)
+
+    return "<br>".join(_colorize_diff_line(ln) for ln in html.split("<br>"))
 
 
 st.set_page_config(
