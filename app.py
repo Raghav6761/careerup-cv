@@ -154,10 +154,36 @@ def _word_diff_html(original: str, improved: str, mode: str) -> str:
     impr_tok = _tok(improved)
 
     if mode == "improved":
-        parts = []
-        for t in impr_tok:
-            parts.append("<br>" if t == "\n" else html_lib.escape(t))
-        return "".join(parts)
+        _yr = re.compile(r"(19|20)\d{2}[\–\-–]")
+        out = []
+        for line in improved.split("\n"):
+            s = line.strip()
+            if not s:
+                out.append("<br>")
+                continue
+            if _yr.search(s):
+                segs = [p.strip() for p in s.split("|")]
+                if len(segs) >= 3:
+                    d = html_lib.escape(segs[0])
+                    t = html_lib.escape(segs[1])
+                    c = html_lib.escape(" | ".join(segs[2:]))
+                    out.append(
+                        f'<span style="color:#2b56e0;font-weight:700;">{d}</span>'
+                        f'<span style="color:#1a1a2e;font-weight:700;"> | {t} | </span>'
+                        f'<span style="color:#022559;font-weight:700;">{c}</span><br>'
+                    )
+                elif len(segs) == 2:
+                    d = html_lib.escape(segs[0])
+                    r = html_lib.escape(segs[1])
+                    out.append(
+                        f'<span style="color:#2b56e0;font-weight:700;">{d}</span>'
+                        f'<span style="color:#1a1a2e;font-weight:700;"> | {r}</span><br>'
+                    )
+                else:
+                    out.append(f'<span style="color:#1a1a2e;font-weight:700;">{html_lib.escape(s)}</span><br>')
+            else:
+                out.append(html_lib.escape(s) + "<br>")
+        return "".join(out)
 
     DEL_STYLE = (
         "text-decoration:line-through;color:#1a1a1a;"
