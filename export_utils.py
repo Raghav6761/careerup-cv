@@ -432,6 +432,7 @@ def _add_docx_separator_line(doc, color='7fb3d8', size='8', space_before=3, spac
     sep = doc.add_paragraph()
     sep.paragraph_format.space_before = Pt(space_before)
     sep.paragraph_format.space_after = Pt(space_after)
+    sep.paragraph_format.line_spacing = Pt(1)
     sep_pPr = sep._p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
     bottom = OxmlElement('w:bottom')
