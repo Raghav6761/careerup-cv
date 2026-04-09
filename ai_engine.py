@@ -434,7 +434,7 @@ def generate_cv_from_interview(conversation_history: list) -> dict:
         "phone": "טלפון",
         "email": "אימייל",
         "city": "עיר",
-        "linkedin": "לינקדאין - URL מלא או שם פרופיל (לדוגמה אם במקור כתוב 'פרופיל לינקדין Keren Belinson' → שמור 'Keren Belinson')"
+        "linkedin": "לינקדאין - אם יש URL מלא בקובץ המקור (כגון https://linkedin.com/in/...) שמור אותו כמות שהוא. אחרת שמור את הטקסט שמופיע לידי 'לינקדאין' / 'פרופיל לינקדין' כמות שהוא."
     },
     "professional_summary": "תקציר מקצועי של 2-3 משפטים",
     "experience": [
@@ -615,7 +615,7 @@ def generate_cv_from_form(form_data: dict, target_position: str = "", max_pages:
 החזר את התוצאה בפורמט JSON בלבד (ללא markdown, ללא ```):
 {{
     "full_name": "שם מלא",
-    "contact": {{"phone": "טלפון", "email": "אימייל", "city": "עיר", "linkedin": "לינקדאין - URL מלא או שם פרופיל (אם במקור 'פרופיל לינקדין [שם]' → שמור את השם)"}},
+    "contact": {{"phone": "טלפון", "email": "אימייל", "city": "עיר", "linkedin": "לינקדאין - אם הוזן URL מלא (כגון https://linkedin.com/in/...) שמור אותו כמות שהוא. אחרת שמור את הטקסט כמות שהוא."}},
     "professional_summary": "תקציר מקצועי של 2-3 משפטים בלבד",
     "experience": [
         {{"title": "תפקיד", "company": "חברה", "period": "תקופה", "achievements": ["הישג 1", "הישג 2"], "honors": "הצטיינות אם יש"}}

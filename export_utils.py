@@ -761,14 +761,7 @@ def _ltr_wrap(text: str) -> str:
 
 
 def _format_linkedin_display(val: str) -> str:
-    import re
-    v = val.strip()
-    if v.startswith('http'):
-        m = re.search(r'linkedin\.com/in/([^/?#\s]+)', v, re.IGNORECASE)
-        if m:
-            return m.group(1)
-        return re.sub(r'^https?://(www\.)?', '', v).rstrip('/')
-    return v
+    return val.strip()
 
 
 def _is_phone_value(v: str) -> bool:
