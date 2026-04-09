@@ -354,10 +354,15 @@ def render_improve_upload():
 
     if uploaded_file is not None:
         if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary"):
+            prog_bar  = None
+            prog_text = None
             try:
                 from file_processor import process_uploaded_file
                 from ai_engine import analyze_cv
-                from streamlit.runtime.scriptrunner import add_script_run_ctx
+                try:
+                    from streamlit.runtime.scriptrunner import add_script_run_ctx as _add_ctx
+                except ImportError:
+                    _add_ctx = None
 
                 prog_bar  = st.progress(0)
                 prog_text = st.empty()
@@ -394,7 +399,8 @@ def render_improve_upload():
                             prog_text.markdown("🤖 הבינה המלאכותית מנתחת... (עשוי לקחת כמה דקות)")
 
                 _t = threading.Thread(target=_crawl, daemon=True)
-                add_script_run_ctx(_t)
+                if _add_ctx is not None:
+                    _add_ctx(_t)
                 _t.start()
 
                 result = None
@@ -426,6 +432,10 @@ def render_improve_upload():
                 go_to("improve_review")
                 st.rerun()
             except Exception as e:
+                if prog_bar is not None:
+                    prog_bar.empty()
+                if prog_text is not None:
+                    prog_text.empty()
                 st.error(f"שגיאה בעיבוד הקובץ: {str(e)}")
 
 
