@@ -37,11 +37,28 @@ def _format_cv_html(text: str) -> str:
                 f'<span style="color:#022559;flex-shrink:0;">•</span>'
                 f'<span>{content}</span></div>'
             )
-        # Job/education header line — contains year range → bold only
+        # Job/education header line — contains year range → color per segment
         elif year_pattern.search(stripped):
-            html_parts.append(
-                f'<div style="font-weight:700;color:#1a1a2e;margin:5px 0 1px 0;">{safe}</div>'
-            )
+            parts = [p.strip() for p in stripped.split("|")]
+            if len(parts) >= 3:
+                date_s  = html_lib.escape(parts[0])
+                title_s = html_lib.escape(parts[1])
+                co_s    = html_lib.escape(" | ".join(parts[2:]))
+                inner   = (
+                    f'<span style="color:#2b56e0;font-weight:700;">{date_s}</span>'
+                    f'<span style="color:#1a1a2e;font-weight:700;"> | {title_s} | </span>'
+                    f'<span style="color:#022559;font-weight:700;">{co_s}</span>'
+                )
+            elif len(parts) == 2:
+                date_s  = html_lib.escape(parts[0])
+                rest_s  = html_lib.escape(parts[1])
+                inner   = (
+                    f'<span style="color:#2b56e0;font-weight:700;">{date_s}</span>'
+                    f'<span style="color:#1a1a2e;font-weight:700;"> | {rest_s}</span>'
+                )
+            else:
+                inner = f'<span style="color:#1a1a2e;font-weight:700;">{safe}</span>'
+            html_parts.append(f'<div style="margin:5px 0 1px 0;">{inner}</div>')
         # Everything else — regular weight
         else:
             html_parts.append(f'<div style="font-weight:400;margin:2px 0;">{safe}</div>')
@@ -74,11 +91,28 @@ def _format_improved_html(text: str) -> str:
                 f'<span style="color:#022559;flex-shrink:0;font-weight:600;">•</span>'
                 f'<span style="font-weight:400;">{content}</span></div>'
             )
-        # Year-range line → bold job/edu header
+        # Year-range line → color per segment (date blue, title dark, company navy)
         elif year_pattern.search(stripped):
-            html_parts.append(
-                f'<div style="font-weight:700;color:#1a1a2e;margin:6px 0 1px 0;">{safe}</div>'
-            )
+            parts = [p.strip() for p in stripped.split("|")]
+            if len(parts) >= 3:
+                date_s  = html_lib.escape(parts[0])
+                title_s = html_lib.escape(parts[1])
+                co_s    = html_lib.escape(" | ".join(parts[2:]))
+                inner   = (
+                    f'<span style="color:#2b56e0;font-weight:700;">{date_s}</span>'
+                    f'<span style="color:#1a1a2e;font-weight:700;"> | {title_s} | </span>'
+                    f'<span style="color:#022559;font-weight:700;">{co_s}</span>'
+                )
+            elif len(parts) == 2:
+                date_s  = html_lib.escape(parts[0])
+                rest_s  = html_lib.escape(parts[1])
+                inner   = (
+                    f'<span style="color:#2b56e0;font-weight:700;">{date_s}</span>'
+                    f'<span style="color:#1a1a2e;font-weight:700;"> | {rest_s}</span>'
+                )
+            else:
+                inner = f'<span style="color:#1a1a2e;font-weight:700;">{safe}</span>'
+            html_parts.append(f'<div style="margin:6px 0 1px 0;">{inner}</div>')
         # Contact line (has pipe, @, phone digits) → centered, regular
         elif contact_pattern.search(stripped):
             html_parts.append(f'<div style="font-weight:400;margin:2px 0;text-align:center;">{safe}</div>')
@@ -340,7 +374,7 @@ def render_improve_upload():
 
     with st.container(border=True, key="card_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-        st.markdown('<span style="font-size:16px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות סינון אוטומטיות (ATS) בצורה מדויקת יותר</span>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:16px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא — ככל שתפרטו יותר, הבינה המלאכותית תוכל להתאים את קורות החיים למסנן הממוחשב של החברה (המערכת שסורקת ומדרגת קורות חיים לפני שהם מגיעים לגורם אנושי)</span>', unsafe_allow_html=True)
         if "improve_target_position" not in st.session_state:
             st.session_state.improve_target_position = ""
         st.session_state.improve_target_position = st.text_area(
@@ -477,6 +511,7 @@ def render_improve_review():
 
     if keywords:
         with st.expander("🔑 מילות מפתח מומלצות", expanded=False):
+            st.markdown('<span style="font-size:13px;color:#6b7c93;">מילות מפתח אלה יעזרו לקורות החיים לעבור את המסנן הממוחשב של מערכות הגיוס — מומלץ לשלב אותן בתיאורי התפקידים</span>', unsafe_allow_html=True)
             st.markdown(", ".join([f"**{kw}**" for kw in keywords]))
 
     st.markdown('<div class="section-header">📝 הצעות שיפור לפי סעיפים</div>', unsafe_allow_html=True)
@@ -1058,7 +1093,7 @@ def render_build_form():
 
     with st.container(border=True, key="bfc_target"):
         st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
-        st.markdown('<span style="font-size:15px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא - ככל שתפרטו יותר, נוכל להתאים את מילות המפתח למערכות סינון אוטומטיות (ATS) בצורה מדויקת יותר</span>', unsafe_allow_html=True)
+        st.markdown('<span style="font-size:15px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא — ככל שתפרטו יותר, הבינה המלאכותית תוכל להתאים את קורות החיים למסנן הממוחשב של החברה (המערכת שסורקת ומדרגת קורות חיים לפני שהם מגיעים לגורם אנושי)</span>', unsafe_allow_html=True)
         if "build_target_position" not in st.session_state:
             st.session_state.build_target_position = ""
         st.session_state.build_target_position = st.text_area(
