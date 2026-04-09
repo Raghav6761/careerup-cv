@@ -1,6 +1,6 @@
 import re
 import base64
-from collections import Counter
+import difflib
 import html as html_lib
 import streamlit as st
 import streamlit.components.v1 as components
@@ -97,20 +97,19 @@ def _format_improved_html(text: str) -> str:
 
 def _word_diff_html(original: str, improved: str, mode: str) -> str:
     """
-    Return HTML of text with word-level diff highlights.
-    mode='original': words that appear more in orig than improved → yellow #fde68a
-    mode='improved': words that appear more in improved than orig → green  #bbf7d0
-    Preserves newlines as <br> tags.
+    Track-changes diff renderer.
 
-    Uses frequency-based comparison (Counter) instead of sequence-based diff so
-    words that merely moved position are NOT highlighted — only truly removed or
-    added words are marked.
+    mode='original': left panel — original text with inline track changes:
+        • removed words → gray strikethrough
+        • inserted words → logo-blue (#2b56e0) bold, shown at insertion point
+        • replaced spans → strikethrough old tokens then blue new tokens inline
+    mode='improved': right panel — clean improved text, zero markup.
+
+    Uses difflib.SequenceMatcher so every change is shown at its exact
+    position in the original context (like Google Docs / Word track changes).
     """
     def _tok(text: str):
         return re.findall(r"\n|[^\S\n]+|[^\s]+", text)
-
-    def _norm(token: str) -> str:
-        return re.sub(r"^[\W_]+|[\W_]+$", "", token, flags=re.UNICODE).lower()
 
     if mode not in ("original", "improved"):
         raise ValueError(f"_word_diff_html: mode must be 'original' or 'improved', got {mode!r}")
@@ -118,48 +117,59 @@ def _word_diff_html(original: str, improved: str, mode: str) -> str:
     orig_tok = _tok(original)
     impr_tok = _tok(improved)
 
-    orig_counts = Counter(_norm(t) for t in orig_tok if t.strip())
-    impr_counts = Counter(_norm(t) for t in impr_tok if t.strip())
-    orig_counts.pop("", None)
-    impr_counts.pop("", None)
+    if mode == "improved":
+        parts = []
+        for t in impr_tok:
+            parts.append("<br>" if t == "\n" else html_lib.escape(t))
+        return "".join(parts)
 
-    removed_budget = {w: max(0, orig_counts[w] - impr_counts.get(w, 0)) for w in orig_counts}
-    added_budget   = {w: max(0, impr_counts[w] - orig_counts.get(w, 0)) for w in impr_counts}
+    DEL_STYLE = (
+        "text-decoration:line-through;color:#aaa;"
+        "display:inline;direction:rtl;unicode-bidi:isolate;"
+    )
+    ADD_STYLE = (
+        "color:#2b56e0;font-weight:700;"
+        "display:inline;direction:rtl;unicode-bidi:isolate;"
+    )
 
-    used_removed: Counter = Counter()
-    used_added:   Counter = Counter()
-
-    DEL_STYLE = "background:#fde68a;border-radius:3px;padding:0 2px;display:inline;direction:rtl;unicode-bidi:isolate;"
-    ADD_STYLE = "background:#bbf7d0;border-radius:3px;padding:0 2px;display:inline;direction:rtl;unicode-bidi:isolate;"
-
+    sm = difflib.SequenceMatcher(None, orig_tok, impr_tok, autojunk=False)
     parts = []
 
-    if mode == "original":
-        for t in orig_tok:
-            if t == "\n":
-                parts.append("<br>")
-            elif t.strip():
-                w = _norm(t)
-                if w and removed_budget.get(w, 0) > used_removed[w]:
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == "equal":
+            for t in orig_tok[i1:i2]:
+                parts.append("<br>" if t == "\n" else html_lib.escape(t))
+        elif tag == "delete":
+            for t in orig_tok[i1:i2]:
+                if t == "\n":
+                    parts.append("<br>")
+                elif t.strip():
                     parts.append(f'<span style="{DEL_STYLE}">{html_lib.escape(t)}</span>')
-                    used_removed[w] += 1
                 else:
                     parts.append(html_lib.escape(t))
-            else:
-                parts.append(html_lib.escape(t))
-    else:  # mode == "improved"
-        for t in impr_tok:
-            if t == "\n":
-                parts.append("<br>")
-            elif t.strip():
-                w = _norm(t)
-                if w and added_budget.get(w, 0) > used_added[w]:
+        elif tag == "insert":
+            for t in impr_tok[j1:j2]:
+                if t == "\n":
+                    parts.append("<br>")
+                elif t.strip():
                     parts.append(f'<span style="{ADD_STYLE}">{html_lib.escape(t)}</span>')
-                    used_added[w] += 1
                 else:
                     parts.append(html_lib.escape(t))
-            else:
-                parts.append(html_lib.escape(t))
+        elif tag == "replace":
+            for t in orig_tok[i1:i2]:
+                if t == "\n":
+                    parts.append("<br>")
+                elif t.strip():
+                    parts.append(f'<span style="{DEL_STYLE}">{html_lib.escape(t)}</span>')
+                else:
+                    parts.append(html_lib.escape(t))
+            for t in impr_tok[j1:j2]:
+                if t == "\n":
+                    parts.append("<br>")
+                elif t.strip():
+                    parts.append(f'<span style="{ADD_STYLE}">{html_lib.escape(t)}</span>')
+                else:
+                    parts.append(html_lib.escape(t))
 
     return "".join(parts)
 
@@ -458,9 +468,9 @@ def render_improve_review():
             # ── Cards as HTML table — cells in same row are always equal height ──
             legend = (
                 '<div style="font-size:11px;color:#666;direction:rtl;text-align:right;'
-                'margin-bottom:6px;display:flex;gap:12px;justify-content:flex-end;">'
-                '<span><span style="background:#bbf7d0;border-radius:3px;padding:0 4px;">מילים שנוספו</span></span>'
-                '<span><span style="background:#fde68a;border-radius:3px;padding:0 4px;">מילים שהוסרו</span></span>'
+                'margin-bottom:6px;display:flex;gap:16px;justify-content:flex-end;align-items:center;">'
+                '<span><span style="color:#2b56e0;font-weight:700;">■</span>&nbsp;נוסף</span>'
+                '<span><span style="text-decoration:line-through;color:#aaa;">אאא</span>&nbsp;הוסר</span>'
                 '</div>'
             )
             st.markdown(legend, unsafe_allow_html=True)
@@ -480,7 +490,7 @@ def render_improve_review():
                 f'padding:14px 14px 10px;background:{orig_bg};position:relative;width:50%;">'
                 f'{orig_ck}'
                 f'<div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:8px;'
-                f'letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מקור</div>'
+                f'letter-spacing:.3px;direction:rtl;text-align:right;">נוסח מקור + שינויים</div>'
                 f'<div style="font-size:13px;line-height:1.8;direction:rtl;text-align:right;">'
                 f'{orig_diff}</div>'
                 f'</td>'
