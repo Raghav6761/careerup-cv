@@ -1242,7 +1242,7 @@ def render_build_form():
             with ec2:
                 edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"bf_edu_inst_{i}", placeholder="אוניברסיטת תל אביב")
             with ec1:
-                edu["year"] = st.text_input("תקופה", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2018-2022 או 2022-היום")
+                edu["year"] = st.text_input("תקופה (אופציונלי)", value=edu.get("year", ""), key=f"bf_edu_year_{i}", placeholder="2018-2022 או 2022-היום")
             edu["honors"] = st.text_input("הצטיינות (אופציונלי)", value=edu.get("honors", ""), key=f"bf_edu_hon_{i}", placeholder="למשל: בוגר הצטיינות, דין של הדיקן...")
 
         if edu_to_delete:
@@ -1482,7 +1482,7 @@ def render_build_preview():
             with ec2:
                 edu["institution"] = st.text_input("מוסד לימודים", value=edu.get("institution", ""), key=f"edu_inst_{i}")
             with ec1:
-                edu["year"] = st.text_input("תקופה", value=edu.get("year", ""), key=f"edu_year_{i}", placeholder="2018-2022 או 2022-היום")
+                edu["year"] = st.text_input("תקופה (אופציונלי)", value=edu.get("year", ""), key=f"edu_year_{i}", placeholder="2018-2022 או 2022-היום")
             edu["honors"] = st.text_input("הצטיינות", value=edu.get("honors", ""), key=f"edu_hon_{i}")
             st.markdown("---")
 
