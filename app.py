@@ -544,9 +544,12 @@ def render_improve_review():
             if current_decision == "custom":
                 edit_source = st.session_state.section_decisions.get(f"edit_source_{i}", "improved")
                 source_label = "נוסח מקור" if edit_source == "original" else "נוסח מחודש"
+                st.session_state.setdefault(
+                    f"custom_text_{i}",
+                    st.session_state.section_decisions.get(f"text_{i}", improved),
+                )
                 custom_text = st.text_area(
                     f"✏️ עורך {source_label} — הטקסט הערוך ישמש בקו״ח הסופי:",
-                    value=st.session_state.section_decisions.get(f"text_{i}", improved),
                     key=f"custom_text_{i}",
                     height=150,
                 )
