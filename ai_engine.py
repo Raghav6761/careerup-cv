@@ -229,6 +229,7 @@ def _improve_one_section(
     content_limits_block: str,
     _pages_tech_note: str,
     is_english: bool,
+    keywords_to_add: list = None,
 ) -> dict:
     """
     Phase 2 — Single-section extract + improve.
@@ -237,6 +238,14 @@ def _improve_one_section(
     Finds the section itself, copies the original, then improves it.
     Returns {"original": "...", "improved": "...", "explanation": "..."}.
     """
+    _kws = [k for k in (keywords_to_add or []) if k and str(k).strip()]
+    if _kws and is_english:
+        keywords_block = f"Keywords to weave in naturally (only where relevant to this section): {', '.join(_kws)}\n"
+    elif _kws:
+        keywords_block = f"מילות מפתח לשילוב טבעי בטקסט (רק אם רלוונטיות לסעיף זה): {', '.join(_kws)}\n"
+    else:
+        keywords_block = ""
+
     if is_english:
         system_prompt = f"""{expert_intro}
 
@@ -260,6 +269,7 @@ Work market 2026 principles:
 * Highlight cross-role core skills.
 * Use strong action verbs: Led, Built, Launched, Delivered, Optimised, Scaled.
 
+{keywords_block}
 {content_limits_block}
 
 Task: work on ONLY the "{section_title}" section from this CV.
@@ -311,6 +321,7 @@ Full CV:
 * שמור על ניסוח ברור וקצר.
 * אל תכתוב את המילה "ATS" בתוך טקסט קורות החיים עצמו — המושג הוא הנחיה פנימית בלבד.
 
+{keywords_block}
 {content_limits_block}
 
 משימה: עבוד על הסעיף "{section_title}" בלבד מקורות החיים הבאים.
@@ -407,6 +418,7 @@ def _parallel_analyze(
     logger.info(f"Phase 1 complete in {_t1 - _t0:.1f}s: {len(sections)} sections, score={phase1.get('score')}")
 
     # ── Phase 2: parallel section improvements ──
+    _p1_keywords = phase1.get("keywords_to_add", [])
     fallback_msg = (
         "Could not auto-improve this section — edit manually"
         if is_english else
@@ -427,6 +439,7 @@ def _parallel_analyze(
                 content_limits_block=content_limits_block,
                 _pages_tech_note=_pages_tech_note,
                 is_english=is_english,
+                keywords_to_add=_p1_keywords,
             )
             original    = (res.get("original") or "").strip()
             improved    = (res.get("improved")  or "").strip() or original
@@ -832,6 +845,7 @@ def analyze_cv_streaming(
     }
 
     # ── Phase 2: parallel improvement, yield each section as it completes ──
+    _p1_keywords = phase1.get("keywords_to_add", [])
     fallback_msg = (
         "Could not auto-improve this section — edit manually"
         if is_english else
@@ -851,6 +865,7 @@ def analyze_cv_streaming(
                 content_limits_block=content_limits_block,
                 _pages_tech_note=_pages_tech_note,
                 is_english=is_english,
+                keywords_to_add=_p1_keywords,
             )
             original    = (res.get("original") or "").strip()
             improved    = (res.get("improved")  or "").strip() or original

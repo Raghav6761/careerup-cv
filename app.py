@@ -562,8 +562,8 @@ def render_improve_review():
                 st.markdown(f"• {tip}")
 
     if keywords:
-        with st.expander("🔑 מילות מפתח מומלצות", expanded=False):
-            st.markdown('<span style="font-size:13px;color:#6b7c93;">מילות מפתח אלה יעזרו לקורות החיים לעבור את המסנן הממוחשב של מערכות הגיוס — מומלץ לשלב אותן בתיאורי התפקידים</span>', unsafe_allow_html=True)
+        with st.expander("🔑 מילות מפתח מומלצות", expanded=True):
+            st.markdown('<span style="font-size:13px;color:#6b7c93;">מילות מפתח אלה שולבו אוטומטית בקורות החיים המשופרים — מומלץ לוודא שהן מופיעות בצורה טבעית בטקסט</span>', unsafe_allow_html=True)
             st.markdown(", ".join([f"**{kw}**" for kw in keywords]))
 
     st.markdown('<div class="section-header">📝 הצעות שיפור לפי סעיפים</div>', unsafe_allow_html=True)
