@@ -604,16 +604,20 @@ def render_improve_review():
             orig_diff = _word_diff_html(original, improved, mode="original")
             impr_diff = _word_diff_html(original, improved, mode="improved")
 
-            # ── Cards as HTML table — cells in same row are always equal height ──
-            legend = (
+            # ── Cards — desktop: table side-by-side | mobile: CSS radio tabs ──
+            _legend_html = (
                 '<div style="font-size:11px;color:#666;direction:rtl;text-align:right;'
                 'margin-bottom:6px;display:flex;gap:16px;justify-content:flex-end;align-items:center;">'
                 '<span style="color:#2b56e0;font-weight:700;">נוסף</span>'
                 '<span style="text-decoration:line-through;color:#1a1a1a;">הוסר</span>'
                 '</div>'
             )
-            st.markdown(legend, unsafe_allow_html=True)
+            _impr_label = f'{"✓ " if impr_sel else ""}📝 נוסח משופר'
+            _orig_label = f'{"✓ " if orig_sel else ""}📄 נוסח מקור'
             st.markdown(
+                # ── DESKTOP: existing table (hidden on mobile via CSS) ──
+                f'<div class="cv-dt">'
+                f'{_legend_html}'
                 f'<table style="width:100%;border-collapse:separate;border-spacing:16px 0;'
                 f'table-layout:fixed;direction:ltr;margin-bottom:4px;">'
                 f'<tr>'
@@ -634,7 +638,27 @@ def render_improve_review():
                 f'{orig_diff}</div>'
                 f'</td>'
                 f'</tr>'
-                f'</table>',
+                f'</table>'
+                f'</div>'
+                # ── MOBILE: CSS radio tabs (hidden on desktop via CSS) ──
+                f'<div class="cv-mob">'
+                f'<input type="radio" name="cv-tabs-{i}" id="cv-t-impr-{i}" class="cv-tr" checked>'
+                f'<input type="radio" name="cv-tabs-{i}" id="cv-t-orig-{i}" class="cv-tr">'
+                f'<div class="cv-tab-bar">'
+                f'<label for="cv-t-impr-{i}" class="cv-tl">{_impr_label}</label>'
+                f'<label for="cv-t-orig-{i}" class="cv-tl">{_orig_label}</label>'
+                f'</div>'
+                f'<div class="cv-tc cv-tc-impr" style="background:{impr_bg};">'
+                f'<div class="cv-legend">'
+                f'<span style="color:#2b56e0;font-weight:700;">נוסף</span>'
+                f'<span style="text-decoration:line-through;color:#1a1a1a;">הוסר</span>'
+                f'</div>'
+                f'{impr_diff}'
+                f'</div>'
+                f'<div class="cv-tc cv-tc-orig" style="background:{orig_bg};">'
+                f'{orig_diff}'
+                f'</div>'
+                f'</div>',
                 unsafe_allow_html=True,
             )
 

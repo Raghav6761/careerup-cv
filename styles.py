@@ -575,5 +575,76 @@ def inject_custom_css():
             display: none !important;
         }
 
+        /* ── Mobile tabs for review page ── */
+        .cv-dt  { display: block; }
+        .cv-mob { display: none;  }
+
+        @media (max-width: 768px) {
+            .cv-dt  { display: none  !important; }
+            .cv-mob { display: block !important; }
+        }
+
+        /* hide radio inputs entirely */
+        .cv-tr { display: none !important; }
+
+        /* tab bar */
+        .cv-tab-bar {
+            display: flex;
+            direction: rtl;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            border: 1.5px solid #e0e4ea;
+            border-bottom: none;
+        }
+        .cv-tl {
+            flex: 1;
+            padding: 10px 6px;
+            text-align: center;
+            cursor: pointer;
+            background: #f5f7fa;
+            font-size: 13px;
+            font-weight: 600;
+            color: #022559;
+            transition: background 0.15s, color 0.15s;
+            border-left: 1px solid #e0e4ea;
+        }
+        .cv-tl:last-child { border-left: none; }
+
+        /* tab content panels (hidden by default) */
+        .cv-tc {
+            display: none;
+            padding: 14px;
+            border: 1.5px solid #e0e4ea;
+            border-radius: 0 0 10px 10px;
+            font-size: 13px;
+            line-height: 1.8;
+            direction: rtl;
+            text-align: right;
+        }
+
+        /* active tab label */
+        input[id^="cv-t-impr-"]:checked ~ .cv-tab-bar label[for^="cv-t-impr-"],
+        input[id^="cv-t-orig-"]:checked ~ .cv-tab-bar label[for^="cv-t-orig-"] {
+            background: #022559;
+            color: #ffffff;
+        }
+
+        /* show active content panel */
+        input[id^="cv-t-impr-"]:checked ~ .cv-tc-impr { display: block; }
+        input[id^="cv-t-orig-"]:checked ~ .cv-tc-orig { display: block; }
+
+        /* legend row inside mobile tab */
+        .cv-legend {
+            font-size: 11px;
+            color: #666;
+            direction: rtl;
+            text-align: right;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 14px;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
     </style>
     """, unsafe_allow_html=True)
