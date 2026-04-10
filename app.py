@@ -398,6 +398,12 @@ def render_improve_upload():
             help="פורמטים נתמכים: PDF, DOCX, TXT"
         )
 
+        if uploaded_file is not None:
+            st.success(f"✅ {uploaded_file.name} הועלה בהצלחה")
+            if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary", key="analyze_top"):
+                st.session_state["_run_analysis"] = True
+                st.rerun()
+
     with st.container(border=True, key="card_language"):
         st.markdown('<div class="section-header">🌐 באיזו שפה תרצו את הגרסה החדשה?</div>', unsafe_allow_html=True)
         st.markdown('<span style="font-size:16px; color:#6b7c93;">בחר באיזו שפה תרצה לקבל את הגרסה המשופרת של קורות החיים</span>', unsafe_allow_html=True)
@@ -438,8 +444,10 @@ def render_improve_upload():
             height=68
         )
 
+    _run_now = st.session_state.pop("_run_analysis", False)
     if uploaded_file is not None:
-        if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary"):
+        _bottom_clicked = st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary", key="analyze_bottom")
+        if _bottom_clicked or _run_now:
             prog_bar  = None
             prog_text = None
             try:
