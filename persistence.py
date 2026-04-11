@@ -88,9 +88,16 @@ def init_storage():
     if not isinstance(data, dict):
         return
 
+    def _is_empty(val) -> bool:
+        if val is None:
+            return True
+        if isinstance(val, (str, dict, list)) and not val:
+            return True
+        return False
+
     changed = False
     for key in _PERSIST_KEYS:
-        if key in data and key not in st.session_state:
+        if key in data and _is_empty(st.session_state.get(key)):
             st.session_state[key] = data[key]
             changed = True
 
@@ -188,10 +195,10 @@ def clear_storage():
         )
 
     clear_keys = _PERSIST_KEYS + [
-        "_storage_loaded",
         "cv_text",
         "improve_cv_title",
         "page",
     ]
     for key in clear_keys:
         st.session_state.pop(key, None)
+    st.session_state["_storage_loaded"] = True
