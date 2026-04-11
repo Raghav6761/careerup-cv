@@ -137,8 +137,6 @@ def init_storage():
                 saved_page = "build_form"
         st.session_state["page"] = saved_page
 
-    st.rerun()
-
 
 def save_to_storage():
     """
