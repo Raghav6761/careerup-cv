@@ -10,6 +10,7 @@ from PIL import Image
 from streamlit_sortables import sort_items
 from styles import inject_custom_css
 from persistence import init_storage, save_to_storage, clear_storage
+from streamlit_js_eval import streamlit_js_eval as _js_eval
 
 def _get_logo_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -363,9 +364,17 @@ def render_home():
             </div>
             """, unsafe_allow_html=True)
             if st.button("בחר →", key="btn_improve_cta", use_container_width=True):
-                reset_improve()
-                go_to("improve_upload")
-                st.rerun()
+                _js_eval(
+                    js_expressions=(
+                        "var d={};"
+                        "try{d=JSON.parse(localStorage.getItem('cv_master_data')||'{}');}catch(e){}"
+                        "d.page='improve_upload';"
+                        "localStorage.setItem('cv_master_data',JSON.stringify(d));"
+                        "window.location.reload();"
+                        "true"
+                    ),
+                    key="reload_to_improve_upload",
+                )
 
 
 def render_improve_upload():
