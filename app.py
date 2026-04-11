@@ -364,17 +364,10 @@ def render_home():
             </div>
             """, unsafe_allow_html=True)
             if st.button("בחר →", key="btn_improve_cta", use_container_width=True):
-                _js_eval(
-                    js_expressions=(
-                        "var d={};"
-                        "try{d=JSON.parse(localStorage.getItem('cv_master_data')||'{}');}catch(e){}"
-                        "d.page='improve_upload';"
-                        "localStorage.setItem('cv_master_data',JSON.stringify(d));"
-                        "window.location.reload();"
-                        "true"
-                    ),
-                    key="reload_to_improve_upload",
-                )
+                reset_improve()
+                st.session_state["_needs_fresh_load"] = True
+                go_to("improve_upload")
+                st.rerun()
 
 
 def render_improve_upload():
@@ -383,6 +376,28 @@ def render_improve_upload():
     if st.button("→ חזרה לדף הבית", key="back_home_improve"):
         go_to("home")
         st.rerun()
+
+    if st.session_state.pop("_needs_fresh_load", False):
+        st.markdown("""
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;
+                    z-index:9999;display:flex;align-items:center;justify-content:center;">
+            <div style="font-size:22px;color:#2b56e0;font-family:Assistant,sans-serif;">
+                טוען...
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        _js_eval(
+            js_expressions=(
+                "var d={};"
+                "try{d=JSON.parse(localStorage.getItem('cv_master_data')||'{}');}catch(e){}"
+                "d.page='improve_upload';"
+                "localStorage.setItem('cv_master_data',JSON.stringify(d));"
+                "window.location.reload();"
+                "true"
+            ),
+            key="auto_reload_improve",
+        )
+        st.stop()
 
     st.markdown("""
     <div class="progress-container">
