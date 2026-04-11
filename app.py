@@ -9,6 +9,7 @@ import streamlit.components.v1 as components
 from PIL import Image
 from streamlit_sortables import sort_items
 from styles import inject_custom_css
+from persistence import init_storage, save_to_storage, clear_storage
 
 def _get_logo_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -1729,6 +1730,28 @@ pages = {
     "build_preview": render_build_preview,
 }
 
+init_storage()
+
+_has_saved = bool(
+    st.session_state.get("build_form_data")
+    or st.session_state.get("analysis_result")
+    or st.session_state.get("generated_cv")
+    or st.session_state.get("improve_target_position")
+    or st.session_state.get("build_target_position")
+)
+if _has_saved:
+    with st.sidebar:
+        st.markdown(
+            '<div style="font-size:13px;color:#6b7c93;margin-bottom:8px;">נתוני הטופס שלך נשמרים אוטומטית בדפדפן</div>',
+            unsafe_allow_html=True,
+        )
+        if st.button("🗑 נקה נתונים שמורים", use_container_width=True, key="sidebar_clear_btn"):
+            clear_storage()
+            go_to("home")
+            st.rerun()
+
 current_page = st.session_state.get("page", "home")
 render_fn = pages.get(current_page, render_home)
 render_fn()
+
+save_to_storage()

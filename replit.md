@@ -10,7 +10,8 @@ CV-Master AI is a Hebrew (RTL) Streamlit application for creating and improving 
 - **Export**: ReportLab (PDF), python-docx (DOCX)
 - **Section Reorder**: streamlit-sortables (drag-and-drop in improve_export)
 - **Styling**: Custom CSS injected via Streamlit markdown (RTL, Assistant font, pastel blue theme)
-- **Storage**: Streamlit session state (no database)
+- **Storage**: Streamlit session state + browser localStorage (streamlit-js-eval)
+- **Persistence**: persistence.py — auto-saves all form data and AI results to localStorage; restored on page refresh or session timeout
 
 ## Project Structure
 ```
@@ -18,6 +19,7 @@ app.py              - Main Streamlit app with page routing
 ai_engine.py        - AI logic (CV analysis, interview chat, CV generation)
 file_processor.py   - File upload and text extraction
 export_utils.py     - PDF and DOCX export functions
+persistence.py      - Browser localStorage persistence (init/save/clear)
 styles.py           - Custom CSS for RTL Hebrew layout and theming
 fonts/              - Assistant font files for PDF export
 .streamlit/         - Streamlit configuration
