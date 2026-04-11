@@ -1755,4 +1755,5 @@ current_page = st.session_state.get("page", "home")
 render_fn = pages.get(current_page, render_home)
 render_fn()
 
-save_to_storage()
+if st.session_state.get("page") != "improve_upload" or st.session_state.get("cv_text"):
+    save_to_storage()
