@@ -396,6 +396,7 @@ def render_improve_upload():
         uploaded_file = st.file_uploader(
             "בחר קובץ",
             type=["pdf", "docx", "txt"],
+            key="cv_file_uploader",
             help="פורמטים נתמכים: PDF, DOCX, TXT"
         )
 
