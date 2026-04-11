@@ -426,9 +426,6 @@ def render_improve_upload():
 
         if uploaded_file is not None:
             st.success(f"✅ {uploaded_file.name} הועלה בהצלחה")
-            if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary", key="analyze_top"):
-                st.session_state["_run_analysis"] = True
-                st.rerun()
 
     with st.container(border=True, key="card_language"):
         st.markdown('<div class="section-header">🌐 באיזו שפה תרצו את הגרסה החדשה?</div>', unsafe_allow_html=True)
@@ -471,6 +468,13 @@ def render_improve_upload():
         )
 
     _run_now = st.session_state.pop("_run_analysis", False)
+
+    if st.session_state.get("analysis_result"):
+        st.success("✅ קורות חיים קודמים מנותחים — ניתן להמשיך לסקירה או לנתח קובץ חדש")
+        if st.button("← המשך לסקירה", use_container_width=True, type="primary", key="continue_to_review"):
+            go_to("improve_review")
+            st.rerun()
+
     if uploaded_file is not None:
         _bottom_clicked = st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary", key="analyze_bottom")
         if _bottom_clicked or _run_now:
@@ -1779,5 +1783,4 @@ current_page = st.session_state.get("page", "home")
 render_fn = pages.get(current_page, render_home)
 render_fn()
 
-if st.session_state.get("page") != "improve_upload" or st.session_state.get("cv_text"):
-    save_to_storage()
+save_to_storage()
