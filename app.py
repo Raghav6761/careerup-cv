@@ -395,15 +395,19 @@ def render_improve_upload():
 
         uploaded_file = st.file_uploader(
             "בחר קובץ",
-            type=["pdf", "docx", "txt"],
             help="פורמטים נתמכים: PDF, DOCX, TXT"
         )
 
         if uploaded_file is not None:
-            st.success(f"✅ {uploaded_file.name} הועלה בהצלחה")
-            if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary", key="analyze_top"):
-                st.session_state["_run_analysis"] = True
-                st.rerun()
+            _fname = uploaded_file.name.lower()
+            if not (_fname.endswith(".pdf") or _fname.endswith(".docx") or _fname.endswith(".txt")):
+                st.error("❌ פורמט לא נתמך. אנא העלה קובץ PDF, DOCX או TXT.")
+                uploaded_file = None
+            else:
+                st.success(f"✅ {uploaded_file.name} הועלה בהצלחה")
+                if st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary", key="analyze_top"):
+                    st.session_state["_run_analysis"] = True
+                    st.rerun()
 
     with st.container(border=True, key="card_language"):
         st.markdown('<div class="section-header">🌐 באיזו שפה תרצו את הגרסה החדשה?</div>', unsafe_allow_html=True)
