@@ -211,7 +211,7 @@ def inject_custom_css():
         [class*="st-key-home_cta"] [data-testid="column"]:last-child [data-testid="stBaseButton-secondary"]:active,
         [class*="st-key-home_cta"] [data-testid="column"]:last-child [data-testid="stBaseButton-secondary"]:focus,
         [class*="st-key-home_cta"] [data-testid="stColumn"]:last-child [data-testid="stBaseButton-secondary"]:hover {
-            background: #80d6c5 !important;
+            background: #f0f4ff !important;
             border: 2px solid #022559 !important;
             border-top: none !important;
             color: #022559 !important;
