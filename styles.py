@@ -239,13 +239,6 @@ def inject_custom_css():
             flex: 1 !important;
         }
 
-        .e1mwqyj92 {
-            background-color: #80d6c5 !important;
-        }
-
-        .e12zf7d53 {
-            border-color: #80d6c5 !important;
-        }
 
         [data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-card_upload),
         [data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-card_language),
