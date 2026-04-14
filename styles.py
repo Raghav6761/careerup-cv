@@ -26,6 +26,21 @@ def inject_custom_css():
             background-color: #ffffff;
         }
 
+        [class*="st-key-_cv_storage_"],
+        [class*="st-key-auto_reload_improve"] {
+            height: 0 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            line-height: 0 !important;
+        }
+        [class*="st-key-_cv_storage_"] iframe,
+        [class*="st-key-auto_reload_improve"] iframe {
+            display: none !important;
+        }
+
         .main .block-container {
             max-width: 900px;
             padding: 0rem 1rem 2rem 1rem;
