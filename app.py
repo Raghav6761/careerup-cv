@@ -595,7 +595,7 @@ def render_improve_review():
     keywords = result.get("keywords_to_add", [])
 
     if tips:
-        with st.expander("💡 טיפים כלליים", expanded=True):
+        with st.expander("✅ מה כדאי להוסיף", expanded=True):
             for tip in tips:
                 st.markdown(f"• {tip}")
 
