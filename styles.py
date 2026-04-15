@@ -262,6 +262,19 @@ def inject_custom_css():
             background-color: #f2f1ef !important;
         }
 
+        /* ── CV title save button: align with input + prevent wrap ── */
+        .st-key-cv_title_save_btn {
+            margin-top: 28px !important;
+        }
+        .st-key-cv_title_save_btn button {
+            white-space: nowrap !important;
+            font-size: 13px !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+            height: 38px !important;
+            line-height: 1 !important;
+        }
+
         div:has(> [class*="st-key-card_upload"]),
         div:has(> [class*="st-key-card_language"]),
         div:has(> [class*="st-key-card_target"]) {

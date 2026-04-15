@@ -995,11 +995,9 @@ def render_improve_reorder():
             label_visibility="collapsed",
         )
     with _col_btn:
-        st.markdown('<div style="padding-top:4px;">', unsafe_allow_html=True)
         if st.button("שמור", key="cv_title_save_btn", use_container_width=True, type="primary"):
             st.session_state.improve_cv_title = cv_title_draft.strip()
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     cv_title = st.session_state.improve_cv_title
     if cv_title:
