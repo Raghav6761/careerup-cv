@@ -986,7 +986,7 @@ def render_improve_reorder():
         st.session_state.improve_cv_title = ""
 
     st.markdown('<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:4px;">כותרת קורות החיים (אופציונלי)</div>', unsafe_allow_html=True)
-    _col_input, _col_btn = st.columns([8, 2])
+    _col_input, _col_btn = st.columns([6, 1])
     with _col_input:
         cv_title_draft = st.text_input(
             "כותרת",
@@ -995,9 +995,11 @@ def render_improve_reorder():
             label_visibility="collapsed",
         )
     with _col_btn:
-        if st.button("שמור כותרת", key="cv_title_save_btn", use_container_width=True):
+        st.markdown('<div style="padding-top:4px;">', unsafe_allow_html=True)
+        if st.button("שמור", key="cv_title_save_btn", use_container_width=True, type="primary"):
             st.session_state.improve_cv_title = cv_title_draft.strip()
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     cv_title = st.session_state.improve_cv_title
     if cv_title:
