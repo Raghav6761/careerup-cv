@@ -263,16 +263,16 @@ def inject_custom_css():
         }
 
         /* ── CV title save button: same height as input + prevent wrap ── */
-        .st-key-cv_title_save_btn button {
+        .st-key-cv_title_save_btn button,
+        .st-key-cv_title_save_btn [data-testid="stBaseButton-primary"] {
             white-space: nowrap !important;
             font-size: 13px !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            padding-left: 12px !important;
-            padding-right: 12px !important;
+            padding: 0 12px !important;
             height: 42px !important;
-            min-height: unset !important;
+            min-height: 42px !important;
+            max-height: 42px !important;
             line-height: 42px !important;
+            box-sizing: border-box !important;
         }
 
         div:has(> [class*="st-key-card_upload"]),
