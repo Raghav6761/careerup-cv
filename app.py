@@ -986,7 +986,7 @@ def render_improve_reorder():
         st.session_state.improve_cv_title = ""
 
     st.markdown('<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:4px;">כותרת קורות החיים (אופציונלי)</div>', unsafe_allow_html=True)
-    _col_input, _col_btn = st.columns([6, 1])
+    _col_input, _col_btn = st.columns([6, 1], vertical_alignment="bottom")
     with _col_input:
         cv_title_draft = st.text_input(
             "כותרת",

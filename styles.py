@@ -262,10 +262,7 @@ def inject_custom_css():
             background-color: #f2f1ef !important;
         }
 
-        /* ── CV title save button: align with input + prevent wrap ── */
-        .st-key-cv_title_save_btn {
-            margin-top: 28px !important;
-        }
+        /* ── CV title save button: same height as input + prevent wrap ── */
         .st-key-cv_title_save_btn button {
             white-space: nowrap !important;
             font-size: 13px !important;
