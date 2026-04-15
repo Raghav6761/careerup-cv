@@ -986,38 +986,32 @@ def render_improve_reorder():
         st.session_state.improve_cv_title = ""
 
     st.markdown('<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:4px;">כותרת קורות החיים (אופציונלי)</div>', unsafe_allow_html=True)
-    cv_title = st.text_input(
-        "כותרת",
-        value=st.session_state.improve_cv_title,
-        key="cv_title_input",
-        placeholder="לדוגמה: קורות חיים - דיסקרטי",
-        label_visibility="collapsed",
-    )
-    st.session_state.improve_cv_title = cv_title
-    if cv_title.strip():
-        _checkmark_svg = (
-            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E"
-            "%3Ccircle cx='10' cy='10' r='9' fill='%2322c55e'/%3E"
-            "%3Cpath d='M5.5 10l3 3 6-6' stroke='white' stroke-width='2' "
-            "stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E"
+    _col_input, _col_btn = st.columns([8, 2])
+    with _col_input:
+        cv_title_draft = st.text_input(
+            "כותרת",
+            key="cv_title_input",
+            placeholder="לדוגמה: קורות חיים - דיסקרטי",
+            label_visibility="collapsed",
         )
+    with _col_btn:
+        if st.button("שמור כותרת", key="cv_title_save_btn", use_container_width=True):
+            st.session_state.improve_cv_title = cv_title_draft.strip()
+            st.rerun()
+
+    cv_title = st.session_state.improve_cv_title
+    if cv_title:
         st.markdown(
-            f"""<style>
-            .st-key-cv_title_input input {{
-                background-image: url("{_checkmark_svg}") !important;
-                background-repeat: no-repeat !important;
-                background-position: left 12px center !important;
-                background-size: 20px 20px !important;
-                padding-left: 40px !important;
-            }}
-            </style>""",
+            f'<div style="font-size:12px;color:#22c55e;margin-top:-8px;margin-bottom:8px;">'
+            f'✓ הכותרת נשמרה: <strong>{cv_title}</strong></div>',
             unsafe_allow_html=True,
         )
-    st.markdown('<div style="font-size:12px;color:#6b7c93;margin-bottom:16px;">הכותרת תופיע בראש קורות החיים המיוצאים</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="font-size:12px;color:#6b7c93;margin-bottom:16px;">הכותרת תופיע בראש קורות החיים המיוצאים</div>', unsafe_allow_html=True)
 
     # ── Cache export bytes so cv_title-field reruns don't break download URLs ──
     # Key is based on sections content + cv_title + language mode; regenerate only on change.
-    _cache_key = (is_english_mode, cv_title.strip(), st.session_state.get("improve_max_pages", 1), tuple((s["title"], s["final_text"]) for s in export_sections))
+    _cache_key = (is_english_mode, cv_title, st.session_state.get("improve_max_pages", 1), tuple((s["title"], s["final_text"]) for s in export_sections))
     if st.session_state.get("_improve_export_cache_key") != _cache_key:
         st.session_state._improve_export_cache_key = _cache_key
         st.session_state._improve_pdf = None
