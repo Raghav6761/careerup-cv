@@ -249,6 +249,14 @@ def inject_custom_css():
             border-width: 2px !important;
         }
 
+        /* ── CV title field: green checkmark inside field on left when value entered ── */
+        .st-key-cv_title_input input:not(:placeholder-shown) {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22' fill='none'%3E%3Ccircle cx='11' cy='11' r='10' stroke='%2322c55e' stroke-width='2'/%3E%3Cpath d='M6.5 11l3 3 6-6' stroke='%2322c55e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 10px center;
+            background-size: 20px 20px;
+            padding-left: 38px !important;
+        }
 
         [class*="st-key-card_upload"],
         [class*="st-key-card_language"],
