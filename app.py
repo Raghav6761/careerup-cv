@@ -986,14 +986,27 @@ def render_improve_reorder():
         st.session_state.improve_cv_title = ""
 
     st.markdown('<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:4px;">כותרת קורות החיים (אופציונלי)</div>', unsafe_allow_html=True)
-    cv_title = st.text_input(
-        "כותרת",
-        value=st.session_state.improve_cv_title,
-        key="cv_title_input",
-        placeholder="לדוגמה: קורות חיים - דיסקרטי",
-        label_visibility="collapsed",
-    )
+    _col_check, _col_input = st.columns([1, 12], vertical_alignment="center")
+    with _col_input:
+        cv_title = st.text_input(
+            "כותרת",
+            value=st.session_state.improve_cv_title,
+            key="cv_title_input",
+            placeholder="לדוגמה: קורות חיים - דיסקרטי",
+            label_visibility="collapsed",
+        )
     st.session_state.improve_cv_title = cv_title
+    with _col_check:
+        if cv_title.strip():
+            st.markdown(
+                '<div style="display:flex;align-items:center;justify-content:center;">'
+                '<svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">'
+                '<circle cx="11" cy="11" r="10" stroke="#22c55e" stroke-width="2"/>'
+                '<path d="M6.5 11l3 3 6-6" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+                '</svg>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
     st.markdown('<div style="font-size:12px;color:#6b7c93;margin-bottom:16px;">הכותרת תופיע בראש קורות החיים המיוצאים</div>', unsafe_allow_html=True)
 
     # ── Cache export bytes so cv_title-field reruns don't break download URLs ──
