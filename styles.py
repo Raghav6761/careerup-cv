@@ -7,6 +7,12 @@ def inject_custom_css():
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
+        /* hide Streamlit sidebar entirely */
+        [data-testid="stSidebar"],
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+
         *, html, body, [class*="st-"] {
             font-family: 'Assistant', sans-serif !important;
             direction: rtl !important;
