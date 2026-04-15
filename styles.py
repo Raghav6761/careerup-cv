@@ -266,10 +266,13 @@ def inject_custom_css():
         .st-key-cv_title_save_btn button {
             white-space: nowrap !important;
             font-size: 13px !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-            height: 38px !important;
-            line-height: 1 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            height: 42px !important;
+            min-height: unset !important;
+            line-height: 42px !important;
         }
 
         div:has(> [class*="st-key-card_upload"]),
