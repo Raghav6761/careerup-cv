@@ -262,10 +262,15 @@ def inject_custom_css():
             background-color: #f2f1ef !important;
         }
 
-        /* ── CV title: input same height as button, both centered ── */
+        /* ── CV title: button same height as input ── */
         .st-key-cv_title_save_btn button {
             white-space: nowrap !important;
             width: 100% !important;
+            height: 2.4rem !important;
+            min-height: 2.4rem !important;
+            max-height: 2.4rem !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
         }
         .st-key-cv_title_input input {
             height: 2.4rem !important;
