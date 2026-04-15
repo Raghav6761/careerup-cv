@@ -994,6 +994,25 @@ def render_improve_reorder():
         label_visibility="collapsed",
     )
     st.session_state.improve_cv_title = cv_title
+    if cv_title.strip():
+        _checkmark_svg = (
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E"
+            "%3Ccircle cx='10' cy='10' r='9' fill='%2322c55e'/%3E"
+            "%3Cpath d='M5.5 10l3 3 6-6' stroke='white' stroke-width='2' "
+            "stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E"
+        )
+        st.markdown(
+            f"""<style>
+            .st-key-cv_title_input input {{
+                background-image: url("{_checkmark_svg}") !important;
+                background-repeat: no-repeat !important;
+                background-position: left 12px center !important;
+                background-size: 20px 20px !important;
+                padding-left: 40px !important;
+            }}
+            </style>""",
+            unsafe_allow_html=True,
+        )
     st.markdown('<div style="font-size:12px;color:#6b7c93;margin-bottom:16px;">הכותרת תופיע בראש קורות החיים המיוצאים</div>', unsafe_allow_html=True)
 
     # ── Cache export bytes so cv_title-field reruns don't break download URLs ──
