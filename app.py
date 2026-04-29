@@ -2158,7 +2158,7 @@ def render_build_preview():
     st.markdown(
         '<div style="background:#f0f7ff;border:1.5px solid #b3d0f5;border-radius:12px;padding:16px 20px;margin:8px 0 4px 0;">'
         '<div style="font-size:15px;font-weight:600;color:#022559;margin-bottom:6px;">🔍 רוצה לוודא שהניסוח מושלם?</div>'
-        '<div style="font-size:14px;color:#4a5568;">נריץ את קורות החיים שיצרת דרך מערכת השיפור כדי לוודא שהניסוח אופטימלי, מילות המפתח נכונות והמסמך עובר מסנני ATS בהצלחה.</div>'
+        '<div style="font-size:14px;color:#4a5568;">לאחר שתוריד את קורות החיים שיצרת כ-DOCX, נריץ אותם דרך מערכת השיפור כדי לוודא שהניסוח אופטימלי, מילות המפתח נכונות והמסמך עובר מסנני ATS בהצלחה.</div>'
         '</div>',
         unsafe_allow_html=True,
     )
