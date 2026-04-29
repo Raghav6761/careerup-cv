@@ -304,8 +304,122 @@ def reset_improve():
                 "improve_en_translated", "improve_en_translating",
                 "_improve_export_cache_key", "_improve_pdf", "_improve_docx",
                 "_improve_pdf_err", "_improve_docx_err",
-                "_improve_en_pdf", "_improve_en_docx"]:
+                "_improve_en_pdf", "_improve_en_docx",
+                "staged_from_build", "staged_cv_text"]:
         st.session_state.pop(_k, None)
+
+
+def _cv_dict_to_text(cv_data: dict) -> str:
+    """Convert a generated_cv dict to plain text suitable for the Improve flow analyzer."""
+    lines = []
+
+    name = cv_data.get("full_name", "").strip()
+    contact = cv_data.get("contact", {})
+    contact_parts = [p for p in [
+        contact.get("phone", ""),
+        contact.get("email", ""),
+        contact.get("city", ""),
+        contact.get("linkedin", ""),
+    ] if p.strip()]
+
+    if name:
+        lines.append(name)
+    if contact_parts:
+        lines.append(" | ".join(contact_parts))
+
+    summary = cv_data.get("professional_summary", "").strip()
+    if summary:
+        lines.append("")
+        lines.append("תקציר מקצועי")
+        lines.append(summary)
+
+    experience = cv_data.get("experience", [])
+    if experience:
+        lines.append("")
+        lines.append("ניסיון תעסוקתי")
+        for exp in experience:
+            title = exp.get("title", "")
+            company = exp.get("company", "")
+            period = exp.get("period", "")
+            header_parts = [p for p in [period, title, company] if p.strip()]
+            if header_parts:
+                lines.append(" | ".join(header_parts))
+            for ach in exp.get("achievements", []):
+                if ach.strip():
+                    lines.append(f"• {ach.strip()}")
+            honors = exp.get("honors", "").strip()
+            if honors:
+                lines.append(f"• הצטיינות: {honors}")
+
+    education = cv_data.get("education", [])
+    if education:
+        lines.append("")
+        lines.append("השכלה")
+        for edu in education:
+            degree = edu.get("degree", "")
+            institution = edu.get("institution", "")
+            year = edu.get("year", "")
+            edu_parts = [p for p in [year, institution, degree] if p.strip()]
+            if edu_parts:
+                lines.append(" | ".join(edu_parts))
+            honors = edu.get("honors", "").strip()
+            if honors:
+                lines.append(f"הצטיינות: {honors}")
+
+    military = cv_data.get("military", [])
+    if military:
+        lines.append("")
+        lines.append("שירות צבאי / לאומי")
+        for item in military:
+            if item.strip():
+                lines.append(f"• {item.strip()}")
+
+    skills = cv_data.get("skills", {})
+    tech = skills.get("technical", [])
+    soft = skills.get("soft", [])
+    if tech or soft:
+        lines.append("")
+        lines.append("מיומנויות")
+        if tech:
+            lines.append("טכניות: " + ", ".join(tech))
+        if soft:
+            lines.append("רכות: " + ", ".join(soft))
+
+    languages = cv_data.get("languages", [])
+    if languages:
+        lines.append("")
+        lines.append("שפות")
+        for lang in languages:
+            lang_name = lang.get("language", "")
+            level = lang.get("level", "")
+            if lang_name.strip():
+                lines.append(f"• {lang_name}" + (f" — {level}" if level.strip() else ""))
+
+    volunteering = cv_data.get("volunteering", [])
+    if volunteering:
+        lines.append("")
+        lines.append("התנדבות")
+        for item in volunteering:
+            if item.strip():
+                lines.append(f"• {item.strip()}")
+
+    projects = cv_data.get("projects", [])
+    if projects:
+        lines.append("")
+        lines.append("פרויקטים")
+        for item in projects:
+            if item.strip():
+                lines.append(f"• {item.strip()}")
+
+    additional = cv_data.get("additional", [])
+    if additional:
+        lines.append("")
+        lines.append("מידע נוסף")
+        for item in additional:
+            if item.strip():
+                lines.append(f"• {item.strip()}")
+
+    return "\n".join(lines)
 
 
 def reset_build():
@@ -374,6 +488,8 @@ def render_improve_upload():
     render_header()
 
     if st.button("→ חזרה לדף הבית", key="back_home_improve"):
+        st.session_state.pop("staged_from_build", None)
+        st.session_state.pop("staged_cv_text", None)
         go_to("home")
         st.rerun()
 
@@ -413,6 +529,8 @@ def render_improve_upload():
     </style>
     """, unsafe_allow_html=True)
 
+    staged_from_build = st.session_state.get("staged_from_build", False)
+
     with st.container(border=True, key="card_upload"):
         st.markdown('<div class="section-header">📤 העלאת קובץ קורות חיים</div>', unsafe_allow_html=True)
         st.markdown("העלה את קובץ קורות החיים שלך בפורמט PDF, DOCX או TXT")
@@ -426,6 +544,16 @@ def render_improve_upload():
 
         if uploaded_file is not None:
             st.success(f"✅ {uploaded_file.name} הועלה בהצלחה")
+
+    if staged_from_build and uploaded_file is None:
+        banner_col, clear_col = st.columns([9, 1])
+        with banner_col:
+            st.success("✅ קורות החיים שיצרת מוכנים לבדיקה — בחרו תפקיד יעד, שפה ומספר עמודים והתחילו")
+        with clear_col:
+            if st.button("× בטל", key="clear_staged_btn", help="בטל את הטעינה מה-Build"):
+                st.session_state.pop("staged_from_build", None)
+                st.session_state.pop("staged_cv_text", None)
+                st.rerun()
 
     with st.container(border=True, key="card_language"):
         st.markdown('<div class="section-header">🌐 באיזו שפה תרצו את הגרסה החדשה?</div>', unsafe_allow_html=True)
@@ -475,7 +603,9 @@ def render_improve_upload():
             go_to("improve_review")
             st.rerun()
 
-    if uploaded_file is not None:
+    _staged_text_ready = staged_from_build and bool(st.session_state.get("staged_cv_text", "").strip())
+    _can_analyze = (uploaded_file is not None) or _staged_text_ready
+    if _can_analyze:
         _bottom_clicked = st.button("🔍 נתח את קורות החיים", use_container_width=True, type="primary", key="analyze_bottom")
         if _bottom_clicked or _run_now:
             prog_bar  = None
@@ -487,16 +617,27 @@ def render_improve_upload():
                 prog_bar  = st.progress(0)
                 prog_text = st.empty()
 
-                # Step 1: file processing
-                prog_text.markdown("📂 מעבד את הקובץ...")
-                prog_bar.progress(5)
-                cv_text = process_uploaded_file(uploaded_file)
+                if uploaded_file is not None:
+                    # Step 1: file processing (uploaded file takes precedence)
+                    prog_text.markdown("📂 מעבד את הקובץ...")
+                    prog_bar.progress(5)
+                    cv_text = process_uploaded_file(uploaded_file)
 
-                if not cv_text.strip():
-                    prog_bar.empty()
-                    prog_text.empty()
-                    st.error("לא הצלחנו לחלץ טקסט מהקובץ. נסה קובץ אחר.")
-                    return
+                    if not cv_text.strip():
+                        prog_bar.empty()
+                        prog_text.empty()
+                        st.error("לא הצלחנו לחלץ טקסט מהקובץ. נסה קובץ אחר.")
+                        return
+                else:
+                    # Use pre-loaded text from Build flow
+                    prog_text.markdown("📂 טוען קורות חיים מה-Build...")
+                    prog_bar.progress(5)
+                    cv_text = st.session_state.get("staged_cv_text", "")
+                    if not cv_text.strip():
+                        prog_bar.empty()
+                        prog_text.empty()
+                        st.error("לא נמצא טקסט לניתוח. נסה להעלות קובץ.")
+                        return
 
                 st.session_state.cv_text = cv_text
 
@@ -551,6 +692,8 @@ def render_improve_upload():
 
                 st.session_state.analysis_result = result
                 st.session_state.section_decisions = {}
+                st.session_state.pop("staged_from_build", None)
+                st.session_state.pop("staged_cv_text", None)
 
                 go_to("improve_review")
                 st.rerun()
@@ -1867,6 +2010,21 @@ def render_build_preview():
         )
     except Exception as e:
         st.error(f"שגיאה ביצירת DOCX: {str(e)}")
+
+    st.markdown("---")
+    st.markdown(
+        '<div style="background:#f0f7ff;border:1.5px solid #b3d0f5;border-radius:12px;padding:16px 20px;margin:8px 0 4px 0;">'
+        '<div style="font-size:15px;font-weight:600;color:#022559;margin-bottom:6px;">🔍 רוצה לוודא שהניסוח מושלם?</div>'
+        '<div style="font-size:14px;color:#4a5568;">נריץ את קורות החיים שיצרת דרך מערכת השיפור כדי לוודא שהניסוח אופטימלי, מילות המפתח נכונות והמסמך עובר מסנני ATS בהצלחה.</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+    if st.button("🔍 בדוק את הניסוח דרך כלי השיפור", use_container_width=True, key="send_to_improve_btn"):
+        staged_text = _cv_dict_to_text(st.session_state.generated_cv)
+        st.session_state.staged_cv_text = staged_text
+        st.session_state.staged_from_build = True
+        go_to("improve_upload")
+        st.rerun()
 
     st.markdown('<div class="section-header">🌐 הורדה באנגלית (תרגום)</div>', unsafe_allow_html=True)
 
