@@ -1477,13 +1477,19 @@ _SECTION_GUIDANCE = {
 }
 
 
-def _build_consultation_system_prompt(section_key: str) -> str:
+def _build_consultation_system_prompt(section_key: str, context_text: str = "") -> str:
     label = _SECTION_LABELS.get(section_key, section_key)
     guidance = _SECTION_GUIDANCE.get(section_key, "")
+    context_block = (
+        f"\nהטקסט הנוכחי של הסעיף שהמשתמש עובד עליו:\n{context_text.strip()}\n"
+        if context_text and context_text.strip()
+        else ""
+    )
     return (
         f"אתה יועץ קריירה ותיק וחברותי שעוזר למועמדים לכתוב קורות חיים מקצועיים בעברית. "
         f"המשתמש נמצא כרגע בסעיף '{label}' בטופס בניית קורות החיים, ומבקש ממך עצה.\n\n"
-        f"הקשר לסעיף הספציפי הזה:\n{guidance}\n\n"
+        f"הקשר לסעיף הספציפי הזה:\n{guidance}\n"
+        + context_block + "\n"
         "כללי תשובה:\n"
         "- ענה בעברית בלבד, בטון חברותי, מקצועי וברור.\n"
         "- שמור על תשובות קצרות וממוקדות (3-7 משפטים בדרך כלל), עם דוגמאות קצרות כשמועיל.\n"
@@ -1497,13 +1503,16 @@ def _build_consultation_system_prompt(section_key: str) -> str:
     )
 
 
-def section_consultation_reply(section_key: str, conversation_history: list) -> str:
+def section_consultation_reply(
+    section_key: str, conversation_history: list, context_text: str = ""
+) -> str:
     """Generate an advisor reply for a per-section consultation chat.
 
     Args:
         section_key: One of the keys in _SECTION_LABELS (e.g. "summary").
         conversation_history: List of {"role": "user"|"assistant", "content": str}.
             The last message must be from the user.
+        context_text: Optional current section text shown to the advisor as context.
 
     Returns:
         The assistant's reply (already sanitized via _sanitize_ai_output).
@@ -1511,7 +1520,7 @@ def section_consultation_reply(section_key: str, conversation_history: list) -> 
     if not conversation_history:
         return ""
 
-    system_prompt = _build_consultation_system_prompt(section_key)
+    system_prompt = _build_consultation_system_prompt(section_key, context_text)
 
     transcript_lines = []
     for msg in conversation_history:
@@ -1531,9 +1540,15 @@ def section_consultation_reply(section_key: str, conversation_history: list) -> 
     return call_ai(system_prompt, user_prompt)
 
 
-def section_consultation_greeting(section_key: str) -> str:
-    """Return a short, deterministic Hebrew greeting for a section's first open."""
-    label = _SECTION_LABELS.get(section_key, section_key)
+def section_consultation_greeting(section_key: str, fallback_label: str = "") -> str:
+    """Return a short, deterministic Hebrew greeting for a section's first open.
+
+    Args:
+        section_key: The semantic key used for guidance lookups.
+        fallback_label: Human-readable section title to use when section_key is not
+                        found in _SECTION_LABELS (e.g. a custom section title).
+    """
+    label = _SECTION_LABELS.get(section_key) or fallback_label or section_key
     return (
         f"שלום! אני כאן לעזור לך עם הסעיף '{label}'. "
         f"ספר לי מה הקושי או מה אתה רוצה לכתוב, ואני אעזור לך לנסח את זה כמו שצריך."
