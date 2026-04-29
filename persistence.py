@@ -16,7 +16,10 @@ _PERSIST_KEYS = [
     "cv_text",
     "section_decisions",
     "improve_final_sections",
+    "consultation_chats",
 ]
+
+_MAX_CONSULTATION_MESSAGES_PER_SECTION = 30
 
 
 def _set_build_widget_keys(fd: dict):
@@ -157,7 +160,16 @@ def save_to_storage():
     for key in _PERSIST_KEYS:
         val = st.session_state.get(key)
         if val is not None:
-            data[key] = val
+            if key == "consultation_chats" and isinstance(val, dict):
+                trimmed = {}
+                for section, msgs in val.items():
+                    if isinstance(msgs, list):
+                        trimmed[section] = msgs[-_MAX_CONSULTATION_MESSAGES_PER_SECTION:]
+                    else:
+                        trimmed[section] = msgs
+                data[key] = trimmed
+            else:
+                data[key] = val
 
     if not data:
         return
