@@ -1480,7 +1480,7 @@ def _render_consult_panel(section_key: str):
     consulting_flag = f"_consulting_{section_key}"
     is_consulting = st.session_state.get(consulting_flag, False)
 
-    chat_box = st.container(height=320, border=False)
+    chat_box = st.container(height=160, border=False)
     with chat_box:
         bubbles_html = _consult_build_html(history, show_typing=is_consulting)
         st.markdown(bubbles_html, unsafe_allow_html=True)
