@@ -18,6 +18,22 @@ client = OpenAI(
 )
 
 
+def _sanitize_ai_output(text: str) -> str:
+    """Replace em/en dashes with a regular hyphen and collapse double-hyphens.
+
+    Safety net: even if the AI ignores the prompt-level instruction, em dashes
+    (U+2014 —) and en dashes (U+2013 –) are stripped here before any caller
+    sees the text. Double hyphens produced by the substitution (or by the AI
+    itself) are then collapsed to a single hyphen.
+
+    Hebrew abbreviations that use a geresh-apostrophe (מנכ"ל, ד"ר …) are not
+    affected because they contain no hyphen characters.
+    """
+    text = text.replace('\u2014', '-').replace('\u2013', '-')
+    text = re.sub(r'-{2,}', '-', text)
+    return text
+
+
 def should_retry(exception: BaseException) -> bool:
     error_msg = str(exception)
     return (
@@ -58,7 +74,7 @@ def call_ai(system_prompt: str, user_prompt: str) -> str:
     if finish_reason == "length":
         logger.warning("Response was truncated due to max_completion_tokens")
 
-    return content
+    return _sanitize_ai_output(content)
 
 
 def _safe_json_parse(text: str) -> dict:
@@ -967,7 +983,7 @@ def get_interview_question(conversation_history: list, step: int) -> str:
         messages=messages,
         max_completion_tokens=1024
     )
-    return response.choices[0].message.content or ""
+    return _sanitize_ai_output(response.choices[0].message.content or "")
 
 
 def generate_cv_from_interview(conversation_history: list) -> dict:

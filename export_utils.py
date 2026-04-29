@@ -116,6 +116,8 @@ def _clean_hebrew_text(text: str) -> str:
     text = text.replace('(', ' - ').replace(')', '').replace('（', ' - ').replace('）', '')
     text = text.replace('"', '״').replace('"', '״').replace('"', '״')
     text = text.replace('׳', "'")
+    text = text.replace('\u2014', '-').replace('\u2013', '-')
+    text = re.sub(r'-{2,}', '-', text)
     return text
 
 
@@ -385,7 +387,7 @@ def export_cv_to_pdf(cv_data: dict, max_pages: int = 1) -> bytes:
             if lang_name and not _is_empty_content(lang_name):
                 part = lang_name
                 if lang_level and not _is_empty_content(lang_level):
-                    part += f" – {lang_level}"
+                    part += f" - {lang_level}"
                 lang_parts.append(part)
         if lang_parts:
             elements.append(Paragraph(reshape_hebrew("שפות"), styles["section_header"]))
@@ -651,7 +653,7 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         if lang_name and not _is_empty_content(lang_name):
             part = lang_name
             if level and not _is_empty_content(level):
-                part += f" – {level}"
+                part += f" - {level}"
             lang_parts.append(part)
     if lang_parts:
         _add_docx_section_header(doc, "שפות")
@@ -1216,7 +1218,7 @@ def export_cv_to_pdf_en(cv_data: dict, max_pages: int = 1) -> bytes:
             if lang_name and not _is_empty_content(lang_name):
                 part = lang_name
                 if lang_level and not _is_empty_content(lang_level):
-                    part += f" – {lang_level}"
+                    part += f" - {lang_level}"
                 lang_parts.append(part)
         if lang_parts:
             elements.append(Paragraph("Languages", styles["section_header"]))
@@ -1375,7 +1377,7 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
         if lang_name and not _is_empty_content(lang_name):
             part = lang_name
             if level and not _is_empty_content(level):
-                part += f" – {level}"
+                part += f" - {level}"
             lang_parts.append(part)
     if lang_parts:
         _add_docx_section_header_en(doc, "Languages")
