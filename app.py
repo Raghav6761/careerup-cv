@@ -1183,87 +1183,90 @@ def _init_build_form_data():
         }
 
 
-@st.dialog("💬 ייעוץ אישי לכתיבת קורות חיים")
-def _consultation_dialog():
+def _open_consultation_dialog(section_key: str):
+    """Open the consultation dialog with a section-specific title."""
     from ai_engine import (
         section_consultation_reply,
         section_consultation_greeting,
         _SECTION_LABELS,
     )
-
-    section_key = st.session_state.get("active_consultation")
-    if not section_key:
-        return
+    import logging as _logging
 
     label = _SECTION_LABELS.get(section_key, section_key)
-    st.markdown(
-        f'<div style="font-size:16px; font-weight:600; color:#022559; margin-bottom:8px;">'
-        f'יועץ הקריירה – סעיף "{label}"</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div style="font-size:13px; color:#6b7c93; margin-bottom:10px;">'
-        'שאל כל שאלה על מה לכתוב בסעיף הזה. היועץ עוזר אבל לא כותב במקומך.'
-        '</div>',
-        unsafe_allow_html=True,
-    )
 
-    if "consultation_chats" not in st.session_state:
-        st.session_state.consultation_chats = {}
-    if section_key not in st.session_state.consultation_chats:
-        st.session_state.consultation_chats[section_key] = [
-            {"role": "assistant", "content": section_consultation_greeting(section_key)}
-        ]
-
-    history = st.session_state.consultation_chats[section_key]
-
-    chat_box = st.container(height=320, border=False)
-    with chat_box:
-        for msg in history:
-            avatar = "🧑‍💼" if msg["role"] == "assistant" else "🙂"
-            with st.chat_message(msg["role"], avatar=avatar):
-                st.markdown(msg["content"])
-
-    with st.form(key=f"consult_form_{section_key}", clear_on_submit=True):
-        user_msg = st.text_area(
-            "שאלה",
-            placeholder="הקלד את השאלה שלך כאן...",
-            height=72,
-            label_visibility="collapsed",
-            key=f"consult_input_{section_key}",
+    @st.dialog(f"💬 ייעוץ – {label}")
+    def _dlg():
+        st.markdown(
+            '<div style="font-size:13px; color:#6b7c93; margin-bottom:10px;">'
+            'שאל כל שאלה על מה לכתוב בסעיף הזה. היועץ עוזר אבל לא כותב במקומך.'
+            '</div>',
+            unsafe_allow_html=True,
         )
-        cols = st.columns([2, 1, 1])
-        with cols[0]:
-            send = st.form_submit_button("📤 שלח שאלה", type="primary", use_container_width=True)
-        with cols[1]:
-            clear = st.form_submit_button("🗑️ נקה שיחה", use_container_width=True)
-        with cols[2]:
-            close = st.form_submit_button("סגור", use_container_width=True)
 
-    if send and user_msg and user_msg.strip():
-        history.append({"role": "user", "content": user_msg.strip()})
-        try:
-            with st.spinner("היועץ חושב..."):
-                reply = section_consultation_reply(section_key, history)
-            if not reply or not reply.strip():
-                reply = "סליחה, לא הצלחתי להפיק תשובה כרגע. נסה לנסח שוב את השאלה."
-            history.append({"role": "assistant", "content": reply})
-        except Exception as e:
-            history.append({
-                "role": "assistant",
-                "content": f"אירעה שגיאה בעת פנייה ליועץ. נסה שוב בעוד רגע. ({e})"
-            })
-        st.rerun()
+        if "consultation_chats" not in st.session_state:
+            st.session_state.consultation_chats = {}
+        if section_key not in st.session_state.consultation_chats:
+            st.session_state.consultation_chats[section_key] = [
+                {"role": "assistant", "content": section_consultation_greeting(section_key)}
+            ]
 
-    if clear:
-        st.session_state.consultation_chats[section_key] = [
-            {"role": "assistant", "content": section_consultation_greeting(section_key)}
-        ]
-        st.rerun()
+        history = st.session_state.consultation_chats[section_key]
 
-    if close:
-        st.session_state.active_consultation = None
-        st.rerun()
+        chat_box = st.container(height=320, border=False)
+        with chat_box:
+            for msg in history:
+                avatar = "🧑‍💼" if msg["role"] == "assistant" else "🙂"
+                with st.chat_message(msg["role"], avatar=avatar):
+                    st.markdown(msg["content"])
+
+        action_cols = st.columns(2)
+        with action_cols[0]:
+            clear = st.button(
+                "🗑️ נקה שיחה",
+                key=f"consult_clear_{section_key}",
+                use_container_width=True,
+            )
+        with action_cols[1]:
+            close = st.button(
+                "סגור",
+                key=f"consult_close_{section_key}",
+                use_container_width=True,
+            )
+
+        user_msg = st.chat_input(
+            "הקלד את השאלה שלך כאן...",
+            key=f"consult_chat_input_{section_key}",
+        )
+
+        if user_msg and user_msg.strip():
+            history.append({"role": "user", "content": user_msg.strip()})
+            try:
+                with st.spinner("היועץ חושב..."):
+                    reply = section_consultation_reply(section_key, history)
+                if not reply or not reply.strip():
+                    reply = "סליחה, לא הצלחתי להפיק תשובה כרגע. נסה לנסח שוב את השאלה."
+                history.append({"role": "assistant", "content": reply})
+            except Exception as e:
+                _logging.getLogger(__name__).exception(
+                    "Consultation chat failed for section %s", section_key
+                )
+                history.append({
+                    "role": "assistant",
+                    "content": "אירעה שגיאה בעת פנייה ליועץ. נסה שוב בעוד רגע."
+                })
+            st.rerun()
+
+        if clear:
+            st.session_state.consultation_chats[section_key] = [
+                {"role": "assistant", "content": section_consultation_greeting(section_key)}
+            ]
+            st.rerun()
+
+        if close:
+            st.session_state.active_consultation = None
+            st.rerun()
+
+    _dlg()
 
 
 def _render_consult_button(section_key: str):
@@ -1289,7 +1292,7 @@ def render_build_form():
     fd = st.session_state.build_form_data
 
     if st.session_state.get("active_consultation"):
-        _consultation_dialog()
+        _open_consultation_dialog(st.session_state.active_consultation)
 
     st.markdown("""
     <style>
