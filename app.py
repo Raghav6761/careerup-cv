@@ -1296,6 +1296,20 @@ def render_build_form():
             border-color: #022559 !important; border-width: 1.5px !important;
             border-radius: 14px !important; background-color: #f2f1ef !important;
         }
+        [class*="st-key-consult_btn_"] button,
+        [class*="st-key-consult_btn_"] button:hover,
+        [class*="st-key-consult_btn_"] button:focus,
+        [class*="st-key-consult_btn_"] button:focus-visible,
+        [class*="st-key-consult_btn_"] button:active {
+            background-color: #1e40af !important;
+            color: #ffffff !important;
+            border: 1px solid #1e40af !important;
+            box-shadow: none !important;
+        }
+        [class*="st-key-consult_btn_"] button p,
+        [class*="st-key-consult_btn_"] button div {
+            color: #ffffff !important;
+        }
     </style>
     """, unsafe_allow_html=True)
 
