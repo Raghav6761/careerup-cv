@@ -1326,6 +1326,103 @@ def _init_build_form_data():
         }
 
 
+_CONSULT_BUBBLE_CSS = """
+<style>
+@keyframes _consult_bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30%            { transform: translateY(-6px); opacity: 1; }
+}
+._consult_chat_wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 2px;
+}
+._consult_row {
+    display: flex;
+    width: 100%;
+}
+._consult_row.user     { justify-content: flex-end; }
+._consult_row.assistant { justify-content: flex-start; }
+._consult_bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    line-height: 1.6;
+    word-break: break-word;
+    font-size: 14px;
+}
+._consult_bubble.user {
+    background-color: #2b56e0;
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+}
+._consult_bubble.assistant {
+    background-color: #f2f2f2;
+    color: #022559;
+    border-bottom-left-radius: 4px;
+}
+._consult_typing_bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f2f2f2;
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    padding: 10px 16px;
+}
+._consult_typing_bubble span {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background-color: #8899b4;
+    animation: _consult_bounce 1.2s infinite ease-in-out;
+}
+._consult_typing_bubble span:nth-child(2) { animation-delay: 0.2s; }
+._consult_typing_bubble span:nth-child(3) { animation-delay: 0.4s; }
+</style>
+"""
+
+_CONSULT_SCROLL_JS = """
+<script>
+(function() {
+  var allDivs = parent.document.querySelectorAll('div');
+  var scrollable = null;
+  for (var i = 0; i < allDivs.length; i++) {
+    var d = allDivs[i];
+    if (d.scrollHeight > d.clientHeight && d.clientHeight > 80 && d.clientHeight < 500) {
+      scrollable = d;
+    }
+  }
+  if (scrollable) { scrollable.scrollTop = scrollable.scrollHeight; }
+})();
+</script>
+"""
+
+
+def _consult_build_html(history, show_typing=False):
+    """Build the full chat bubble HTML for the consultation panel."""
+    import html as _html
+    rows = []
+    for msg in history:
+        role = msg["role"]
+        text = _html.escape(msg["content"]).replace("\n", "<br>")
+        rows.append(
+            f'<div class="_consult_row {role}">'
+            f'<div class="_consult_bubble {role}">{text}</div>'
+            f'</div>'
+        )
+    if show_typing:
+        rows.append(
+            '<div class="_consult_row assistant">'
+            '<div class="_consult_typing_bubble">'
+            '<span></span><span></span><span></span>'
+            '</div></div>'
+        )
+    inner = "\n".join(rows)
+    return f'<div class="_consult_chat_wrap">{inner}</div>'
+
+
 def _render_consult_panel(section_key: str):
     """Render the inline consultation chat panel for `section_key`.
 
@@ -1341,6 +1438,8 @@ def _render_consult_panel(section_key: str):
         section_consultation_greeting,
     )
     import logging as _logging
+
+    st.markdown(_CONSULT_BUBBLE_CSS, unsafe_allow_html=True)
 
     st.markdown(
         '<hr style="margin:14px 0 10px 0; border:none; border-top:1px solid #d6deea;" />'
@@ -1358,13 +1457,14 @@ def _render_consult_panel(section_key: str):
         ]
 
     history = st.session_state.consultation_chats[section_key]
+    consulting_flag = f"_consulting_{section_key}"
+    is_consulting = st.session_state.get(consulting_flag, False)
 
     chat_box = st.container(height=320, border=False)
     with chat_box:
-        for msg in history:
-            avatar = "🧑‍💼" if msg["role"] == "assistant" else "🙂"
-            with st.chat_message(msg["role"], avatar=avatar):
-                st.markdown(msg["content"])
+        bubbles_html = _consult_build_html(history, show_typing=is_consulting)
+        st.markdown(bubbles_html, unsafe_allow_html=True)
+        st.markdown(_CONSULT_SCROLL_JS, unsafe_allow_html=True)
 
     user_msg = st.chat_input(
         "הקלד את השאלה שלך כאן...",
@@ -1379,13 +1479,12 @@ def _render_consult_panel(section_key: str):
         st.session_state.consultation_chats[section_key] = [
             {"role": "assistant", "content": section_consultation_greeting(section_key)}
         ]
+        st.session_state[consulting_flag] = False
         st.rerun()
 
-    if user_msg and user_msg.strip():
-        history.append({"role": "user", "content": user_msg.strip()})
+    if is_consulting:
         try:
-            with st.spinner("היועץ חושב..."):
-                reply = section_consultation_reply(section_key, history)
+            reply = section_consultation_reply(section_key, history)
             if not reply or not reply.strip():
                 reply = "סליחה, לא הצלחתי להפיק תשובה כרגע. נסה לנסח שוב את השאלה."
             history.append({"role": "assistant", "content": reply})
@@ -1397,6 +1496,12 @@ def _render_consult_panel(section_key: str):
                 "role": "assistant",
                 "content": "אירעה שגיאה בעת פנייה ליועץ. נסה שוב בעוד רגע."
             })
+        st.session_state[consulting_flag] = False
+        st.rerun()
+
+    if user_msg and user_msg.strip():
+        history.append({"role": "user", "content": user_msg.strip()})
+        st.session_state[consulting_flag] = True
         st.rerun()
 
 
