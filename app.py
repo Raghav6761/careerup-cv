@@ -4,7 +4,6 @@ import time
 import threading
 import difflib
 import html as html_lib
-import uuid
 import streamlit as st
 import streamlit.components.v1 as components
 from PIL import Image
@@ -767,19 +766,6 @@ def render_improve_review():
                 )
                 st.session_state.section_decisions[f"text_{i}"] = custom_text
 
-            # ── Consultation button & inline chat ──
-            _sec_key = _improve_section_key(title, i, prefix="impr_rev")
-            _sec_ai_key = _improve_ai_key(title)
-            _sec_context = (
-                f"נוסח מקור:\n{original}\n\nנוסח מחודש מוצע:\n{improved}"
-                if original or improved
-                else ""
-            )
-            _consult_col, _ = st.columns([1, 3])
-            with _consult_col:
-                _render_consult_button(_sec_key)
-            _render_inline_consultation(_sec_key, _sec_context, ai_key=_sec_ai_key, section_label=title)
-
     st.markdown("---")
 
     if st.button("📄 צור קורות חיים סופיים", use_container_width=True, type="primary"):
@@ -815,13 +801,8 @@ def render_improve_export():
             if any(title.strip().startswith(p) or title.strip() == p for p in _DECOMPOSED_PREFIXES):
                 continue
             final_text = st.session_state.section_decisions.get(f"text_{i}", section.get("improved", ""))
-            final_sections.append({"title": title, "final_text": final_text, "_cid": uuid.uuid4().hex[:8]})
+            final_sections.append({"title": title, "final_text": final_text})
         st.session_state.improve_final_sections = final_sections
-    else:
-        # Back-fill _cid for any existing sections that pre-date this feature.
-        for _sec in st.session_state.improve_final_sections:
-            if "_cid" not in _sec:
-                _sec["_cid"] = uuid.uuid4().hex[:8]
 
     if "imp_pending_delete" not in st.session_state:
         st.session_state.imp_pending_delete = None
@@ -862,14 +843,6 @@ def render_improve_export():
             )
             st.session_state.improve_final_sections[i]["final_text"] = new_text
 
-            # ── Consultation button & inline chat ──
-            _exp_sec_key = f"impr_exp_{sec['_cid']}"
-            _exp_ai_key = _improve_ai_key(sec["title"])
-            _exp_consult_col, _ = st.columns([1, 3])
-            with _exp_consult_col:
-                _render_consult_button(_exp_sec_key)
-            _render_inline_consultation(_exp_sec_key, new_text, ai_key=_exp_ai_key, section_label=sec["title"])
-
             if st.session_state.imp_pending_delete == i:
                 st.warning("האם למחוק סעיף זה? לא ניתן לשחזר.")
                 _, col_no, col_yes = st.columns([4, 1, 1])
@@ -888,7 +861,7 @@ def render_improve_export():
         st.rerun()
 
     if st.button("➕ הוסף סעיף חדש", key="imp_add_section"):
-        st.session_state.improve_final_sections.append({"title": "סעיף חדש", "final_text": "", "_cid": uuid.uuid4().hex[:8]})
+        st.session_state.improve_final_sections.append({"title": "סעיף חדש", "final_text": ""})
         st.rerun()
 
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
@@ -941,11 +914,6 @@ def render_improve_reorder():
             new_val = st.session_state.pop(xk)
             if new_val.strip() or not secs[j].get("final_text", "").strip():
                 secs[j]["final_text"] = new_val
-
-    # Back-fill _cid for any sections missing it (restored sessions or direct navigation).
-    for _sec in secs:
-        if "_cid" not in _sec:
-            _sec["_cid"] = uuid.uuid4().hex[:8]
 
     n_secs = len(secs)
 
@@ -1002,31 +970,6 @@ def render_improve_reorder():
         st.rerun()
 
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-
-    # ── Per-section consultation panel ──
-    st.markdown(
-        '<div style="font-size:14px;font-weight:600;color:#022559;margin-bottom:6px;">'
-        '💬 ייעוץ לפי סעיפים</div>'
-        '<div style="font-size:13px;color:#6b7c93;margin-bottom:10px;">'
-        'לחץ על כפתור הסעיף לפתיחת צ\'אט ייעוץ.</div>',
-        unsafe_allow_html=True,
-    )
-    _reorder_secs = st.session_state.improve_final_sections
-    for _ri, _rsec in enumerate(_reorder_secs):
-        _rkey = f"impr_ro_{_rsec['_cid']}"
-        _rai_key = _improve_ai_key(_rsec["title"])
-        _rc1, _rc2 = st.columns([3, 1])
-        with _rc1:
-            st.markdown(
-                f'<div style="font-size:13px;font-weight:600;color:#022559;'
-                f'padding:6px 0 2px;">{_rsec["title"]}</div>',
-                unsafe_allow_html=True,
-            )
-        with _rc2:
-            _render_consult_button(_rkey)
-        _render_inline_consultation(_rkey, _rsec.get("final_text", ""), ai_key=_rai_key, section_label=_rsec["title"])
-
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     from export_utils import _is_empty_content as _exp_is_empty
     export_sections = [
@@ -1240,73 +1183,8 @@ def _init_build_form_data():
         }
 
 
-def _improve_section_key(title: str, idx: int, prefix: str = "impr") -> str:
-    """Return a per-position widget/storage key for an improve-flow section.
-
-    The key is always unique on the page (it embeds *idx*) so Streamlit widget
-    keys and the open_consultation tracker never collide even when two sections
-    share the same title.  Prefix distinguishes the flow step (review / export
-    / reorder) so histories are isolated between pages.
-    """
-    return f"{prefix}_{idx}"
-
-
-def _improve_ai_key(title: str) -> str:
-    """Return the semantic _SECTION_LABELS key for AI guidance lookups.
-
-    Maps a Hebrew section title to a known base key (e.g. "experience",
-    "summary") so the advisor receives the correct section-specific guidance
-    from _SECTION_GUIDANCE.  Returns "" for unrecognised or blank titles
-    (the caller falls back to the section_key for generic advisor behaviour).
-    """
-    from ai_engine import _SECTION_LABELS
-
-    title_strip = title.strip()
-    if not title_strip:
-        return ""
-    for key, label in _SECTION_LABELS.items():
-        if label in title_strip or title_strip in label:
-            return key
-    return ""
-
-
-def _render_consult_button(section_key: str):
-    is_open = st.session_state.get("open_consultation") == section_key
-    label = "✕ סגור התייעצות" if is_open else "💬 התייעץ"
-    help_text = "סגור את צ'אט הייעוץ" if is_open else "פתח צ'אט עם יועץ קריירה לקבלת עצות לכתיבת הסעיף הזה"
-    if st.button(
-        label,
-        key=f"consult_btn_{section_key}",
-        type="primary" if is_open else "secondary",
-        help=help_text,
-        use_container_width=True,
-    ):
-        current = st.session_state.get("open_consultation")
-        st.session_state.open_consultation = None if current == section_key else section_key
-        st.rerun()
-
-
-def _render_inline_consultation(
-    section_key: str,
-    context_text: str = "",
-    ai_key: str = "",
-    section_label: str = "",
-):
-    """Render the chat panel inline inside the section card, only when this section is open.
-
-    Args:
-        section_key: Unique key for open_consultation tracking, widget keys, and
-                     chat-history storage.  Must be unique per section instance.
-        context_text: Current section text forwarded to the AI advisor as context.
-        ai_key: Semantic _SECTION_LABELS key (e.g. "experience") for AI guidance
-                lookups.  Defaults to section_key when empty.
-        section_label: Human-readable section title used for display and greetings when
-                       ai_key is not found in _SECTION_LABELS.  Prevents internal keys
-                       from leaking into the chat UI for custom / unrecognised sections.
-    """
-    if st.session_state.get("open_consultation") != section_key:
-        return
-
+def _open_consultation_dialog(section_key: str):
+    """Open the consultation dialog with a section-specific title."""
     from ai_engine import (
         section_consultation_reply,
         section_consultation_greeting,
@@ -1314,73 +1192,92 @@ def _render_inline_consultation(
     )
     import logging as _logging
 
-    _ai_key = ai_key if ai_key else section_key
+    label = _SECTION_LABELS.get(section_key, section_key)
 
-    if "consultation_contexts" not in st.session_state:
-        st.session_state.consultation_contexts = {}
-    st.session_state.consultation_contexts[section_key] = context_text
+    @st.dialog(f"💬 ייעוץ – {label}")
+    def _dlg():
+        st.markdown(
+            '<div style="font-size:13px; color:#6b7c93; margin-bottom:10px;">'
+            'שאל כל שאלה על מה לכתוב בסעיף הזה. היועץ עוזר אבל לא כותב במקומך.'
+            '</div>',
+            unsafe_allow_html=True,
+        )
 
-    label = _SECTION_LABELS.get(_ai_key) or section_label or _ai_key
+        if "consultation_chats" not in st.session_state:
+            st.session_state.consultation_chats = {}
+        if section_key not in st.session_state.consultation_chats:
+            st.session_state.consultation_chats[section_key] = [
+                {"role": "assistant", "content": section_consultation_greeting(section_key)}
+            ]
 
-    st.markdown(
-        '<div style="margin-top:14px; margin-bottom:6px; border-top:1px dashed #c9d3e0;"></div>'
-        f'<div style="font-size:14px; font-weight:600; color:#022559; margin-top:8px;">'
-        f'💬 ייעוץ אישי – {label}'
-        '</div>'
-        '<div style="font-size:13px; color:#6b7c93; margin-bottom:8px;">'
-        'שאל כל שאלה על מה לכתוב בסעיף הזה. היועץ עוזר אבל לא כותב במקומך.'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+        history = st.session_state.consultation_chats[section_key]
 
-    if "consultation_chats" not in st.session_state:
-        st.session_state.consultation_chats = {}
-    if section_key not in st.session_state.consultation_chats:
-        st.session_state.consultation_chats[section_key] = [
-            {"role": "assistant", "content": section_consultation_greeting(_ai_key, fallback_label=label)}
-        ]
+        chat_box = st.container(height=320, border=False)
+        with chat_box:
+            for msg in history:
+                avatar = "🧑‍💼" if msg["role"] == "assistant" else "🙂"
+                with st.chat_message(msg["role"], avatar=avatar):
+                    st.markdown(msg["content"])
 
-    history = st.session_state.consultation_chats[section_key]
+        action_cols = st.columns(2)
+        with action_cols[0]:
+            clear = st.button(
+                "🗑️ נקה שיחה",
+                key=f"consult_clear_{section_key}",
+                use_container_width=True,
+            )
+        with action_cols[1]:
+            close = st.button(
+                "סגור",
+                key=f"consult_close_{section_key}",
+                use_container_width=True,
+            )
 
-    chat_box = st.container(height=320, border=False)
-    with chat_box:
-        for msg in history:
-            avatar = "🧑‍💼" if msg["role"] == "assistant" else "🙂"
-            with st.chat_message(msg["role"], avatar=avatar):
-                st.markdown(msg["content"])
+        user_msg = st.chat_input(
+            "הקלד את השאלה שלך כאן...",
+            key=f"consult_chat_input_{section_key}",
+        )
 
+        if user_msg and user_msg.strip():
+            history.append({"role": "user", "content": user_msg.strip()})
+            try:
+                with st.spinner("היועץ חושב..."):
+                    reply = section_consultation_reply(section_key, history)
+                if not reply or not reply.strip():
+                    reply = "סליחה, לא הצלחתי להפיק תשובה כרגע. נסה לנסח שוב את השאלה."
+                history.append({"role": "assistant", "content": reply})
+            except Exception as e:
+                _logging.getLogger(__name__).exception(
+                    "Consultation chat failed for section %s", section_key
+                )
+                history.append({
+                    "role": "assistant",
+                    "content": "אירעה שגיאה בעת פנייה ליועץ. נסה שוב בעוד רגע."
+                })
+            st.rerun()
+
+        if clear:
+            st.session_state.consultation_chats[section_key] = [
+                {"role": "assistant", "content": section_consultation_greeting(section_key)}
+            ]
+            st.rerun()
+
+        if close:
+            st.session_state.active_consultation = None
+            st.rerun()
+
+    _dlg()
+
+
+def _render_consult_button(section_key: str):
     if st.button(
-        "🗑️ נקה שיחה",
-        key=f"consult_clear_{section_key}",
+        "💬 התייעץ",
+        key=f"consult_btn_{section_key}",
+        type="secondary",
+        help="פתח צ'אט עם יועץ קריירה לקבלת עצות לכתיבת הסעיף הזה",
         use_container_width=True,
     ):
-        st.session_state.consultation_chats[section_key] = [
-            {"role": "assistant", "content": section_consultation_greeting(_ai_key, fallback_label=label)}
-        ]
-        st.rerun()
-
-    user_msg = st.chat_input(
-        "הקלד את השאלה שלך כאן...",
-        key=f"consult_chat_input_{section_key}",
-    )
-
-    if user_msg and user_msg.strip():
-        history.append({"role": "user", "content": user_msg.strip()})
-        try:
-            with st.spinner("היועץ חושב..."):
-                _ctx = st.session_state.get("consultation_contexts", {}).get(section_key, "")
-                reply = section_consultation_reply(_ai_key, history, _ctx)
-            if not reply or not reply.strip():
-                reply = "סליחה, לא הצלחתי להפיק תשובה כרגע. נסה לנסח שוב את השאלה."
-            history.append({"role": "assistant", "content": reply})
-        except Exception:
-            _logging.getLogger(__name__).exception(
-                "Consultation chat failed for section %s", section_key
-            )
-            history.append({
-                "role": "assistant",
-                "content": "אירעה שגיאה בעת פנייה ליועץ. נסה שוב בעוד רגע."
-            })
+        st.session_state.active_consultation = section_key
         st.rerun()
 
 
@@ -1393,6 +1290,9 @@ def render_build_form():
 
     _init_build_form_data()
     fd = st.session_state.build_form_data
+
+    if st.session_state.get("active_consultation"):
+        _open_consultation_dialog(st.session_state.active_consultation)
 
     st.markdown("""
     <style>
@@ -1436,7 +1336,6 @@ def render_build_form():
             label_visibility="collapsed",
             height=68
         )
-        _render_inline_consultation("target")
 
     with st.container(border=True, key="bfc_personal"):
         _hdr, _btn = st.columns([5, 1])
@@ -1453,7 +1352,6 @@ def render_build_form():
         with c1:
             fd["city"] = st.text_input("עיר", value=fd["city"], key="bf_city", placeholder="תל אביב")
         fd["linkedin"] = st.text_input("פרופיל לינקדאין (אופציונלי)", value=fd.get("linkedin", ""), key="bf_linkedin", placeholder="https://linkedin.com/in/your-profile")
-        _render_inline_consultation("personal")
 
     with st.container(border=True, key="bfc_summary"):
         _hdr, _btn = st.columns([5, 1])
@@ -1470,7 +1368,6 @@ def render_build_form():
             label_visibility="collapsed",
             placeholder="למשל: מפתח תוכנה עם 5 שנות ניסיון בפיתוח אפליקציות ווב..."
         )
-        _render_inline_consultation("summary")
 
     with st.container(border=True, key="bfc_experience"):
         _hdr, _btn = st.columns([5, 1])
@@ -1514,8 +1411,6 @@ def render_build_form():
                 experience.pop(idx)
             st.rerun()
 
-        _render_inline_consultation("experience")
-
     if st.button("+ הוסף תפקיד", key="bf_add_exp", use_container_width=True, type="primary"):
         experience.append({"title": "", "company": "", "period": "", "achievements": "", "honors": ""})
         st.rerun()
@@ -1551,8 +1446,6 @@ def render_build_form():
                 education.pop(idx)
             st.rerun()
 
-        _render_inline_consultation("education")
-
     if st.button("+ הוסף השכלה", key="bf_add_edu", use_container_width=True, type="primary"):
         education.append({"degree": "", "institution": "", "year": "", "honors": ""})
         st.rerun()
@@ -1575,7 +1468,6 @@ def render_build_form():
             key="bf_soft",
             placeholder="עבודת צוות, מנהיגות, תקשורת בינאישית..."
         )
-        _render_inline_consultation("skills")
 
     with st.container(border=True, key="bfc_languages"):
         st.markdown('<div class="section-header">🌍 שפות</div>', unsafe_allow_html=True)
@@ -1615,7 +1507,6 @@ def render_build_form():
             label_visibility="collapsed",
             placeholder="למשל: חיל המודיעין - קצינת מחקר, שירות מלא 2018-2020"
         )
-        _render_inline_consultation("military")
 
     with st.container(border=True, key="bfc_volunteering"):
         _hdr, _btn = st.columns([5, 1])
@@ -1631,7 +1522,6 @@ def render_build_form():
             label_visibility="collapsed",
             placeholder="למשל: מנטור בעמותת יוניסטרים, מתנדב בלמ״ן..."
         )
-        _render_inline_consultation("volunteering")
 
     with st.container(border=True, key="bfc_projects"):
         _hdr, _btn = st.columns([5, 1])
@@ -1647,7 +1537,6 @@ def render_build_form():
             label_visibility="collapsed",
             placeholder="למשל: פיתוח אפליקציה לניהול משימות בReact, בניית אתר אישי..."
         )
-        _render_inline_consultation("projects")
 
     with st.container(border=True, key="bfc_additional"):
         _hdr, _btn = st.columns([5, 1])
@@ -1663,7 +1552,6 @@ def render_build_form():
             label_visibility="collapsed",
             placeholder="קורסים, הסמכות, פרסומים..."
         )
-        _render_inline_consultation("additional")
 
     st.session_state.build_form_data = fd
 
