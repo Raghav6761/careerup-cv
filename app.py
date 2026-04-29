@@ -1183,6 +1183,101 @@ def _init_build_form_data():
         }
 
 
+@st.dialog("💬 ייעוץ אישי לכתיבת קורות חיים")
+def _consultation_dialog():
+    from ai_engine import (
+        section_consultation_reply,
+        section_consultation_greeting,
+        _SECTION_LABELS,
+    )
+
+    section_key = st.session_state.get("active_consultation")
+    if not section_key:
+        return
+
+    label = _SECTION_LABELS.get(section_key, section_key)
+    st.markdown(
+        f'<div style="font-size:16px; font-weight:600; color:#022559; margin-bottom:8px;">'
+        f'יועץ הקריירה – סעיף "{label}"</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div style="font-size:13px; color:#6b7c93; margin-bottom:10px;">'
+        'שאל כל שאלה על מה לכתוב בסעיף הזה. היועץ עוזר אבל לא כותב במקומך.'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+    if "consultation_chats" not in st.session_state:
+        st.session_state.consultation_chats = {}
+    if section_key not in st.session_state.consultation_chats:
+        st.session_state.consultation_chats[section_key] = [
+            {"role": "assistant", "content": section_consultation_greeting(section_key)}
+        ]
+
+    history = st.session_state.consultation_chats[section_key]
+
+    chat_box = st.container(height=320, border=False)
+    with chat_box:
+        for msg in history:
+            avatar = "🧑‍💼" if msg["role"] == "assistant" else "🙂"
+            with st.chat_message(msg["role"], avatar=avatar):
+                st.markdown(msg["content"])
+
+    with st.form(key=f"consult_form_{section_key}", clear_on_submit=True):
+        user_msg = st.text_area(
+            "שאלה",
+            placeholder="הקלד את השאלה שלך כאן...",
+            height=72,
+            label_visibility="collapsed",
+            key=f"consult_input_{section_key}",
+        )
+        cols = st.columns([2, 1, 1])
+        with cols[0]:
+            send = st.form_submit_button("📤 שלח שאלה", type="primary", use_container_width=True)
+        with cols[1]:
+            clear = st.form_submit_button("🗑️ נקה שיחה", use_container_width=True)
+        with cols[2]:
+            close = st.form_submit_button("סגור", use_container_width=True)
+
+    if send and user_msg and user_msg.strip():
+        history.append({"role": "user", "content": user_msg.strip()})
+        try:
+            with st.spinner("היועץ חושב..."):
+                reply = section_consultation_reply(section_key, history)
+            if not reply or not reply.strip():
+                reply = "סליחה, לא הצלחתי להפיק תשובה כרגע. נסה לנסח שוב את השאלה."
+            history.append({"role": "assistant", "content": reply})
+        except Exception as e:
+            history.append({
+                "role": "assistant",
+                "content": f"אירעה שגיאה בעת פנייה ליועץ. נסה שוב בעוד רגע. ({e})"
+            })
+        st.rerun()
+
+    if clear:
+        st.session_state.consultation_chats[section_key] = [
+            {"role": "assistant", "content": section_consultation_greeting(section_key)}
+        ]
+        st.rerun()
+
+    if close:
+        st.session_state.active_consultation = None
+        st.rerun()
+
+
+def _render_consult_button(section_key: str):
+    if st.button(
+        "💬 התייעץ",
+        key=f"consult_btn_{section_key}",
+        type="secondary",
+        help="פתח צ'אט עם יועץ קריירה לקבלת עצות לכתיבת הסעיף הזה",
+        use_container_width=True,
+    ):
+        st.session_state.active_consultation = section_key
+        st.rerun()
+
+
 def render_build_form():
     render_header()
 
@@ -1192,6 +1287,9 @@ def render_build_form():
 
     _init_build_form_data()
     fd = st.session_state.build_form_data
+
+    if st.session_state.get("active_consultation"):
+        _consultation_dialog()
 
     st.markdown("""
     <style>
@@ -1219,7 +1317,11 @@ def render_build_form():
         st.session_state.build_max_pages = 1 if build_pages_choice == "נסה להכניס לעמוד אחד (מומלץ)" else 2
 
     with st.container(border=True, key="bfc_target"):
-        st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("target")
         st.markdown('<span style="font-size:15px; color:#6b7c93;">ציין את שם התפקיד או הדבק את תיאור המשרה המלא — ככל שתפרטו יותר, הבינה המלאכותית תוכל להתאים את קורות החיים למסנן הממוחשב של החברה (המערכת שסורקת ומדרגת קורות חיים לפני שהם מגיעים לגורם אנושי)</span>', unsafe_allow_html=True)
         if "build_target_position" not in st.session_state:
             st.session_state.build_target_position = ""
@@ -1233,7 +1335,11 @@ def render_build_form():
         )
 
     with st.container(border=True, key="bfc_personal"):
-        st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("personal")
         fd["full_name"] = st.text_input("שם מלא", value=fd["full_name"], key="bf_name", placeholder="ישראל ישראלי")
         c1, c2, c3 = st.columns(3)
         with c3:
@@ -1245,7 +1351,11 @@ def render_build_form():
         fd["linkedin"] = st.text_input("פרופיל לינקדאין (אופציונלי)", value=fd.get("linkedin", ""), key="bf_linkedin", placeholder="https://linkedin.com/in/your-profile")
 
     with st.container(border=True, key="bfc_summary"):
-        st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("summary")
         st.markdown('<span style="font-size:13px; color:#6b7c93;">כתוב בקצרה על הרקע המקצועי שלך, או השאר ריק והבינה המלאכותית תכתוב עבורך</span>', unsafe_allow_html=True)
         fd["professional_summary"] = st.text_area(
             "תקציר",
@@ -1257,7 +1367,11 @@ def render_build_form():
         )
 
     with st.container(border=True, key="bfc_experience"):
-        st.markdown('<div class="section-header">💼 ניסיון תעסוקתי</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">💼 ניסיון תעסוקתי</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("experience")
         experience = fd["experience"]
         exp_to_delete = []
         for i, exp in enumerate(experience):
@@ -1299,7 +1413,11 @@ def render_build_form():
         st.rerun()
 
     with st.container(border=True, key="bfc_education"):
-        st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("education")
         education = fd["education"]
         edu_to_delete = []
         for i, edu in enumerate(education):
@@ -1330,7 +1448,11 @@ def render_build_form():
         st.rerun()
 
     with st.container(border=True, key="bfc_skills"):
-        st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("skills")
         fd["technical_skills"] = st.text_input(
             "מיומנויות טכניות",
             value=fd["technical_skills"],
@@ -1369,7 +1491,11 @@ def render_build_form():
         st.rerun()
 
     with st.container(border=True, key="bfc_military"):
-        st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי (אופציונלי)</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי (אופציונלי)</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("military")
         fd["military"] = st.text_area(
             "שירות צבאי",
             value=fd.get("military", ""),
@@ -1380,7 +1506,11 @@ def render_build_form():
         )
 
     with st.container(border=True, key="bfc_volunteering"):
-        st.markdown('<div class="section-header">🤝 התנדבות בקהילה (אופציונלי)</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">🤝 התנדבות בקהילה (אופציונלי)</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("volunteering")
         fd["volunteering"] = st.text_area(
             "התנדבות",
             value=fd.get("volunteering", ""),
@@ -1391,7 +1521,11 @@ def render_build_form():
         )
 
     with st.container(border=True, key="bfc_projects"):
-        st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים (אופציונלי)</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים (אופציונלי)</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("projects")
         fd["projects"] = st.text_area(
             "פרויקטים",
             value=fd.get("projects", ""),
@@ -1402,7 +1536,11 @@ def render_build_form():
         )
 
     with st.container(border=True, key="bfc_additional"):
-        st.markdown('<div class="section-header">📌 מידע נוסף (אופציונלי)</div>', unsafe_allow_html=True)
+        _hdr, _btn = st.columns([5, 1])
+        with _hdr:
+            st.markdown('<div class="section-header">📌 מידע נוסף (אופציונלי)</div>', unsafe_allow_html=True)
+        with _btn:
+            _render_consult_button("additional")
         fd["additional"] = st.text_area(
             "מידע נוסף",
             value=fd["additional"],

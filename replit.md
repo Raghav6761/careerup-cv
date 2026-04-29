@@ -32,6 +32,7 @@ fonts/              - Assistant font files for PDF export
 4. **English Translation Export**: Both flows support AI-powered translation to English with PDF/DOCX export in LTR format
 5. **Empty section filtering**: All export functions use `_is_empty_content()` and `_filter_list()` to skip placeholder/empty sections universally; `_EMPTY_PLACEHOLDERS` includes plural "לא צויינו" in addition to "לא צויין"; `render_improve_reorder` pre-filters export_sections using `_is_empty_content` before building the cache key
 6. **CV document title**: Optional "כותרת קורות החיים" field in the reorder/export step; appears as a centered bold 14pt heading at the top of all exported PDF/DOCX files; all 4 improve-flow export functions accept `cv_title: str = ""` parameter
+7. **Per-section consultation chat (Build flow)**: Each content section in the build-from-scratch form has a "💬 התייעץ" button that opens a Streamlit dialog with an OpenAI GPT-5 career advisor focused on that specific section (target/personal/summary/experience/education/skills/military/volunteering/projects/additional). Chat history kept per-section in `st.session_state.consultation_chats`, session-only (not persisted to localStorage). Backend: `section_consultation_reply()` and `section_consultation_greeting()` in `ai_engine.py` (with `_SECTION_LABELS` and `_SECTION_GUIDANCE` dicts). UI: `_consultation_dialog()` (decorated with `@st.dialog`) and `_render_consult_button()` helpers in `app.py`.
 
 ## User Flow Pages
 - `home` - Two path selection cards
