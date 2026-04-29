@@ -98,9 +98,32 @@ def init_storage():
             return True
         return False
 
+    def _build_form_data_is_empty(fd) -> bool:
+        """Return True when the dict has no actual user-typed content."""
+        if not fd or not isinstance(fd, dict):
+            return True
+        for key, val in fd.items():
+            if isinstance(val, str) and val.strip():
+                return False
+            if isinstance(val, list):
+                for item in val:
+                    if isinstance(item, dict):
+                        for v in item.values():
+                            if isinstance(v, str) and v.strip():
+                                return False
+                    elif isinstance(item, str) and item.strip():
+                        return False
+        return True
+
     changed = False
     for key in _PERSIST_KEYS:
-        if key in data and _is_empty(st.session_state.get(key)):
+        if key not in data:
+            continue
+        if key == "build_form_data":
+            if _build_form_data_is_empty(st.session_state.get(key)):
+                st.session_state[key] = data[key]
+                changed = True
+        elif _is_empty(st.session_state.get(key)):
             st.session_state[key] = data[key]
             changed = True
 

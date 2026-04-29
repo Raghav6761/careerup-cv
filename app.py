@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 from PIL import Image
 from streamlit_sortables import sort_items
 from styles import inject_custom_css
-from persistence import init_storage, save_to_storage, clear_storage
+from persistence import init_storage, save_to_storage, clear_storage, _set_build_widget_keys
 from streamlit_js_eval import streamlit_js_eval as _js_eval
 
 def _get_logo_b64(path: str) -> str:
@@ -428,6 +428,27 @@ def reset_build():
                "build_max_pages", "build_pages_radio",
                "build_en_translated", "build_en_translating"]:
         st.session_state.pop(_k, None)
+    _indexed_prefixes = (
+        "bf_exp_title_", "bf_exp_company_", "bf_exp_period_", "bf_exp_ach_", "bf_exp_hon_",
+        "bf_del_exp_",
+        "bf_edu_deg_", "bf_edu_inst_", "bf_edu_year_", "bf_edu_hon_",
+        "bf_del_edu_",
+        "bf_lang_", "bf_lang_lvl_", "bf_del_lang_",
+    )
+    for _k in list(st.session_state.keys()):
+        if any(_k.startswith(_p) for _p in _indexed_prefixes):
+            st.session_state.pop(_k, None)
+    _empty_fd = {
+        "full_name": "", "phone": "", "email": "", "city": "", "linkedin": "",
+        "professional_summary": "",
+        "experience": [{"title": "", "company": "", "period": "", "achievements": "", "honors": ""}],
+        "education": [{"degree": "", "institution": "", "year": "", "honors": ""}],
+        "technical_skills": "", "soft_skills": "",
+        "languages": [{"language": "", "level": ""}, {"language": "", "level": ""}],
+        "military": "", "volunteering": "", "projects": "", "additional": "",
+    }
+    _set_build_widget_keys(_empty_fd)
+    st.session_state.pop("build_target_input", None)
 
 
 def render_header():
@@ -460,7 +481,6 @@ def render_home():
             </div>
             """, unsafe_allow_html=True)
             if st.button("בחר →", key="btn_build_cta", use_container_width=True, type="primary"):
-                reset_build()
                 go_to("build_form")
                 st.rerun()
 
@@ -1529,9 +1549,27 @@ def _render_consult_button(section_key: str):
 def render_build_form():
     render_header()
 
-    if st.button("→ חזרה לדף הבית", key="back_home_build"):
-        go_to("home")
-        st.rerun()
+    nav_col, clear_col = st.columns([3, 2])
+    with nav_col:
+        if st.button("→ חזרה לדף הבית", key="back_home_build"):
+            go_to("home")
+            st.rerun()
+    with clear_col:
+        if st.session_state.get("_build_confirm_clear"):
+            confirm_c, cancel_c = st.columns(2)
+            with confirm_c:
+                if st.button("כן, נקה הכל", key="bf_confirm_clear", type="primary"):
+                    st.session_state.pop("_build_confirm_clear", None)
+                    reset_build()
+                    st.rerun()
+            with cancel_c:
+                if st.button("ביטול", key="bf_cancel_clear"):
+                    st.session_state.pop("_build_confirm_clear", None)
+                    st.rerun()
+        else:
+            if st.button("🗑️ נקה טופס", key="bf_clear_btn", type="secondary"):
+                st.session_state["_build_confirm_clear"] = True
+                st.rerun()
 
     _init_build_form_data()
     fd = st.session_state.build_form_data
