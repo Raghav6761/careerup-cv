@@ -1328,7 +1328,7 @@ def render_build_form():
         st.session_state.build_max_pages = 1 if build_pages_choice == "נסה להכניס לעמוד אחד (מומלץ)" else 2
 
     with st.container(border=True, key="bfc_target"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">🎯 תפקיד יעד (אופציונלי)</div>', unsafe_allow_html=True)
         with _btn:
@@ -1347,7 +1347,7 @@ def render_build_form():
         _render_consult_panel("target")
 
     with st.container(border=True, key="bfc_personal"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">👤 פרטים אישיים</div>', unsafe_allow_html=True)
         with _btn:
@@ -1364,7 +1364,7 @@ def render_build_form():
         _render_consult_panel("personal")
 
     with st.container(border=True, key="bfc_summary"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">📋 תקציר מקצועי</div>', unsafe_allow_html=True)
         with _btn:
@@ -1381,7 +1381,7 @@ def render_build_form():
         _render_consult_panel("summary")
 
     with st.container(border=True, key="bfc_experience"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">💼 ניסיון תעסוקתי</div>', unsafe_allow_html=True)
         with _btn:
@@ -1429,7 +1429,7 @@ def render_build_form():
         st.rerun()
 
     with st.container(border=True, key="bfc_education"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">🎓 השכלה אקדמית / מקצועית</div>', unsafe_allow_html=True)
         with _btn:
@@ -1466,7 +1466,7 @@ def render_build_form():
         st.rerun()
 
     with st.container(border=True, key="bfc_skills"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">🛠️ מיומנויות</div>', unsafe_allow_html=True)
         with _btn:
@@ -1510,7 +1510,7 @@ def render_build_form():
         st.rerun()
 
     with st.container(border=True, key="bfc_military"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">🎖️ שירות צבאי / לאומי (אופציונלי)</div>', unsafe_allow_html=True)
         with _btn:
@@ -1526,7 +1526,7 @@ def render_build_form():
         _render_consult_panel("military")
 
     with st.container(border=True, key="bfc_volunteering"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">🤝 התנדבות בקהילה (אופציונלי)</div>', unsafe_allow_html=True)
         with _btn:
@@ -1542,7 +1542,7 @@ def render_build_form():
         _render_consult_panel("volunteering")
 
     with st.container(border=True, key="bfc_projects"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">🚀 פרויקטים עצמאיים (אופציונלי)</div>', unsafe_allow_html=True)
         with _btn:
@@ -1558,7 +1558,7 @@ def render_build_form():
         _render_consult_panel("projects")
 
     with st.container(border=True, key="bfc_additional"):
-        _hdr, _btn = st.columns([5, 1])
+        _hdr, _btn = st.columns([3, 1.3])
         with _hdr:
             st.markdown('<div class="section-header">📌 מידע נוסף (אופציונלי)</div>', unsafe_allow_html=True)
         with _btn:
