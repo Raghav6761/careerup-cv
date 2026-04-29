@@ -1223,8 +1223,13 @@ def _render_consult_panel(section_key: str):
             with st.chat_message(msg["role"], avatar=avatar):
                 st.markdown(msg["content"])
 
+    user_msg = st.chat_input(
+        "הקלד את השאלה שלך כאן...",
+        key=f"consult_chat_input_{section_key}",
+    )
+
     if st.button(
-        "🗑️ נקה שיחה",
+        "🗑️ איפוס השיחה",
         key=f"consult_clear_{section_key}",
         use_container_width=True,
     ):
@@ -1232,11 +1237,6 @@ def _render_consult_panel(section_key: str):
             {"role": "assistant", "content": section_consultation_greeting(section_key)}
         ]
         st.rerun()
-
-    user_msg = st.chat_input(
-        "הקלד את השאלה שלך כאן...",
-        key=f"consult_chat_input_{section_key}",
-    )
 
     if user_msg and user_msg.strip():
         history.append({"role": "user", "content": user_msg.strip()})
