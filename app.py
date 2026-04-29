@@ -1259,7 +1259,7 @@ def _render_consult_panel(section_key: str):
 
 def _render_consult_button(section_key: str):
     is_open = st.session_state.get("active_consultation") == section_key
-    label = "✖ סגור התייעצות" if is_open else "💬 ייעוץ AI לכתיבה"
+    label = "✖ סגור התייעצות" if is_open else "💬 התייעץ עם AI"
     help_text = (
         "סגור את שיחת הייעוץ"
         if is_open
