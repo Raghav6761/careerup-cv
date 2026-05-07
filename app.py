@@ -503,23 +503,24 @@ def render_home():
                 go_to("improve_upload")
                 st.rerun()
 
-    dolphin_b64 = _get_logo_b64("dolphin_avatar.png")
-    col_text, col_img = st.columns([3, 1])
-    with col_text:
-        st.markdown(
-            '<div style="margin-top:28px; font-family:\'Assistant\',sans-serif; direction:rtl; text-align:right;">'
-            '<div style="font-size:18px; font-weight:700; color:#022559; margin-bottom:12px;">אז מה יש לנו כאן? 👀</div>'
-            '<div style="font-size:15px; color:#4a5568; line-height:2;">📝 <b>בונה מאפס?</b> מלאו כמה פרטים פשוטים ונייצר לכם קו״ח מנוסח, מקצועי ומותאם לשוק.<br>'
-            '🔍 <b>כבר יש קו״ח?</b> תעלו אותם וה-AI יחזיר אותם משודרגים עם ניסוח חזק יותר, מילות מפתח נכונות ומוכן למסנני ATS.<br>'
-            '⚡ <b>ממוצע זמן להשלמה:</b> 15-30 דקות בלבד.</div>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+    dolphin_b64 = _get_logo_b64("Dolphin_1778151089828.png")
+    col_img, col_text = st.columns([1, 3])
     with col_img:
         st.markdown(
             f'<div style="text-align:center; margin-top:8px;">'
             f'<img src="data:image/png;base64,{dolphin_b64}" style="height:200px; object-fit:contain;" alt="CareerUp Avatar">'
             f'</div>',
+            unsafe_allow_html=True,
+        )
+    with col_text:
+        st.markdown(
+            '<div style="margin-top:28px; font-family:\'Assistant\',sans-serif; direction:rtl; text-align:right;">'
+            '<div style="font-size:18px; font-weight:700; color:#022559; margin-bottom:12px;">אז מה יש לנו כאן? 👀</div>'
+            '<div style="font-size:15px; color:#4a5568; line-height:2;">'
+            '📝 בונה מאפס? מלאו כמה פרטים פשוטים ונייצר לכם קו״ח מנוסח, מקצועי ומותאם לשוק.<br>'
+            '🔍 כבר יש קו״ח? תעלו אותם וה-AI יחזיר אותם משודרגים עם ניסוח חזק יותר, מילות מפתח נכונות ומוכן למסנני ATS.<br>'
+            '⚡ ממוצע זמן להשלמה: 15-30 דקות בלבד.'
+            '</div></div>',
             unsafe_allow_html=True,
         )
 
