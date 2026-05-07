@@ -504,25 +504,20 @@ def render_home():
                 st.rerun()
 
     dolphin_b64 = _get_logo_b64("Dolphin_1778151089828.png")
-    col_img, col_text = st.columns([1, 3])
-    with col_img:
-        st.markdown(
-            f'<div style="text-align:center; margin-top:8px;">'
-            f'<img src="data:image/png;base64,{dolphin_b64}" style="height:200px; object-fit:contain; transform:scaleX(-1);" alt="CareerUp Avatar">'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-    with col_text:
-        st.markdown(
-            '<div style="margin-top:28px; font-family:\'Assistant\',sans-serif; direction:rtl; text-align:right;">'
-            '<div style="font-size:18px; font-weight:700; color:#022559; margin-bottom:12px;">אז מה יש לנו כאן? 👀</div>'
-            '<div style="font-size:15px; color:#4a5568; line-height:2;">'
-            '📝 בונה מאפס? מלאו כמה פרטים פשוטים ונייצר לכם קו״ח מנוסח, מקצועי ומותאם לשוק.<br>'
-            '🔍 כבר יש קו״ח? תעלו אותם וה-AI יחזיר אותם משודרגים עם ניסוח חזק יותר, מילות מפתח נכונות ומוכן למסנני ATS.<br>'
-            '⚡ ממוצע זמן להשלמה: 15-30 דקות בלבד.'
-            '</div></div>',
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        f'<div style="display:flex; flex-direction:row; align-items:center; gap:16px; margin-top:28px;">'
+        f'<div style="flex-shrink:0; text-align:center;">'
+        f'<img src="data:image/png;base64,{dolphin_b64}" style="height:150px; object-fit:contain; transform:scaleX(-1);" alt="CareerUp Avatar">'
+        f'</div>'
+        f'<div style="flex:1; min-width:0; font-family:\'Assistant\',sans-serif; direction:rtl; text-align:right;">'
+        f'<div style="font-size:18px; font-weight:700; color:#022559; margin-bottom:12px;">אז מה יש לנו כאן? 👀</div>'
+        f'<div style="font-size:15px; color:#4a5568; line-height:2;">'
+        f'📝 בונה מאפס? מלאו כמה פרטים פשוטים ונייצר לכם קו״ח מנוסח, מקצועי ומותאם לשוק.<br>'
+        f'🔍 כבר יש קו״ח? תעלו אותם וה-AI יחזיר אותם משודרגים עם ניסוח חזק יותר, מילות מפתח נכונות ומוכן למסנני ATS.<br>'
+        f'⚡ ממוצע זמן להשלמה: 15-30 דקות בלבד.'
+        f'</div></div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 def render_improve_upload():
