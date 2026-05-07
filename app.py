@@ -505,9 +505,10 @@ def render_home():
 
     dolphin_b64 = _get_logo_b64("Dolphin_1778151089828.png")
     st.markdown(
+        f'<style>@media(min-width:600px){{.dolphin-avatar{{height:200px!important;}}}}</style>'
         f'<div style="display:flex; flex-direction:row; align-items:center; gap:16px; margin-top:28px;">'
         f'<div style="flex-shrink:0; text-align:center;">'
-        f'<img src="data:image/png;base64,{dolphin_b64}" style="height:150px; object-fit:contain; transform:scaleX(-1);" alt="CareerUp Avatar">'
+        f'<img src="data:image/png;base64,{dolphin_b64}" class="dolphin-avatar" style="height:150px; object-fit:contain; transform:scaleX(-1);" alt="CareerUp Avatar">'
         f'</div>'
         f'<div style="flex:1; min-width:0; font-family:\'Assistant\',sans-serif; direction:rtl; text-align:right;">'
         f'<div style="font-size:18px; font-weight:700; color:#022559; margin-bottom:12px;">אז מה יש לנו כאן? 👀</div>'
