@@ -508,7 +508,7 @@ def render_home():
     with col_img:
         st.markdown(
             f'<div style="text-align:center; margin-top:8px;">'
-            f'<img src="data:image/png;base64,{dolphin_b64}" style="height:200px; object-fit:contain;" alt="CareerUp Avatar">'
+            f'<img src="data:image/png;base64,{dolphin_b64}" style="height:200px; object-fit:contain; transform:scaleX(-1);" alt="CareerUp Avatar">'
             f'</div>',
             unsafe_allow_html=True,
         )
