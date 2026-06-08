@@ -467,8 +467,7 @@ def render_home():
 
     st.markdown("""
     <div style="
-        background:#eef4ff;
-        border-right:4px solid #2b56e0;
+        background:#e8650a;
         border-radius:10px;
         padding:14px 18px;
         margin-bottom:18px;
@@ -476,8 +475,8 @@ def render_home():
         text-align:right;
         font-family:'Assistant',sans-serif;
     ">
-        <div style="font-size:15px;font-weight:700;color:#022559;margin-bottom:6px;">💡 טיפ חשוב</div>
-        <div style="font-size:14px;color:#3a4a6b;line-height:1.8;">
+        <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:6px;">💡 טיפ חשוב</div>
+        <div style="font-size:14px;color:#ffffff;line-height:1.8;">
             כדי להגדיל את הסיכויים להתקבל, כדאי להתאים את קורות החיים בדיוק למשרה שאתם רוצים. פשוט הדביקו את תיאור המשרה לתוך הכלי להכנת קורות חיים, והוא כבר ידע לעשות את ההתאמה המושלמת עבורכם.
         </div>
     </div>
