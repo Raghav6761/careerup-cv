@@ -861,6 +861,14 @@ def _add_docx_hyperlink(doc, paragraph, text: str, url: str, font_size_pt: float
     return hyperlink
 
 
+def _is_portfolio_url(val: str) -> bool:
+    """Return True if val looks like a portfolio/personal URL (http-based, non-LinkedIn)."""
+    v = val.strip().lower()
+    if not v.startswith('http'):
+        return False
+    return 'linkedin.com' not in v
+
+
 def _is_phone_value(v: str) -> bool:
     import re
     return bool(re.match(r'^\+?[\d\s\-\(\)\.]{6,}$', v.strip()))
@@ -956,18 +964,25 @@ def export_improved_cv_to_pdf(sections: list, cv_text: str = "", cv_title: str =
                             extra_lines = contact_only[1:]
                         elements.append(Paragraph(reshape_hebrew(name), styles["name"]))
                         _linkedin_labels = ["פרופיל לינקדין", "פרופיל לינקדאין", "לינקדין", "לינקדאין", "linkedin"]
-                        contact_values = []
+                        contact_tuples = []
                         for cl in inline_contact + extra_lines:
                             val = _extract_contact_value(cl)
                             if val:
                                 cl_lower = cl.lower().strip()
                                 is_li = any(cl_lower.startswith(lbl.lower()) for lbl in _linkedin_labels)
                                 if is_li:
-                                    contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                                    contact_tuples.append((f"LinkedIn: {_format_linkedin_display(val)}", None))
+                                elif _is_portfolio_url(val):
+                                    contact_tuples.append((_format_portfolio_display(val), val))
                                 else:
-                                    contact_values.append(reshape_hebrew(val))
-                        if contact_values:
-                            elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+                                    contact_tuples.append((reshape_hebrew(val), None))
+                        if contact_tuples:
+                            import html as _html
+                            if any(u for _, u in contact_tuples):
+                                _parts = [f'<link href="{_html.escape(u, quote=True)}" color="#2b56e0"><u>{_html.escape(d)}</u></link>' if u else _html.escape(d) for d, u in contact_tuples]
+                                elements.append(Paragraph(" | ".join(_parts), styles["contact"]))
+                            else:
+                                elements.append(Paragraph(" | ".join(d for d, _ in contact_tuples), styles["contact"]))
                         elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
                 else:
                     render_lines = (
@@ -1058,23 +1073,43 @@ def export_improved_cv_to_docx(sections: list, cv_text: str = "", cv_title: str 
                     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     _set_docx_rtl(p)
                     _linkedin_labels = ["פרופיל לינקדין", "פרופיל לינקדאין", "לינקדין", "לינקדאין", "linkedin"]
-                    contact_values = []
+                    contact_tuples = []
                     for cl in inline_contact + extra_lines:
                         val = _extract_contact_value(cl)
                         if val:
                             cl_lower = cl.lower().strip()
                             is_li = any(cl_lower.startswith(lbl.lower()) for lbl in _linkedin_labels)
                             if is_li:
-                                contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                                contact_tuples.append((f"LinkedIn: {_format_linkedin_display(val)}", None))
                             elif _is_phone_value(val):
-                                contact_values.append(_ltr_wrap(val))
+                                contact_tuples.append((_ltr_wrap(val), None))
+                            elif _is_portfolio_url(val):
+                                contact_tuples.append((_format_portfolio_display(val), val))
                             else:
-                                contact_values.append(val)
-                    if contact_values:
+                                contact_tuples.append((val, None))
+                    if contact_tuples:
                         p = doc.add_paragraph()
-                        run = p.add_run(" | ".join(contact_values))
-                        run.font.size = Pt(9)
-                        run.font.color.rgb = RGBColor(85, 85, 85)
+                        if any(u for _, u in contact_tuples):
+                            _plain_acc = []
+                            for _i, (_d, _u) in enumerate(contact_tuples):
+                                if _u:
+                                    if _plain_acc:
+                                        _r = p.add_run(" | ".join(_plain_acc) + " | ")
+                                        _r.font.size = Pt(9); _r.font.color.rgb = RGBColor(85, 85, 85)
+                                        _plain_acc = []
+                                    _add_docx_hyperlink(doc, p, _d, _u, font_size_pt=9)
+                                    if _i < len(contact_tuples) - 1:
+                                        _r = p.add_run(" | ")
+                                        _r.font.size = Pt(9); _r.font.color.rgb = RGBColor(85, 85, 85)
+                                else:
+                                    _plain_acc.append(_d)
+                            if _plain_acc:
+                                _r = p.add_run(" | ".join(_plain_acc))
+                                _r.font.size = Pt(9); _r.font.color.rgb = RGBColor(85, 85, 85)
+                        else:
+                            run = p.add_run(" | ".join(d for d, _ in contact_tuples))
+                            run.font.size = Pt(9)
+                            run.font.color.rgb = RGBColor(85, 85, 85)
                         p.paragraph_format.space_after = Pt(6)
                         p.paragraph_format.line_spacing = Pt(12)
                         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1597,18 +1632,25 @@ def export_improved_cv_to_pdf_en(translated_text: str, cv_title: str = "", max_p
                     if contact_only:
                         elements.append(Paragraph(contact_only[0], styles["name"]))
                         _linkedin_labels_en = ["linkedin"]
-                        contact_values = []
+                        contact_tuples = []
                         for cl in contact_only[1:]:
                             val = _extract_contact_value(cl)
                             if val:
                                 cl_lower = cl.lower().strip()
                                 is_li = any(cl_lower.startswith(lbl) for lbl in _linkedin_labels_en)
                                 if is_li:
-                                    contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                                    contact_tuples.append((f"LinkedIn: {_format_linkedin_display(val)}", None))
+                                elif _is_portfolio_url(val):
+                                    contact_tuples.append((_format_portfolio_display(val), val))
                                 else:
-                                    contact_values.append(val)
-                        if contact_values:
-                            elements.append(Paragraph(" | ".join(contact_values), styles["contact"]))
+                                    contact_tuples.append((val, None))
+                        if contact_tuples:
+                            import html as _html
+                            if any(u for _, u in contact_tuples):
+                                _parts = [f'<link href="{_html.escape(u, quote=True)}" color="#2b56e0"><u>{_html.escape(d)}</u></link>' if u else _html.escape(d) for d, u in contact_tuples]
+                                elements.append(Paragraph(" | ".join(_parts), styles["contact"]))
+                            else:
+                                elements.append(Paragraph(" | ".join(d for d, _ in contact_tuples), styles["contact"]))
                     elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
                     personal_lines = []
                 header_text = _clean_section_title(stripped)
@@ -1693,21 +1735,41 @@ def _add_docx_personal_block_en(doc, personal_lines):
     p.paragraph_format.line_spacing = Pt(24)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     _linkedin_labels_en = ["linkedin"]
-    contact_values = []
+    contact_tuples = []
     for cl in contact_only[1:]:
         val = _extract_contact_value(cl)
         if val:
             cl_lower = cl.lower().strip()
             is_li = any(cl_lower.startswith(lbl) for lbl in _linkedin_labels_en)
             if is_li:
-                contact_values.append(f"LinkedIn: {_format_linkedin_display(val)}")
+                contact_tuples.append((f"LinkedIn: {_format_linkedin_display(val)}", None))
+            elif _is_portfolio_url(val):
+                contact_tuples.append((_format_portfolio_display(val), val))
             else:
-                contact_values.append(val)
-    if contact_values:
+                contact_tuples.append((val, None))
+    if contact_tuples:
         p = doc.add_paragraph()
-        run = p.add_run(" | ".join(contact_values))
-        run.font.size = Pt(9)
-        run.font.color.rgb = RGBColor(85, 85, 85)
+        if any(u for _, u in contact_tuples):
+            _plain_acc = []
+            for _i, (_d, _u) in enumerate(contact_tuples):
+                if _u:
+                    if _plain_acc:
+                        _r = p.add_run(" | ".join(_plain_acc) + " | ")
+                        _r.font.size = Pt(9); _r.font.color.rgb = RGBColor(85, 85, 85)
+                        _plain_acc = []
+                    _add_docx_hyperlink(doc, p, _d, _u, font_size_pt=9)
+                    if _i < len(contact_tuples) - 1:
+                        _r = p.add_run(" | ")
+                        _r.font.size = Pt(9); _r.font.color.rgb = RGBColor(85, 85, 85)
+                else:
+                    _plain_acc.append(_d)
+            if _plain_acc:
+                _r = p.add_run(" | ".join(_plain_acc))
+                _r.font.size = Pt(9); _r.font.color.rgb = RGBColor(85, 85, 85)
+        else:
+            run = p.add_run(" | ".join(d for d, _ in contact_tuples))
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(85, 85, 85)
         p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.line_spacing = Pt(12)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
