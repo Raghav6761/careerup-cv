@@ -1798,7 +1798,7 @@ def render_build_form():
             "מיומנויות טכניות",
             value=fd["technical_skills"],
             key="bf_tech",
-            placeholder="Python, JavaScript, Excel, ניהול פרויקטים..."
+            placeholder="ChatGPT, Claude, Copilot, Cursor, Python, JavaScript, Excel, ניהול פרויקטים..."
         )
         fd["soft_skills"] = st.text_input(
             "מיומנויות רכות",
@@ -2064,7 +2064,8 @@ def render_build_preview():
     tech_text = st.text_input(
         "מיומנויות טכניות (מופרדות בפסיקים)",
         value=", ".join(technical),
-        key="build_tech_skills"
+        key="build_tech_skills",
+        placeholder="ChatGPT, Claude, Copilot, Cursor, Python, JavaScript, Excel, ניהול פרויקטים..."
     )
     skills["technical"] = [s.strip() for s in tech_text.split(",") if s.strip()]
 
