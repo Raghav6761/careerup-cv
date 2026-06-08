@@ -1683,7 +1683,8 @@ def render_build_form():
         with c1:
             fd["city"] = st.text_input("עיר", value=fd["city"], key="bf_city", placeholder="תל אביב")
         fd["linkedin"] = st.text_input("פרופיל לינקדאין (אופציונלי)", value=fd.get("linkedin", ""), key="bf_linkedin", placeholder="https://linkedin.com/in/your-profile")
-        fd["portfolio"] = st.text_input("קישור נוסף - פורטפוליו / GitHub / אתר אישי (אופציונלי)", value=fd.get("portfolio", ""), key="bf_portfolio", placeholder="https://github.com/username")
+        fd["portfolio"] = st.text_input("תיק עבודות / פורטפוליו (אופציונלי)", value=fd.get("portfolio", ""), key="bf_portfolio", placeholder="https://github.com/username")
+        st.caption("כדאי להוסיף רק אם הפרופיל פעיל ועדכני — GitHub עם קוד אמיתי, אתר אישי עם דוגמאות עבודה וכדומה. פרופיל ריק עלול לפגוע יותר מלעזור.")
         _render_consult_panel("personal")
 
     with st.container(border=True, key="bfc_summary"):
