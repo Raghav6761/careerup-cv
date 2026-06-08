@@ -1350,6 +1350,7 @@ def _init_build_form_data():
             "email": "",
             "city": "",
             "linkedin": "",
+            "portfolio": "",
             "professional_summary": "",
             "experience": [{"title": "", "company": "", "period": "", "achievements": "", "honors": ""}],
             "education": [{"degree": "", "institution": "", "year": "", "honors": ""}],
@@ -1664,6 +1665,7 @@ def render_build_form():
         with c1:
             fd["city"] = st.text_input("עיר", value=fd["city"], key="bf_city", placeholder="תל אביב")
         fd["linkedin"] = st.text_input("פרופיל לינקדאין (אופציונלי)", value=fd.get("linkedin", ""), key="bf_linkedin", placeholder="https://linkedin.com/in/your-profile")
+        fd["portfolio"] = st.text_input("קישור נוסף - פורטפוליו / GitHub / אתר אישי (אופציונלי)", value=fd.get("portfolio", ""), key="bf_portfolio", placeholder="https://github.com/username")
         _render_consult_panel("personal")
 
     with st.container(border=True, key="bfc_summary"):

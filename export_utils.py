@@ -311,8 +311,17 @@ def export_cv_to_pdf(cv_data: dict, max_pages: int = 1) -> bytes:
             contact_parts.append(reshape_hebrew(contact["city"]))
         if contact.get("linkedin"):
             contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
-        if contact_parts:
-            elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
+        portfolio_url = (contact.get("portfolio") or "").strip()
+        portfolio_label = _format_portfolio_display(portfolio_url) if portfolio_url else ""
+        if contact_parts or portfolio_label:
+            import html as _html
+            if portfolio_label:
+                plain = " | ".join(_html.escape(p) for p in contact_parts)
+                link_tag = f'<link href="{_html.escape(portfolio_url, quote=True)}" color="#2b56e0"><u>{_html.escape(portfolio_label)}</u></link>'
+                contact_line = (plain + " | " + link_tag) if plain else link_tag
+            else:
+                contact_line = " | ".join(contact_parts)
+            elements.append(Paragraph(contact_line, styles["contact"]))
 
         elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
@@ -569,12 +578,21 @@ def export_cv_to_docx(cv_data: dict) -> bytes:
         contact_parts.append(contact["city"])
     if contact.get("linkedin"):
         contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
-    if contact_parts:
+    portfolio_url = (contact.get("portfolio") or "").strip()
+    portfolio_label = _format_portfolio_display(portfolio_url) if portfolio_url else ""
+    if contact_parts or portfolio_label:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = p.add_run(" | ".join(contact_parts))
-        run.font.size = Pt(9)
-        run.font.color.rgb = RGBColor(85, 85, 85)
+        if portfolio_label:
+            if contact_parts:
+                sep_run = p.add_run(" | ".join(contact_parts) + " | ")
+                sep_run.font.size = Pt(9)
+                sep_run.font.color.rgb = RGBColor(85, 85, 85)
+            _add_docx_hyperlink(doc, p, portfolio_label, portfolio_url, font_size_pt=9)
+        else:
+            run = p.add_run(" | ".join(contact_parts))
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(85, 85, 85)
         p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.line_spacing = Pt(12)
         _set_docx_rtl(p)
@@ -781,6 +799,66 @@ def _format_linkedin_display(val: str) -> str:
             return m.group(1)
         return re.sub(r'^https?://(www\.)?', '', v).rstrip('/')
     return v
+
+
+def _format_portfolio_display(url: str) -> str:
+    import re
+    v = url.strip()
+    if not v:
+        return v
+    domain_map = {
+        'github.com': 'GitHub',
+        'stackoverflow.com': 'Stack Overflow',
+        'behance.net': 'Behance',
+        'dribbble.com': 'Dribbble',
+        'kaggle.com': 'Kaggle',
+        'gitlab.com': 'GitLab',
+        'bitbucket.org': 'Bitbucket',
+        'medium.com': 'Medium',
+        'dev.to': 'Dev.to',
+        'codepen.io': 'CodePen',
+    }
+    m = re.search(r'(?:https?://)?(?:www\.)?([^/?#\s/]+)', v, re.IGNORECASE)
+    if m:
+        domain = m.group(1).lower()
+        for key, label in domain_map.items():
+            if domain == key or domain.endswith('.' + key):
+                return label
+        return domain
+    return v
+
+
+def _add_docx_hyperlink(doc, paragraph, text: str, url: str, font_size_pt: float = 9):
+    """Add a clickable hyperlink run (blue, underlined) to an existing paragraph."""
+    rel_id = doc.part.relate_to(
+        url,
+        'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink',
+        is_external=True
+    )
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), rel_id)
+    run_elem = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+    color = OxmlElement('w:color')
+    color.set(qn('w:val'), '2b56e0')
+    rPr.append(color)
+    u = OxmlElement('w:u')
+    u.set(qn('w:val'), 'single')
+    rPr.append(u)
+    sz = OxmlElement('w:sz')
+    sz.set(qn('w:val'), str(int(font_size_pt * 2)))
+    rPr.append(sz)
+    szCs = OxmlElement('w:szCs')
+    szCs.set(qn('w:val'), str(int(font_size_pt * 2)))
+    rPr.append(szCs)
+    run_elem.append(rPr)
+    t = OxmlElement('w:t')
+    t.text = text
+    t.set(qn('xml:space'), 'preserve')
+    run_elem.append(t)
+    hyperlink.append(run_elem)
+    paragraph._p.append(hyperlink)
+    return hyperlink
 
 
 def _is_phone_value(v: str) -> bool:
@@ -1142,8 +1220,17 @@ def export_cv_to_pdf_en(cv_data: dict, max_pages: int = 1) -> bytes:
             contact_parts.append(contact["city"])
         if contact.get("linkedin"):
             contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
-        if contact_parts:
-            elements.append(Paragraph(" | ".join(contact_parts), styles["contact"]))
+        portfolio_url = (contact.get("portfolio") or "").strip()
+        portfolio_label = _format_portfolio_display(portfolio_url) if portfolio_url else ""
+        if contact_parts or portfolio_label:
+            import html as _html
+            if portfolio_label:
+                plain = " | ".join(_html.escape(p) for p in contact_parts)
+                link_tag = f'<link href="{_html.escape(portfolio_url, quote=True)}" color="#2b56e0"><u>{_html.escape(portfolio_label)}</u></link>'
+                contact_line = (plain + " | " + link_tag) if plain else link_tag
+            else:
+                contact_line = " | ".join(contact_parts)
+            elements.append(Paragraph(contact_line, styles["contact"]))
 
         elements.append(HRFlowable(width="100%", thickness=2, color=HexColor("#2c3e50"), spaceAfter=4, spaceBefore=2))
 
@@ -1299,12 +1386,21 @@ def export_cv_to_docx_en(cv_data: dict) -> bytes:
         contact_parts.append(contact["city"])
     if contact.get("linkedin"):
         contact_parts.append(f"LinkedIn: {_format_linkedin_display(contact['linkedin'])}")
-    if contact_parts:
+    portfolio_url = (contact.get("portfolio") or "").strip()
+    portfolio_label = _format_portfolio_display(portfolio_url) if portfolio_url else ""
+    if contact_parts or portfolio_label:
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = p.add_run(" | ".join(contact_parts))
-        run.font.size = Pt(9)
-        run.font.color.rgb = RGBColor(85, 85, 85)
+        if portfolio_label:
+            if contact_parts:
+                sep_run = p.add_run(" | ".join(contact_parts) + " | ")
+                sep_run.font.size = Pt(9)
+                sep_run.font.color.rgb = RGBColor(85, 85, 85)
+            _add_docx_hyperlink(doc, p, portfolio_label, portfolio_url, font_size_pt=9)
+        else:
+            run = p.add_run(" | ".join(contact_parts))
+            run.font.size = Pt(9)
+            run.font.color.rgb = RGBColor(85, 85, 85)
         p.paragraph_format.space_after = Pt(6)
         p.paragraph_format.line_spacing = Pt(12)
 

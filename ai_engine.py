@@ -1182,7 +1182,7 @@ def generate_cv_from_form(form_data: dict, target_position: str = "", max_pages:
 החזר את התוצאה בפורמט JSON בלבד (ללא markdown, ללא ```):
 {{
     "full_name": "שם מלא",
-    "contact": {{"phone": "טלפון", "email": "אימייל", "city": "עיר", "linkedin": "לינקדאין - URL מלא או שם פרופיל (אם במקור 'פרופיל לינקדין [שם]' → שמור את השם)"}},
+    "contact": {{"phone": "טלפון", "email": "אימייל", "city": "עיר", "linkedin": "לינקדאין - URL מלא או שם פרופיל (אם במקור 'פרופיל לינקדין [שם]' → שמור את השם)", "portfolio": ""}},
     "professional_summary": "תקציר מקצועי של 2-3 משפטים בלבד",
     "experience": [
         {{"title": "תפקיד", "company": "חברה", "period": "תקופה", "achievements": ["הישג 1", "הישג 2"], "honors": "הצטיינות אם יש"}}
@@ -1212,6 +1212,7 @@ def generate_cv_from_form(form_data: dict, target_position: str = "", max_pages:
 אימייל: {form_data.get('email', '')}
 עיר: {form_data.get('city', '')}
 לינקדאין: {form_data.get('linkedin', '')}
+פורטפוליו/קישור נוסף: {form_data.get('portfolio', '')}
 
 תקציר מקצועי: {form_data.get('professional_summary', '')}
 
@@ -1283,7 +1284,10 @@ def generate_cv_from_form(form_data: dict, target_position: str = "", max_pages:
     result = result.strip()
 
     try:
-        return _safe_json_parse(result)
+        parsed = _safe_json_parse(result)
+        if isinstance(parsed.get("contact"), dict):
+            parsed["contact"]["portfolio"] = form_data.get("portfolio", "")
+        return parsed
     except (json.JSONDecodeError, Exception):
         return {
             "full_name": form_data.get("full_name", ""),
@@ -1291,7 +1295,8 @@ def generate_cv_from_form(form_data: dict, target_position: str = "", max_pages:
                 "phone": form_data.get("phone", ""),
                 "email": form_data.get("email", ""),
                 "city": form_data.get("city", ""),
-                "linkedin": form_data.get("linkedin", "")
+                "linkedin": form_data.get("linkedin", ""),
+                "portfolio": form_data.get("portfolio", "")
             },
             "professional_summary": form_data.get("professional_summary", ""),
             "experience": [],

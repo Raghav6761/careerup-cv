@@ -28,6 +28,7 @@ def _set_build_widget_keys(fd: dict):
     st.session_state["bf_email"]       = fd.get("email", "")
     st.session_state["bf_city"]        = fd.get("city", "")
     st.session_state["bf_linkedin"]    = fd.get("linkedin", "")
+    st.session_state["bf_portfolio"]   = fd.get("portfolio", "")
     st.session_state["bf_summary"]     = fd.get("professional_summary", "")
     st.session_state["bf_tech"]        = fd.get("technical_skills", "")
     st.session_state["bf_soft"]        = fd.get("soft_skills", "")
