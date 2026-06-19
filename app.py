@@ -9,8 +9,9 @@ import streamlit.components.v1 as components
 from PIL import Image
 from streamlit_sortables import sort_items
 from styles import inject_custom_css
-from persistence import init_storage, save_to_storage, clear_storage, _set_build_widget_keys
+from persistence import init_storage, save_to_storage, clear_storage, persist_partial, _set_build_widget_keys
 from streamlit_js_eval import streamlit_js_eval as _js_eval
+from auth_gate import require_access, render_user_button
 
 def _get_logo_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -271,12 +272,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Hard access gate — must run before anything else renders (after set_page_config).
+require_access()
+
 st.markdown("""
 <meta name="robots" content="noindex, nofollow">
 <title>Career Up | CV Master AI</title>
 """, unsafe_allow_html=True)
 
 inject_custom_css()
+
+# Persistent profile button (top-left), the Streamlit twin of the other tools' UserButton.
+render_user_button()
 
 if "page" not in st.session_state:
     st.session_state.page = "home"
@@ -548,6 +555,11 @@ def render_improve_upload():
         st.rerun()
 
     if st.session_state.pop("_needs_fresh_load", False):
+        # Persist page=improve_upload to the hub (keeping any prior analysis) so it
+        # survives the hard reload below, then force a clean browser reload to reset
+        # lingering widget state (e.g. the file uploader).
+        st.session_state["page"] = "improve_upload"
+        persist_partial({"page": "improve_upload"})
         st.markdown("""
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;
                     z-index:9999;display:flex;align-items:center;justify-content:center;">
@@ -557,14 +569,7 @@ def render_improve_upload():
         </div>
         """, unsafe_allow_html=True)
         _js_eval(
-            js_expressions=(
-                "var d={};"
-                "try{d=JSON.parse(localStorage.getItem('cv_master_data')||'{}');}catch(e){}"
-                "d.page='improve_upload';"
-                "localStorage.setItem('cv_master_data',JSON.stringify(d));"
-                "window.location.reload();"
-                "true"
-            ),
+            js_expressions="window.location.reload(); true",
             key="auto_reload_improve",
         )
         st.stop()

@@ -44,6 +44,16 @@ def inject_custom_css():
             margin: 0 !important;
         }
 
+        /* Kill Streamlit's framework chrome so this reads as our app, not a Streamlit app. */
+        [data-testid="stToolbar"],
+        [data-testid="stStatusWidget"],
+        [data-testid="stMainMenu"],
+        #MainMenu,
+        .stDeployButton,
+        .stAppDeployButton {
+            display: none !important;
+        }
+
         .stMainBlockContainer {
             padding-top: 0.5rem !important;
         }
