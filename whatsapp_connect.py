@@ -12,7 +12,6 @@ import io
 import os
 import streamlit as st
 import requests
-import qrcode
 
 
 def _secret(key: str, default: str = "") -> str:
@@ -45,6 +44,9 @@ def _fetch_deeplink(clerk_id: str):
 
 
 def _qr_png(data: str) -> bytes:
+    # Lazy import — a missing `qrcode` must never crash CV; the caller falls back
+    # to the button-only view if this raises.
+    import qrcode
     buf = io.BytesIO()
     qrcode.make(data).save(buf, format="PNG")
     return buf.getvalue()
@@ -70,13 +72,19 @@ def _connect_dialog(clerk_id: str):
             st.rerun()
         return
 
-    with st.columns([1, 2, 1])[1]:
-        st.image(_qr_png(deep_link), use_container_width=True)
-    st.markdown(
-        '<div style="direction:rtl;text-align:center;color:#6b7c93;font-size:0.8rem;'
-        'margin-bottom:10px;">סרקו עם מצלמת הטלפון כדי לפתוח את WhatsApp</div>',
-        unsafe_allow_html=True,
-    )
+    # QR is a nice-to-have (scan from another phone). If the qrcode lib is missing or
+    # fails, skip it silently — the button below still works.
+    try:
+        qr_png = _qr_png(deep_link)
+        with st.columns([1, 2, 1])[1]:
+            st.image(qr_png, use_container_width=True)
+        st.markdown(
+            '<div style="direction:rtl;text-align:center;color:#6b7c93;font-size:0.8rem;'
+            'margin-bottom:10px;">סרקו עם מצלמת הטלפון כדי לפתוח את WhatsApp</div>',
+            unsafe_allow_html=True,
+        )
+    except Exception:
+        pass
 
     st.link_button("פתחו ב-WhatsApp בטלפון זה", deep_link, use_container_width=True)
     if st.button("אולי מאוחר יותר", use_container_width=True):
