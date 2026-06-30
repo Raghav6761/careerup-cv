@@ -77,6 +77,24 @@ def _centered_message(title: str, body: str):
 
 def require_access():
     """Call once at the very top of app.py, right after st.set_page_config."""
+    # DEV ESCAPE HATCH — active ONLY when CV_DEV_CLERK_ID is set. Set it ONLY in the dev
+    # workspace (Replit Secrets / env), NEVER in the production deployment. Clerk's OIDC
+    # sign-in needs the hosted [auth] redirect, which the Replit dev preview can't do —
+    # so in dev we skip OIDC and run as the given clerk_id, keeping the REAL access check
+    # + real results/data so the preview behaves like production. In prod this var is
+    # unset, so the normal OIDC gate below runs unchanged.
+    dev_clerk_id = _secret("CV_DEV_CLERK_ID")
+    if dev_clerk_id:
+        cache = st.session_state.get("_cv_access")
+        if not cache or cache.get("clerk_id") != dev_clerk_id:
+            cache = {"clerk_id": dev_clerk_id, **_check_access(dev_clerk_id)}
+            st.session_state["_cv_access"] = cache
+        if not cache.get("granted"):
+            title, body = _DENIED_TEXT.get(cache.get("reason"), _DENIED_TEXT["inactive"])
+            _centered_message(title, body)
+            st.stop()
+        return
+
     user = getattr(st, "user", None)
 
     # 1. Signed in? If not, redirect STRAIGHT to the Clerk sign-in page — no
