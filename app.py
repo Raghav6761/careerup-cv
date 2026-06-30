@@ -12,6 +12,7 @@ from styles import inject_custom_css
 from persistence import init_storage, save_to_storage, clear_storage, persist_partial, _set_build_widget_keys
 from streamlit_js_eval import streamlit_js_eval as _js_eval
 from auth_gate import require_access, render_user_button
+from whatsapp_connect import maybe_render_connect_prompt
 
 def _get_logo_b64(path: str) -> str:
     with open(path, "rb") as f:
@@ -284,6 +285,11 @@ inject_custom_css()
 
 # Persistent profile button (top-left), the Streamlit twin of the other tools' UserButton.
 render_user_button()
+
+# One-time WhatsApp connect prompt — shown once per session to active users who haven't
+# linked their number yet (the Streamlit twin of the React tools' ConnectWhatsAppModal).
+_acc = st.session_state.get("_cv_access") or {}
+maybe_render_connect_prompt(_acc.get("clerk_id"), _acc.get("whatsapp_linked", False))
 
 if "page" not in st.session_state:
     st.session_state.page = "home"

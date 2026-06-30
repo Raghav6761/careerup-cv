@@ -52,7 +52,11 @@ def _check_access(clerk_id: str) -> dict:
         )
         if resp.status_code == 200:
             data = resp.json()
-            return {"granted": bool(data.get("granted")), "reason": data.get("reason") or "inactive"}
+            return {
+                "granted": bool(data.get("granted")),
+                "reason": data.get("reason") or "inactive",
+                "whatsapp_linked": bool(data.get("whatsappLinked")),
+            }
         return {"granted": False, "reason": "error"}
     except Exception:
         return {"granted": False, "reason": "error"}
